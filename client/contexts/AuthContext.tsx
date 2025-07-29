@@ -103,17 +103,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      console.log('Starting Google sign-in...');
+      
+      // Check if Firebase is properly configured
+      if (!auth) {
+        throw new Error('Firebase auth is not initialized');
+      }
+
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      
+      console.log('Google sign-in successful:', { 
+        uid: user.uid, 
+        email: user.email, 
+        displayName: user.displayName 
+      });
       
       // 既存のプロフィールを確認
       const profileDoc = await getDoc(doc(db, 'userProfiles', user.uid));
       if (!profileDoc.exists()) {
+        console.log('Creating new user profile...');
         await createUserProfile(user);
+      } else {
+        console.log('User profile already exists');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google認証エラー:', error);
-      throw error;
+      
+      // Provide more specific error messages
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Google認証がキャンセルされました。');
+      } else if (error.code === 'auth/popup-blocked') {
+        throw new Error('ポップアップがブロックされました。ブラウザの設定を確認してください。');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('ネットワークエラーが発生しました。接続を確認してください。');
+      } else if (error.code === 'auth/configuration-not-found') {
+        throw new Error('Firebase設定エラー: Google認証が有効になっていません。');
+      } else if (error.message?.includes('Firebase')) {
+        throw new Error('Firebase設定エラー: 環境変数を確認してください。');
+      } else {
+        throw new Error(`認証エラー: ${error.message || 'Unknown error'}`);
+      }
     }
   };
 

@@ -33,7 +33,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await signInWithGoogle();
       onClose();
     } catch (err: any) {
-      setError('Googleでのログインに失敗しました。');
+      console.error('Google sign-in error:', err);
+      setError(err.message || 'Googleでのログインに失敗しました。');
     } finally {
       setLoading(false);
     }
