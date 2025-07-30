@@ -1,0 +1,14 @@
+# Add these Firebase environment variables to your .env file:
+
+VITE_FIREBASE_API_KEY=your-actual-api-key-here
+VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id-here
+VITE_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id-here
+VITE_FIREBASE_APP_ID=your-app-id-here
+
+# To fix the error:
+# 1.Copy the above lines
+# 2. Replace 'your-*-here' with actual values from Firebase Console
+# 3. Add them to your .env file
+# 4. Restart the development server

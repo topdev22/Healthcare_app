@@ -66,7 +66,7 @@ export default function ChatInterface({
   };
 
   return (
-    <Card className="h-[500px] flex flex-col">
+    <Card className="min-h-[500px] w-full flex flex-col overflow-y-scroll">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Chat with {characterName}</span>
