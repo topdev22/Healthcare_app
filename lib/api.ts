@@ -1,9 +1,23 @@
+import { firebaseAuth } from './firebase';
+
 // API ベースURL（環境変数から取得、デフォルトはローカル開発環境）
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // 共通のフェッチ関数
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('auth_token');
+  // Get Firebase token for authentication
+  const currentUser = firebaseAuth.getCurrentUser();
+  let token = localStorage.getItem('auth_token');
+  
+  // If we have a Firebase user but no stored token, get a fresh token
+  if (currentUser && !token) {
+    try {
+      token = await currentUser.getIdToken();
+      localStorage.setItem('auth_token', token);
+    } catch (error) {
+      console.error('Failed to get Firebase token:', error);
+    }
+  }
   
   const defaultOptions: RequestInit = {
     headers: {
@@ -14,46 +28,112 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     ...options,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
-  
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Network error' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Network error' }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
 
-  return response.json();
+    return response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
 }
 
 // 認証関連API
 export const authAPI = {
   // Googleログイン
-  async signInWithGoogle(googleToken: string) {
-    return fetchAPI('/auth/google', {
-      method: 'POST',
-      body: JSON.stringify({ token: googleToken }),
-    });
+  async signInWithGoogle() {
+    try {
+      // First, authenticate with Firebase
+      const firebaseResult = await firebaseAuth.signInWithGoogle();
+      
+      // Then send the token to our backend
+      const backendResult = await fetchAPI('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ token: firebaseResult.token }),
+      });
+      
+      // Store the JWT token from backend
+      if (backendResult.token) {
+        localStorage.setItem('auth_token', backendResult.token);
+      }
+      
+      return backendResult;
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      throw error;
+    }
   },
 
   // メールログイン
   async signInWithEmail(email: string, password: string) {
-    return fetchAPI('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      // First, authenticate with Firebase
+      const firebaseResult = await firebaseAuth.signInWithEmail(email, password);
+      
+      // Then send credentials to our backend
+      const backendResult = await fetchAPI('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+      
+      // Store the JWT token from backend
+      if (backendResult.token) {
+        localStorage.setItem('auth_token', backendResult.token);
+      }
+      
+      return backendResult;
+    } catch (error) {
+      console.error('Email sign in error:', error);
+      throw error;
+    }
   },
 
   // メール登録
   async signUpWithEmail(email: string, password: string, displayName: string) {
-    return fetchAPI('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, displayName }),
-    });
+    try {
+      // First, create user with Firebase
+      const firebaseResult = await firebaseAuth.signUpWithEmail(email, password, displayName);
+      
+      // Then register with our backend
+      const backendResult = await fetchAPI('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, displayName }),
+      });
+      
+      // Store the JWT token from backend
+      if (backendResult.token) {
+        localStorage.setItem('auth_token', backendResult.token);
+      }
+      
+      return backendResult;
+    } catch (error) {
+      console.error('Email sign up error:', error);
+      throw error;
+    }
   },
 
   // ログアウト
   async logout() {
-    localStorage.removeItem('auth_token');
-    return fetchAPI('/auth/logout', { method: 'POST' });
+    try {
+      // Sign out from Firebase
+      await firebaseAuth.signOut();
+      
+      // Clear local storage
+      localStorage.removeItem('auth_token');
+      
+      // Notify backend
+      return fetchAPI('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local storage even if backend call fails
+      localStorage.removeItem('auth_token');
+      throw error;
+    }
   },
 
   // ユーザー情報取得
