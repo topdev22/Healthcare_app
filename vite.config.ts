@@ -17,6 +17,16 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
+    rollupOptions: {
+      external: [
+        '@capacitor/app',
+        '@capacitor/status-bar',
+        '@capacitor/splash-screen',
+        '@capacitor/keyboard',
+        '@capacitor/haptics',
+        '@capacitor/core'
+      ]
+    }
   },
   plugins: [react()],
   resolve: {
