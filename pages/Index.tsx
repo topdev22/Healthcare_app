@@ -102,7 +102,7 @@ export default function Index() {
       const data = await healthAPI.getHealthLogs();
       setHealthData(data);
     } catch (error) {
-      console.error('健康データの読み込みエラー:', error);
+      console.error('Health data loading error:', error);
       // エラーの場合はサンプルデータを表示
       setHealthData([
         { mood: 'happy', weight: 70.2, calories: 1850, date: new Date().toISOString() },

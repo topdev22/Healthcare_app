@@ -1,11 +1,28 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authAPI, userAPI, setAuthToken, removeAuthToken, getAuthToken } from '@/lib/api';
+import { 
+  signInWithGoogle as googleSignIn, 
+  validateEmail, 
+  validatePassword,
+  initializeGoogleAuth,
+  isAuthenticated,
+  getStoredUser,
+  setStoredUser,
+  setStoredToken,
+  clearAuthStorage,
+  addAuthStateListener,
+  removeAuthStateListener,
+  notifyAuthStateChange,
+  User as AuthUser
+} from '@/lib/auth';
 
 interface User {
   id: string;
   email: string;
   displayName: string;
   photoURL?: string;
+  provider: 'email' | 'google';
+  isEmailVerified: boolean;
 }
 
 interface UserProfile {
@@ -26,7 +43,7 @@ interface AuthContextType {
   currentUser: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signInWithGoogle: (googleToken: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -49,83 +66,208 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
+    const initializeAuth = async () => {
+      try {
+        // Initialize Google Auth
+        await initializeGoogleAuth();
+        
+        // Check if user is already authenticated
+        const storedUser = getStoredUser();
+        const token = getAuthToken();
+        
+        if (storedUser && token && isAuthenticated()) {
+          try {
+            // Verify token is still valid by getting current user from backend
+            const response = await authAPI.getCurrentUser();
+            setCurrentUser(response.user);
+            
+            // Try to get user profile
+            try {
+              const profileData = await userAPI.getProfile();
+              setUserProfile(profileData);
+            } catch (profileError) {
+              console.log('Profile not found, user may need to complete setup');
+            }
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            await handleAuthError();
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Set up auth state listener
+    const handleAuthStateChange = (user: User | null) => {
+      setCurrentUser(user);
+    };
+
+    addAuthStateListener(handleAuthStateChange);
+
+    return () => {
+      removeAuthStateListener(handleAuthStateChange);
+    };
   }, []);
 
-  const checkAuthStatus = async () => {
+  const handleAuthSuccess = async (response: any) => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      // バックエンドから現在のユーザー情報を取得
-      const userData = await authAPI.getCurrentUser();
-      setCurrentUser(userData.user);
+      // Store token and user data
+      setAuthToken(response.token);
+      setStoredToken(response.token);
+      setStoredUser(response.user);
       
-      // ユーザープロフィールを取得
-      const profileData = await userAPI.getProfile();
-      setUserProfile(profileData);
+      // Set user data
+      setCurrentUser(response.user);
+      
+      // Notify auth state change
+      notifyAuthStateChange(response.user);
+
+      // Get user profile if available
+      if (response.profile) {
+        setUserProfile(response.profile);
+      } else {
+        try {
+          const profileData = await userAPI.getProfile();
+          setUserProfile(profileData);
+        } catch (profileError) {
+          console.log('Profile not found, user may need to complete setup');
+        }
+      }
     } catch (error) {
-      console.error('認証状態の確認エラー:', error);
-      removeAuthToken();
+      console.error('Auth success handling error:', error);
+      throw error;
+    }
+  };
+
+  const handleAuthError = async () => {
+    clearAuthStorage();
+    setCurrentUser(null);
+    setUserProfile(null);
+    notifyAuthStateChange(null);
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true);
+      
+      // Get Google user data from frontend OAuth
+      const googleData = await googleSignIn();
+      
+      // Send Google data to backend
+      const response = await authAPI.signInWithGoogle(googleData);
+      
+      // Handle successful authentication
+      await handleAuthSuccess(response);
+      
+    } catch (error) {
+      console.error('Google authentication error:', error);
+      await handleAuthError();
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const signInWithGoogle = async (googleToken: string) => {
-    try {
-      const response = await authAPI.signInWithGoogle(googleToken);
-      setAuthToken(response.token);
-      setCurrentUser(response.user);
-      
-      // プロフィールを取得
-      const profileData = await userAPI.getProfile();
-      setUserProfile(profileData);
-    } catch (error) {
-      console.error('Google認証エラー:', error);
-      throw error;
-    }
-  };
-
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      const response = await authAPI.signInWithEmail(email, password);
-      setAuthToken(response.token);
-      setCurrentUser(response.user);
+      setLoading(true);
       
-      // プロフィールを取得
-      const profileData = await userAPI.getProfile();
-      setUserProfile(profileData);
+      // Validate email and password
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+      
+      // Validate email format
+      if (!validateEmail(email)) {
+        throw new Error('有効なメールアドレスを入力してください。');
+      }
+      
+      // Validate password
+      const passwordErrors = validatePassword(password);
+      if (passwordErrors.length > 0) {
+        throw new Error(passwordErrors[0]);
+      }
+      
+      // Sign in with backend
+      const response = await authAPI.signInWithEmail(email, password);
+      
+      // Handle successful authentication
+      await handleAuthSuccess(response);
+      
     } catch (error) {
-      console.error('メール認証エラー:', error);
+      console.error('Email authentication error:', error);
+      await handleAuthError();
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUpWithEmail = async (email: string, password: string, displayName: string) => {
     try {
-      const response = await authAPI.signUpWithEmail(email, password, displayName);
-      setAuthToken(response.token);
-      setCurrentUser(response.user);
-      setUserProfile(response.profile);
+      setLoading(true);
+      
+      // Validate email, password, and displayName presence
+      if (!email || !password || !displayName) {
+        throw new Error('Email, password, and display name are required');
+      }
+      
+      // Validate email format
+      if (!validateEmail(email)) {
+        throw new Error('有効なメールアドレスを入力してください。');
+      }
+      
+      // Validate password
+      const passwordErrors = validatePassword(password);
+      if (passwordErrors.length > 0) {
+        throw new Error(passwordErrors[0]);
+      }
+      
+      // Validate display name
+      if (!displayName.trim()) {
+        throw new Error('表示名を入力してください。');
+      }
+      
+      // Register with backend
+      const response = await authAPI.signUpWithEmail(email, password, displayName.trim());
+      
+      // Handle successful registration
+      await handleAuthSuccess(response);
+      
     } catch (error) {
-      console.error('ユーザー登録エラー:', error);
+      console.error('Registration error:', error);
+      await handleAuthError();
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      await authAPI.logout();
+      setLoading(true);
+      
+      // Call backend logout
+      try {
+        await authAPI.logout();
+      } catch (error) {
+        console.log('Backend logout error (may be expected):', error);
+      }
+      
+      // Clean up local state
+      await handleAuthError();
+      
     } catch (error) {
-      console.error('ログアウトエラー:', error);
+      console.error('Logout error:', error);
+      // Even if there's an error, clean up local state
+      await handleAuthError();
     } finally {
-      removeAuthToken();
-      setCurrentUser(null);
-      setUserProfile(null);
+      setLoading(false);
     }
   };
 
@@ -134,7 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const updatedProfile = await userAPI.updateProfile(profileData);
       setUserProfile(updatedProfile);
     } catch (error) {
-      console.error('プロフィール更新エラー:', error);
+      console.error('Profile update error:', error);
       throw error;
     }
   };

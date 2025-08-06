@@ -14,9 +14,18 @@ import { useEffect } from "react";
 
 // Capacitor imports
 import { App as CapacitorApp } from '@capacitor/app';
-import { StatusBar } from '@capacitor/status-bar';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { Keyboard } from '@capacitor/keyboard';
+
+// Extend Window interface for Capacitor
+declare global {
+  interface Window {
+    Capacitor?: {
+      isNativePlatform(): boolean;
+    };
+  }
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,18 +47,20 @@ function useCapacitorInit() {
         
         // Configure status bar
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-          await StatusBar.setStyle({ style: 'light' });
+          await StatusBar.setStyle({ style: Style.Light });
           await StatusBar.setBackgroundColor({ color: '#78c896' });
         }
 
-        // Handle keyboard events for better UX
-        Keyboard.addListener('keyboardWillShow', () => {
-          document.body.classList.add('keyboard-open');
-        });
+        // Handle keyboard events for better UX (only on native platforms)
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+          Keyboard.addListener('keyboardWillShow', () => {
+            document.body.classList.add('keyboard-open');
+          });
 
-        Keyboard.addListener('keyboardWillHide', () => {
-          document.body.classList.remove('keyboard-open');
-        });
+          Keyboard.addListener('keyboardWillHide', () => {
+            document.body.classList.remove('keyboard-open');
+          });
+        }
 
         // Handle app state changes
         CapacitorApp.addListener('appStateChange', ({ isActive }) => {
