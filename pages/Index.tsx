@@ -99,7 +99,10 @@ export default function Index() {
 
   const loadHealthData = async () => {
     try {
-      const data = await healthAPI.getHealthLogs();
+      const response = await healthAPI.getHealthLogs();
+      // healthAPI.getHealthLogs() returns { success: true, data: logs, pagination: {...} }
+      // We need to extract the data array
+      const data = response.data || [];
       setHealthData(data);
     } catch (error) {
       console.error('Health data loading error:', error);

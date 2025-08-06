@@ -126,6 +126,7 @@ export const authAPI = {
 
   // Email/Password Login
   async signInWithEmail(email: string, password: string) {
+    console.log('signInWithEmail', email, password);
     const response = await apiClient.post('/auth/login', { email, password });
     return response.data;
   },
