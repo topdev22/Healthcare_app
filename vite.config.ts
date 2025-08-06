@@ -7,28 +7,22 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    fs: {
-      allow: ["./client"],
-      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**"],
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_BASE_URL || "http://localhost:3001",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
     outDir: "dist",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-        },
-      },
-    },
   },
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./client"),
+      "@": path.resolve(__dirname, "."),
+      "@shared": path.resolve(__dirname, "./shared"),
     },
-  },
-  optimizeDeps: {
-    include: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
   },
 });
