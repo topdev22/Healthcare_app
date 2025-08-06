@@ -30,6 +30,8 @@ interface UserProfile {
   email: string;
   displayName: string;
   photoURL?: string;
+  provider: 'email' | 'google';
+  isEmailVerified: boolean;
   age?: number;
   gender?: 'male' | 'female' | 'other';
   height?: number;

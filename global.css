@@ -201,7 +201,7 @@
 
   /* Floating action button */
   .fab {
-    @apply fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg;
+    @apply fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg;
     @apply bg-gradient-to-r from-primary to-primary/80;
     @apply flex items-center justify-center text-primary-foreground;
     @apply transition-all duration-300 ease-in-out;
@@ -251,6 +251,16 @@
     h4 {
       font-size: 1.125rem;
       line-height: 1.4;
+    }
+
+    /* Better spacing for mobile cards */
+    .card-hover {
+      @apply hover:scale-[1.01] hover:shadow-md;
+    }
+
+    /* Optimize tab content for mobile */
+    [data-state="active"] {
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     /* Enhanced touch targets */

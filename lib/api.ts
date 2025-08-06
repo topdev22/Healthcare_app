@@ -177,6 +177,7 @@ export const userAPI = {
 
   // Update user profile
   async updateProfile(profileData: any) {
+    console.log('updateProfile', profileData);
     const response = await apiClient.put('/user/profile', profileData);
     return response.data;
   },

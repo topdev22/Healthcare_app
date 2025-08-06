@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { User } from '../models/User';
+import { validateUserProfile, sanitizeUserProfile } from '../utils/validation';
 
 
 const router = express.Router();
@@ -8,7 +9,7 @@ const router = express.Router();
 // Get user profile
 router.get('/profile', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const user = await User.findById(userId).select('-password');
     
     if (!user) {
@@ -24,6 +25,11 @@ router.get('/profile', authenticateToken, async (req: any, res) => {
         photoURL: user.photoURL,
         provider: user.provider,
         isEmailVerified: user.isEmailVerified,
+        age: user.age,
+        gender: user.gender,
+        height: user.height,
+        activityLevel: user.activityLevel,
+        healthGoals: user.healthGoals,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -37,22 +43,38 @@ router.get('/profile', authenticateToken, async (req: any, res) => {
 // Update user profile
 router.put('/profile', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
-    const { displayName, photoURL } = req.body;
+    console.log('updateProfile', req.body, 'userId:', req.user._id);
+    const userId = req.user._id;
+    
+    // Sanitize and validate input data
+    const sanitizedData = sanitizeUserProfile(req.body);
+    const validation = validateUserProfile(sanitizedData);
+    
+    if (!validation.isValid) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validation.errors 
+      });
+    }
+
+    // Build update object with sanitized data
+    const updateData: any = {
+      ...sanitizedData,
+      updatedAt: new Date()
+    };
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { 
-        displayName, 
-        photoURL,
-        updatedAt: new Date()
-      },
+      updateData,
       { new: true, select: '-password' }
     );
 
     if (!updatedUser) {
+      console.error('User not found during profile update, userId:', userId);
       return res.status(404).json({ message: 'User not found' });
     }
+
+    console.log('Profile updated successfully:', updatedUser.displayName);
 
     res.json({
       success: true,
@@ -63,6 +85,11 @@ router.put('/profile', authenticateToken, async (req: any, res) => {
         photoURL: updatedUser.photoURL,
         provider: updatedUser.provider,
         isEmailVerified: updatedUser.isEmailVerified,
+        age: updatedUser.age,
+        gender: updatedUser.gender,
+        height: updatedUser.height,
+        activityLevel: updatedUser.activityLevel,
+        healthGoals: updatedUser.healthGoals,
         createdAt: updatedUser.createdAt,
         updatedAt: updatedUser.updatedAt
       }
@@ -76,7 +103,7 @@ router.put('/profile', authenticateToken, async (req: any, res) => {
 // Delete user profile
 router.delete('/profile', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const deletedUser = await User.findByIdAndDelete(userId);
     
