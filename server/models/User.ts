@@ -9,6 +9,12 @@ export interface IUser extends Document {
   provider: 'email' | 'google';
   googleId?: string;
   isEmailVerified: boolean;
+  // Extended profile fields
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  height?: number;
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  healthGoals?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +58,29 @@ const userSchema = new Schema<IUser>({
   isEmailVerified: {
     type: Boolean,
     default: false
+  },
+  // Extended profile fields
+  age: {
+    type: Number,
+    min: 1,
+    max: 120
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other']
+  },
+  height: {
+    type: Number,
+    min: 50,
+    max: 300
+  },
+  activityLevel: {
+    type: String,
+    enum: ['sedentary', 'light', 'moderate', 'active', 'very_active']
+  },
+  healthGoals: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true,

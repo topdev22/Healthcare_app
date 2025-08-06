@@ -19,8 +19,10 @@ interface HealthStatsProps {
 }
 
 export default function HealthStats({ recentData, onLogHealth, onTakePhoto }: HealthStatsProps) {
-  const today = recentData[0];
-  const weekAvg = recentData.slice(0, 7).reduce((acc, day) => acc + (day.weight || 0), 0) / Math.max(recentData.slice(0, 7).filter(d => d.weight).length, 1);
+  // Ensure recentData is always an array
+  const safeRecentData = Array.isArray(recentData) ? recentData : [];
+  const today = safeRecentData[0];
+  const weekAvg = safeRecentData.slice(0, 7).reduce((acc, day) => acc + (day.weight || 0), 0) / Math.max(safeRecentData.slice(0, 7).filter(d => d.weight).length, 1);
   
   const getMoodIcon = (mood: string) => {
     switch (mood) {
@@ -99,18 +101,18 @@ export default function HealthStats({ recentData, onLogHealth, onTakePhoto }: He
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">平均体重</span>
-            <span className="font-medium">{weekAvg.toFixed(1)}kg</span>
+            <span className="font-medium">{isNaN(weekAvg) ? '--' : weekAvg.toFixed(1)}kg</span>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">記録日数</span>
-            <span className="font-medium">{recentData.slice(0, 7).length}/7</span>
+            <span className="font-medium">{safeRecentData.slice(0, 7).length}/7</span>
           </div>
           
           <div>
             <span className="text-sm text-muted-foreground mb-2 block">最近の気分</span>
             <div className="flex gap-2">
-              {recentData.slice(0, 5).map((day, i) => (
+              {safeRecentData.slice(0, 5).map((day, i) => (
                 <div key={i} className="flex items-center justify-center w-6 h-6">
                   {getMoodIcon(day.mood)}
                 </div>
