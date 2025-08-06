@@ -147,3 +147,90 @@ export const sanitizeUserProfile = (data: any): UserProfileSchema => {
 
   return sanitized;
 };
+
+// Chat validation schemas
+export interface ChatMessageSchema {
+  content: string;
+  type?: 'text' | 'image' | 'health_data' | 'suggestion' | 'system_notification';
+  conversationId?: string;
+  metadata?: any;
+  attachments?: any[];
+}
+
+export interface ConversationSchema {
+  title?: string;
+  tags?: string[];
+  metadata?: any;
+}
+
+export const validateChatMessage = (data: any): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  if (!data.content || typeof data.content !== 'string' || data.content.trim().length === 0) {
+    errors.push('Message content is required and cannot be empty');
+  }
+
+  if (data.content && data.content.length > 4000) {
+    errors.push('Message content cannot exceed 4000 characters');
+  }
+
+  if (data.type && !['text', 'image', 'health_data', 'suggestion', 'system_notification'].includes(data.type)) {
+    errors.push('Invalid message type');
+  }
+
+  if (data.conversationId && typeof data.conversationId !== 'string') {
+    errors.push('Conversation ID must be a valid string');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+export const validateConversation = (data: any): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  if (data.title && (typeof data.title !== 'string' || data.title.length > 100)) {
+    errors.push('Title must be a string with maximum 100 characters');
+  }
+
+  if (data.tags && !Array.isArray(data.tags)) {
+    errors.push('Tags must be an array');
+  }
+
+  if (data.tags && data.tags.some((tag: any) => typeof tag !== 'string')) {
+    errors.push('All tags must be strings');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+export const sanitizeChatMessage = (data: any): ChatMessageSchema => {
+  return {
+    content: String(data.content || '').trim(),
+    type: data.type ? String(data.type).trim() as any : 'text',
+    conversationId: data.conversationId ? String(data.conversationId).trim() : undefined,
+    metadata: data.metadata || {},
+    attachments: Array.isArray(data.attachments) ? data.attachments : []
+  };
+};
+
+export const sanitizeConversation = (data: any): ConversationSchema => {
+  const sanitized: ConversationSchema = {};
+
+  if (data.title !== undefined) {
+    sanitized.title = String(data.title).trim();
+  }
+  if (data.tags !== undefined && Array.isArray(data.tags)) {
+    sanitized.tags = data.tags.map((tag: any) => String(tag).trim().toLowerCase());
+  }
+  if (data.metadata !== undefined) {
+    sanitized.metadata = data.metadata;
+  }
+
+  return sanitized;
+};
