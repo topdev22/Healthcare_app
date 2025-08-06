@@ -4,115 +4,167 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Mail } from 'lucide-react';
+import { initializeGoogleAuth } from '@/lib/auth';
+import { Loader2, Mail, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 
-interface AuthModalProps {
+interface AuthModalProps {  
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Google Sign-In Web API の型定義
-declare global {
-  interface Window {
-    google: any;
-    googleSignInCallback: (response: any) => void;
-  }
-}
-
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, loading } = useAuth();
+  const [localLoading, setLocalLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // ログインフォーム
+  const [success, setSuccess] = useState('');
+  const [googleAuthError, setGoogleAuthError] = useState('');
+
+  // Login form
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  
-  // 登録フォーム
+
+  // Signup form
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupName, setSignupName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
+  const isLoading = loading || localLoading;
+
+  // Initialize Google Auth on mount
   useEffect(() => {
-    // Google Sign-In Web APIのロード
-    if (isOpen && !window.google) {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeGoogleSignIn;
-      document.head.appendChild(script);
-    } else if (isOpen && window.google) {
-      initializeGoogleSignIn();
+    if (isOpen) {
+      initializeGoogleAuth()
+        .then(() => {
+          setGoogleAuthError('');
+        })
+        .catch((error) => {
+          console.warn('Google Auth initialization failed:', error);
+          setGoogleAuthError('Google認証の初期化に失敗しました。Google認証機能が利用できない可能性があります。');
+        });
     }
   }, [isOpen]);
 
-  const initializeGoogleSignIn = () => {
-    if (!window.google) return;
-
-    // グローバルコールバック関数を設定
-    window.googleSignInCallback = handleGoogleSignInResponse;
-
-    window.google.accounts.id.initialize({
-      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id',
-      callback: window.googleSignInCallback,
-    });
+  const clearMessages = () => {
+    setError('');
+    setSuccess('');
   };
 
-  const handleGoogleSignInResponse = async (response: any) => {
+  const handleGoogleSignIn = async () => {
     try {
-      setLoading(true);
-      setError('');
+      setLocalLoading(true);
+      clearMessages();
       
-      // JWTトークンをバックエンドに送信
-      await signInWithGoogle(response.credential);
-      onClose();
+      await signInWithGoogle();
+      setSuccess('Googleでのログインに成功しました！');
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        onClose();
+        setSuccess('');
+      }, 1000);
+      
     } catch (err: any) {
-      setError('Googleでのログインに失敗しました。');
+      console.error('Google sign-in error:', err);
+      setError(err.message || 'Googleでのログインに失敗しました。');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = () => {
-    if (window.google) {
-      window.google.accounts.id.prompt();
-    } else {
-      setError('Google Sign-Inの初期化に失敗しました。');
+      setLocalLoading(false);
     }
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const trimmedEmail = loginEmail.trim();
+    const trimmedPassword = loginPassword.trim();
+    
+    if (!trimmedEmail || !trimmedPassword) {
+      setError('メールアドレスとパスワードを入力してください。');
+      return;
+    }
+
     try {
-      setLoading(true);
-      setError('');
-      await signInWithEmail(loginEmail, loginPassword);
-      onClose();
+      setLocalLoading(true);
+      clearMessages();
+      
+      await signInWithEmail(trimmedEmail, trimmedPassword);
+      setSuccess('ログインに成功しました！');
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        onClose();
+        setSuccess('');
+        setLoginEmail('');
+        setLoginPassword('');
+      }, 1000);
+      
     } catch (err: any) {
-      setError('メールアドレスまたはパスワードが正しくありません。');
+      console.error('Email login error:', err);
+      setError(err.message || 'ログインに失敗しました。');
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const trimmedEmail = signupEmail.trim();
+    const trimmedPassword = signupPassword.trim();
+    const trimmedName = signupName.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+    
+    if (!trimmedEmail || !trimmedPassword || !trimmedName) {
+      setError('すべての項目を入力してください。');
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      setError('パスワードは6文字以上で設定してください。');
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      setError('パスワードが一致しません。');
+      return;
+    }
+
     try {
-      setLoading(true);
-      setError('');
-      await signUpWithEmail(signupEmail, signupPassword, signupName);
-      onClose();
+      setLocalLoading(true);
+      clearMessages();
+      
+      await signUpWithEmail(trimmedEmail, trimmedPassword, trimmedName);
+      setSuccess('アカウントの作成に成功しました！');
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        onClose();
+        setSuccess('');
+        setSignupEmail('');
+        setSignupPassword('');
+        setSignupName('');
+        setConfirmPassword('');
+      }, 1000);
+      
     } catch (err: any) {
-      setError('アカウントの作成に失敗しました。');
+      console.error('Email signup error:', err);
+      setError(err.message || 'アカウントの作成に失敗しました。');
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isLoading) {
+      clearMessages();
+      onClose();
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
@@ -123,25 +175,59 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="login" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">ログイン</TabsTrigger>
-            <TabsTrigger value="signup">新規登録</TabsTrigger>
-          </TabsList>
-
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
+        <div className="space-y-4">
+          {/* Google Auth Warning */}
+          {googleAuthError && (
+            <Alert className="border-orange-200 bg-orange-50 text-orange-800">
+              <WifiOff className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="font-medium">Google認証について</p>
+                  <p>{googleAuthError}</p>
+                  <p className="text-xs opacity-75">
+                    メール認証は引き続き利用できます。
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
           )}
 
-          {/* Googleログインボタン */}
+          {/* Success Message */}
+          {success && (
+            <Alert className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-900">
+              <AlertCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                {success}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-1">
+                  <p>{error}</p>
+                  {error.includes('ネットワーク') && (
+                    <p className="text-xs opacity-75">
+                      • インターネット接続を確認してください
+                      • ファイアウォールやVPNが影響していないか確認してください
+                      • しばらく時間をおいてから再度お試しください
+                    </p>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Google Login Button */}
           <Button
             onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full flex items-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
+                          disabled={isLoading}
+            className="w-full flex items-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50"
           >
-            {loading ? (
+            {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -159,107 +245,133 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">また���</span>
+              <span className="bg-background px-2 text-muted-foreground">または</span>
             </div>
           </div>
 
-          <TabsContent value="login" className="space-y-4">
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">メールアドレス</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="login-password">パスワード</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ログイン中...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4 mr-2" />
-                    メールでログイン
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
+          <Tabs defaultValue="login" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="login" disabled={isLoading}>ログイン</TabsTrigger>
+            <TabsTrigger value="signup" disabled={isLoading}>新規登録</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="signup" className="space-y-4">
-            <form onSubmit={handleEmailSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">お名前</Label>
-                <Input
-                  id="signup-name"
-                  type="text"
-                  value={signupName}
-                  onChange={(e) => setSignupName(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">メールアドレス</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  value={signupEmail}
-                  onChange={(e) => setSignupEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">パスワード</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  minLength={6}
-                />
-              </div>
-              
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    登録中...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4 mr-2" />
-                    アカウント作成
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="login" className="space-y-4">
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">メールアドレス</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    placeholder="your@example.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">パスワード</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    placeholder="パスワードを入力"
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ログイン中...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      メールでログイン
+                    </>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="signup" className="space-y-4">
+              <form onSubmit={handleEmailSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">お名前</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    value={signupName}
+                    onChange={(e) => setSignupName(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    placeholder="田中 太郎"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">メールアドレス</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    placeholder="your@example.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">パスワード</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    minLength={6}
+                    placeholder="6文字以上のパスワード"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">パスワード（確認）</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    minLength={6}
+                    placeholder="パスワードを再入力"
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      登録中...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      アカウント作成
+                    </>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );

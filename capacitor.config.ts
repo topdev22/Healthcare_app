@@ -1,4 +1,6 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
+import { Style } from '@capacitor/status-bar';
 
 const config: CapacitorConfig = {
   appId: 'com.healthbuddy.app',
@@ -20,12 +22,12 @@ const config: CapacitorConfig = {
       spinnerColor: "#ffffff"
     },
     StatusBar: {
-      style: "light",
+      style: Style.Light,
       backgroundColor: "#78c896"
     },
     Keyboard: {
-      resize: "body",
-      style: "dark",
+      resize: KeyboardResize.Body,
+      style: KeyboardStyle.Dark,
       resizeOnFullScreen: true
     }
   }
