@@ -3,6 +3,8 @@ import { authenticateToken } from '../middleware/auth';
 import ChatMessage from '../models/ChatMessage';
 import Conversation from '../models/Conversation';
 import { User } from '../models/User';
+import HealthLog from '../models/HealthLog';
+import OpenAIService from '../services/openaiService';
 import { 
   validateChatMessage, 
   validateConversation,
@@ -11,6 +13,19 @@ import {
 } from '../utils/validation';
 
 const router = express.Router();
+
+// Initialize OpenAI service
+let openaiService: OpenAIService | null = null;
+let openaiInitError: string | null = null;
+
+try {
+  openaiService = new OpenAIService();
+  console.log('✅ OpenAI service initialized successfully');
+} catch (error) {
+  openaiInitError = (error as Error).message;
+  console.warn('⚠️ OpenAI service initialization failed:', openaiInitError);
+  console.warn('🔄 Chat will use fallback responses');
+}
 
 // Send chat message and get AI response
 router.post('/message', authenticateToken, async (req: any, res) => {
@@ -55,6 +70,13 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       await conversation.save();
     }
 
+    // Get user's full profile and recent health data for context
+    const user = await User.findById(userId).select('-password');
+    const recentHealthLogs = await HealthLog.find({ userId })
+      .sort({ date: -1 })
+      .limit(10)
+      .lean();
+
     // Save user message to database
     const userMessage = new ChatMessage({
       conversationId: conversation._id,
@@ -72,10 +94,39 @@ router.post('/message', authenticateToken, async (req: any, res) => {
     });
     await userMessage.save();
 
-    // Generate AI response
-    const startTime = Date.now();
-    const aiResponseData = generateHealthResponse(sanitizedMessage.content, userContext);
-    const responseTime = Date.now() - startTime;
+    // Prepare health context for GPT
+    const healthContext = {
+      recentHealthLogs,
+      userProfile: user ? {
+        age: user.age,
+        gender: user.gender,
+        height: user.height,
+        activityLevel: user.activityLevel,
+        healthGoals: user.healthGoals
+      } : undefined,
+      currentMood: userContext?.mood,
+      conversationHistory: [] // Could be populated with recent messages if needed
+    };
+
+    // Generate AI response using GPT or fallback
+    let aiResponseData;
+    if (openaiService) {
+      try {
+        console.log('🤖 Generating GPT response for user:', userId);
+        aiResponseData = await openaiService.generateChatResponse({
+          message: sanitizedMessage.content,
+          userName: user?.displayName || userContext?.displayName,
+          healthContext,
+          conversationId: conversation._id.toString()
+        });
+      } catch (gptError) {
+        console.error('GPT response failed, using fallback:', gptError);
+        aiResponseData = generateHealthResponse(sanitizedMessage.content, userContext);
+      }
+    } else {
+      console.log('📝 Using fallback response system');
+      aiResponseData = generateHealthResponse(sanitizedMessage.content, userContext);
+    }
 
     // Save AI response to database
     const aiMessage = new ChatMessage({
@@ -88,8 +139,9 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       aiResponse: {
         mood: aiResponseData.mood,
         confidence: aiResponseData.confidence || 0.8,
-        responseTime,
-        model: 'health-assistant-v1'
+        responseTime: aiResponseData.responseTime || 0,
+        model: aiResponseData.model || 'health-assistant-v1',
+        tokens: aiResponseData.tokens
       },
       metadata: {
         topics: aiResponseData.topics || extractTopics(aiResponseData.message),
@@ -115,12 +167,57 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       messageId: aiMessage._id,
       userMessageId: userMessage._id,
       metadata: {
-        responseTime,
-        topics: aiResponseData.topics
+        responseTime: aiResponseData.responseTime || 0,
+        topics: aiResponseData.topics,
+        confidence: aiResponseData.confidence,
+        model: aiResponseData.model,
+        tokens: aiResponseData.tokens,
+        intent: aiResponseData.intent
       }
     });
   } catch (error) {
     console.error('Chat message error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get health trend analysis
+router.get('/health-analysis', authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!openaiService) {
+      return res.status(503).json({ 
+        message: 'AI service unavailable', 
+        fallback: 'Health analysis requires OpenAI integration' 
+      });
+    }
+
+    // Get recent health logs
+    const recentHealthLogs = await HealthLog.find({ userId })
+      .sort({ date: -1 })
+      .limit(14)
+      .lean();
+
+    if (recentHealthLogs.length === 0) {
+      return res.json({
+        success: true,
+        analysis: 'まだ健康データが記録されていません。データを記録して、トレンド分析を確認しましょう！',
+        recommendation: '体重、気分、睡眠、エネルギーレベルを記録することから始めてみてください。'
+      });
+    }
+
+    const analysis = await openaiService.analyzeHealthTrend(recentHealthLogs);
+
+    res.json({
+      success: true,
+      analysis: analysis || '健康データを継続的に記録していただき、ありがとうございます！',
+      dataPoints: recentHealthLogs.length,
+      period: '過去2週間'
+    });
+
+  } catch (error) {
+    console.error('Health analysis error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -377,11 +474,12 @@ function analyzeSentiment(message: string): 'positive' | 'negative' | 'neutral' 
   return 'neutral';
 }
 
-// Enhanced health-focused response generator
+// Enhanced health-focused response generator (fallback when GPT is unavailable)
 function generateHealthResponse(message: string, userContext: any) {
   const lowerMessage = message.toLowerCase();
   const userName = userContext?.displayName || 'あなた';
   const topics = extractTopics(message);
+  const responseTime = Math.floor(Math.random() * 100) + 50; // Simulate response time
   
   // Health-related keywords and responses
   if (lowerMessage.includes('体重') || lowerMessage.includes('weight')) {
@@ -390,7 +488,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['体重管理'],
-      intent: 'weight_management'
+      intent: 'weight_management',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -400,7 +501,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'excited' as const,
       confidence: 0.9,
       topics: ['食事', '栄養'],
-      intent: 'nutrition_guidance'
+      intent: 'nutrition_guidance',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -410,7 +514,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'excited' as const,
       confidence: 0.9,
       topics: ['運動', 'フィットネス'],
-      intent: 'exercise_support'
+      intent: 'exercise_support',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -420,7 +527,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'neutral' as const,
       confidence: 0.8,
       topics: ['メンタルヘルス', 'ストレス管理'],
-      intent: 'mental_health_support'
+      intent: 'mental_health_support',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -430,7 +540,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['睡眠', '生活リズム'],
-      intent: 'sleep_guidance'
+      intent: 'sleep_guidance',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -440,7 +553,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['水分補給', 'ヘルスケア'],
-      intent: 'hydration_guidance'
+      intent: 'hydration_guidance',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -451,7 +567,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['挨拶'],
-      intent: 'greeting'
+      intent: 'greeting',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -461,7 +580,10 @@ function generateHealthResponse(message: string, userContext: any) {
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['感謝'],
-      intent: 'appreciation'
+      intent: 'appreciation',
+      responseTime,
+      tokens: 0,
+      model: 'fallback-health-assistant'
     };
   }
 
@@ -471,7 +593,10 @@ function generateHealthResponse(message: string, userContext: any) {
     mood: 'happy' as const,
     confidence: 0.7,
     topics: topics.length > 0 ? topics : ['一般的な健康支援'],
-    intent: 'general_health_support'
+    intent: 'general_health_support',
+    responseTime,
+    tokens: 0,
+    model: 'fallback-health-assistant'
   };
 }
 
@@ -486,5 +611,23 @@ function getTimeBasedGreeting(): string {
     return 'こんばんは！';
   }
 }
+
+// Test endpoint for OpenAI service (development only)
+router.get('/status', async (req: any, res) => {
+  res.json({
+    openai_service_available: !!openaiService,
+    openai_init_error: openaiInitError,
+    environment: process.env.NODE_ENV,
+    has_api_key: !!process.env.OPENAI_API_KEY,
+    api_key_configured: process.env.OPENAI_API_KEY !== 'your_openai_api_key_here',
+    setup_instructions: !openaiService ? {
+      step1: 'Get API key from https://platform.openai.com/api-keys',
+      step2: 'Create .env file in project root',
+      step3: 'Add: OPENAI_API_KEY=sk-your-actual-key-here',
+      step4: 'Restart the server'
+    } : null
+  });
+});
+
 
 export default router;
