@@ -85,7 +85,7 @@ export default function ChatInterface({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col p-4 space-y-4">
+      <CardContent className="flex-1 flex flex-col p-4 space-y-4 h-[800px] overflow-y-auto">
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto space-y-3 pr-2">
           {messages.length === 0 ? (

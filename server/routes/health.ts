@@ -1,6 +1,12 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
 import HealthLog from '../models/HealthLog';
+import { 
+  validateHealthLog, 
+  validateFoodData, 
+  sanitizeHealthLogData, 
+  sanitizeFoodData 
+} from '../utils/validation';
 
 
 const router = express.Router();
@@ -8,7 +14,7 @@ const router = express.Router();
 // Get health logs
 router.get('/logs', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
     const type = req.query.type as string;
@@ -46,21 +52,26 @@ router.get('/logs', authenticateToken, async (req: any, res) => {
 // Create health log
 router.post('/logs', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
-    const { type, title, description, data, date } = req.body;
-
-    // Validate required fields
-    if (!type || !title) {
-      return res.status(400).json({ message: 'Type and title are required' });
+    const userId = req.user._id;
+    
+    // Sanitize and validate input data
+    const sanitizedData = sanitizeHealthLogData(req.body);
+    const validation = validateHealthLog(sanitizedData);
+    
+    if (!validation.isValid) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validation.errors 
+      });
     }
 
     const healthLog = new HealthLog({
       userId,
-      type,
-      title,
-      description,
-      data: data || {},
-      date: date ? new Date(date) : new Date()
+      type: sanitizedData.type,
+      title: sanitizedData.title,
+      description: sanitizedData.description,
+      data: sanitizedData.data || {},
+      date: sanitizedData.date ? new Date(sanitizedData.date) : new Date()
     });
 
     await healthLog.save();
@@ -78,7 +89,7 @@ router.post('/logs', authenticateToken, async (req: any, res) => {
 // Update health log
 router.put('/logs/:id', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const logId = req.params.id;
     const { type, title, description, data, date } = req.body;
 
@@ -112,7 +123,7 @@ router.put('/logs/:id', authenticateToken, async (req: any, res) => {
 // Delete health log
 router.delete('/logs/:id', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const logId = req.params.id;
 
     const deletedLog = await HealthLog.findOneAndDelete({
@@ -173,24 +184,31 @@ router.post('/analyze-food', authenticateToken, async (req: any, res) => {
 // Save food data
 router.post('/food', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
-    const { name, calories, nutrition, meal, date } = req.body;
-
-    if (!name || calories === undefined) {
-      return res.status(400).json({ message: 'Food name and calories are required' });
+    const userId = req.user._id;
+    
+    // Sanitize and validate input data
+    const sanitizedData = sanitizeFoodData(req.body);
+    const validation = validateFoodData(sanitizedData);
+    
+    if (!validation.isValid) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validation.errors 
+      });
     }
 
     const foodLog = new HealthLog({
       userId,
       type: 'food',
-      title: `${meal || 'Food'}: ${name}`,
+      title: `${sanitizedData.meal || 'Food'}: ${sanitizedData.name}`,
       data: {
-        name,
-        calories,
-        nutrition: nutrition || {},
-        meal: meal || 'other'
+        name: sanitizedData.name,
+        calories: sanitizedData.calories,
+        nutrition: sanitizedData.nutrition || {},
+        meal: sanitizedData.meal || 'other',
+        imageUrl: sanitizedData.imageUrl
       },
-      date: date ? new Date(date) : new Date()
+      date: sanitizedData.date ? new Date(sanitizedData.date) : new Date()
     });
 
     await foodLog.save();
@@ -208,7 +226,7 @@ router.post('/food', authenticateToken, async (req: any, res) => {
 // Get nutrition data for specific food
 router.get('/nutrition/:foodId', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const foodId = req.params.foodId;
 
     const foodLog = await HealthLog.findOne({
@@ -240,7 +258,7 @@ router.get('/nutrition/:foodId', authenticateToken, async (req: any, res) => {
 // Track water intake
 router.post('/water', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const { amount, date } = req.body;
 
     if (!amount || amount <= 0) {
@@ -273,7 +291,7 @@ router.post('/water', authenticateToken, async (req: any, res) => {
 // Track exercise
 router.post('/exercise', authenticateToken, async (req: any, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const { type, duration, intensity, calories, date } = req.body;
 
     if (!type || !duration) {
