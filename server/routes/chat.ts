@@ -94,6 +94,15 @@ router.post('/message', authenticateToken, async (req: any, res) => {
     });
     await userMessage.save();
 
+    // Get recent conversation history for context
+    const recentMessages = await ChatMessage.find({ 
+      conversationId: conversation._id 
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('sender content createdAt')
+      .lean();
+
     // Prepare health context for GPT
     const healthContext = {
       recentHealthLogs,
@@ -105,7 +114,7 @@ router.post('/message', authenticateToken, async (req: any, res) => {
         healthGoals: user.healthGoals
       } : undefined,
       currentMood: userContext?.mood,
-      conversationHistory: [] // Could be populated with recent messages if needed
+      conversationHistory: recentMessages.reverse() // Oldest to newest for better context
     };
 
     // Generate AI response using GPT or fallback
@@ -153,6 +162,7 @@ router.post('/message', authenticateToken, async (req: any, res) => {
     // Update conversation with latest activity
     await Conversation.findByIdAndUpdate(conversation._id, {
       lastMessageAt: new Date(),
+      $inc: { messageCount: 2 }, // Increment by 2 (user message + AI response)
       'metadata.topics': Array.from(new Set([
         ...(conversation.metadata?.topics || []),
         ...extractTopics(sanitizedMessage.content)
