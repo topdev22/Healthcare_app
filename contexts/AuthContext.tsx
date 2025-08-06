@@ -83,10 +83,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             // Try to get user profile
             try {
-              const profileData = await userAPI.getProfile();
+              const profileResponse = await userAPI.getProfile();
+              // Handle the case where the API returns a success wrapper
+              const profileData = profileResponse.data || profileResponse;
               setUserProfile(profileData);
-            } catch (profileError) {
-              console.log('Profile not found, user may need to complete setup');
+            } catch (profileError: any) {
+              console.log('Profile not found, user may need to complete setup', profileError?.message || profileError);
             }
           } catch (error) {
             console.error('Token validation failed:', error);
@@ -132,10 +134,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(response.profile);
       } else {
         try {
-          const profileData = await userAPI.getProfile();
+          const profileResponse = await userAPI.getProfile();
+          // Handle the case where the API returns a success wrapper
+          const profileData = profileResponse.data || profileResponse;
           setUserProfile(profileData);
-        } catch (profileError) {
-          console.log('Profile not found, user may need to complete setup');
+        } catch (profileError: any) {
+          console.log('Profile not found, user may need to complete setup', profileError?.message || profileError);
         }
       }
     } catch (error) {
@@ -273,7 +277,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserProfile = async (profileData: Partial<UserProfile>) => {
     try {
-      const updatedProfile = await userAPI.updateProfile(profileData);
+      const updatedProfileResponse = await userAPI.updateProfile(profileData);
+      // Handle the case where the API returns a success wrapper
+      const updatedProfile = updatedProfileResponse.data || updatedProfileResponse;
       setUserProfile(updatedProfile);
     } catch (error) {
       console.error('Profile update error:', error);
