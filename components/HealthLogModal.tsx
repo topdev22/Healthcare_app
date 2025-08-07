@@ -183,7 +183,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scale className="w-5 h-5 text-health-green" />
@@ -208,7 +208,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="weight">体重 (kg)</Label>
                 <Input
@@ -346,18 +346,18 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
           </TabsContent>
         </Tabs>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 border-t">
           <Button 
             variant="outline" 
             onClick={onClose} 
-            className="flex-1 min-h-[44px]"
+            className="flex-1"
             disabled={isLoading}
           >
             キャンセル
           </Button>
           <Button 
             onClick={handleSave} 
-            className="flex-1 flex items-center justify-center gap-2 min-h-[44px]"
+            className="flex-1 flex items-center gap-2"
             disabled={isLoading}
           >
             {isLoading ? (
