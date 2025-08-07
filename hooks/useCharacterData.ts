@@ -78,14 +78,21 @@ export function useCharacterData(currentUser: any) {
 
   // Calculate character level and experience
   const calculateLevelAndExperience = (healthLevel: number, totalLogs: number, streak: number) => {
-    const baseExp = totalLogs * 10 + streak * 20;
+    const baseExp = totalLogs * 10;
+    const streakBonus = streak * 25;
     const healthBonus = Math.floor(healthLevel / 10) * 5;
-    const totalExp = baseExp + healthBonus;
+    const totalExp = baseExp + streakBonus + healthBonus;
     
     const level = Math.floor(totalExp / 100) + 1;
-    const experience = totalExp % 100;
+    const currentLevelExp = totalExp % 100;
+    const expToNext = 100 - currentLevelExp;
     
-    return { level, experience };
+    return { 
+      level, 
+      experience: currentLevelExp,
+      expToNext,
+      totalExp
+    };
   };
 
   // Get mood from recent health logs
