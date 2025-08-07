@@ -43,7 +43,7 @@ export default function QuickStatsCards({
     );
   }
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <Card className="card-hover">
         <CardContent className="p-3 sm:p-4 text-center">
           <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-health-green mx-auto mb-1 sm:mb-2" />

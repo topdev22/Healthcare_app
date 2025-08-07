@@ -14,8 +14,8 @@ export default function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
           <img src="/images/logo.jpg" alt="Health Buddy Logo" className="w-24 h-24 sm:w-24 sm:h-24 rounded-full flex items-center justify-center shadow-lg" />
         </div>
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">ヘルスバディへようこそ</h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
+          <h2 className="text-3xl font-bold mb-3">ヘルスバディへようこそ</h2>
+          <p className="text-muted-foreground text-lg">
             あなた専用の健康管理パートナーです。<br />
             ログインして健康な生活を始めましょう！
           </p>
