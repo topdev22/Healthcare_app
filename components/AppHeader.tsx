@@ -35,9 +35,7 @@ export default function AppHeader({
       <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
+            <img src="/images/favicon.jpg" alt="Health Buddy Logo" className="w-12 h-12 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg" />
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-foreground">ヘルスバディ</h1>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">あなた専用の健康管理パートナー</p>

@@ -221,18 +221,39 @@ export const healthAPI = {
   // Create health log
   async createHealthLog(logData: any) {
     const response = await apiClient.post('/health/logs', logData);
+    
+    // Trigger character data refresh
+    if (typeof window !== 'undefined') {
+      const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
+      triggerCharacterRefresh();
+    }
+    
     return response.data;
   },
 
   // Update health log
   async updateHealthLog(logId: string, logData: any) {
     const response = await apiClient.put(`/health/logs/${logId}`, logData);
+    
+    // Trigger character data refresh
+    if (typeof window !== 'undefined') {
+      const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
+      triggerCharacterRefresh();
+    }
+    
     return response.data;
   },
 
   // Delete health log
   async deleteHealthLog(logId: string) {
     const response = await apiClient.delete(`/health/logs/${logId}`);
+    
+    // Trigger character data refresh
+    if (typeof window !== 'undefined') {
+      const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
+      triggerCharacterRefresh();
+    }
+    
     return response.data;
   },
 
@@ -270,6 +291,14 @@ export const healthAPI = {
   // Track exercise
   async trackExercise(exerciseData: any) {
     const response = await apiClient.post('/health/exercise', exerciseData);
+    return response.data;
+  },
+
+  // Get health statistics for character
+  async getHealthStats(period: '7days' | '30days' | '90days' = '30days') {
+    const response = await apiClient.get('/health/stats', {
+      params: { period }
+    });
     return response.data;
   }
 };
@@ -351,7 +380,57 @@ export const chatAPI = {
   }
 };
 
-// Statistics API
+// Dashboard API
+export const dashboardAPI = {
+  // Get comprehensive dashboard statistics
+  async getDashboardStats() {
+    const response = await apiClient.get('/dashboard/stats');
+    return response.data;
+  },
+
+  // Get quick stats for cards
+  async getQuickStats() {
+    const response = await apiClient.get('/dashboard/quick-stats');
+    return response.data;
+  },
+
+  // Get progress data for character growth
+  async getProgress() {
+    const response = await apiClient.get('/dashboard/progress');
+    return response.data;
+  }
+};
+
+// Achievements API
+export const achievementsAPI = {
+  // Get all achievements
+  async getAchievements(status?: 'completed' | 'pending') {
+    const response = await apiClient.get('/achievements', {
+      params: status ? { status } : {}
+    });
+    return response.data;
+  },
+
+  // Get achievement statistics
+  async getAchievementStats() {
+    const response = await apiClient.get('/achievements/stats');
+    return response.data;
+  },
+
+  // Initialize default achievements
+  async initializeAchievements() {
+    const response = await apiClient.post('/achievements/initialize');
+    return response.data;
+  },
+
+  // Check achievement progress
+  async checkProgress() {
+    const response = await apiClient.post('/achievements/check-progress');
+    return response.data;
+  }
+};
+
+// Statistics API (legacy - keeping for compatibility)
 export const statsAPI = {
   // Get health statistics
   async getHealthStats(period: '7days' | '30days' | '90days' = '30days') {
