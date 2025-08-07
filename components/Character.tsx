@@ -160,14 +160,14 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
         ))}
       </div>
 
-      <div className="relative flex flex-col items-center p-8 space-y-6">
+      <div className="relative flex flex-col items-center p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
         {/* Character Avatar with enhanced design */}
         <div className="relative">
           {/* Main character container */}
           <div className={cn(
-            "relative w-36 h-36 rounded-full flex items-center justify-center transition-all duration-700 ease-out",
+            "relative w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full flex items-center justify-center transition-all duration-700 ease-out",
             "bg-gradient-to-br from-character-primary/30 via-character-primary/10 to-character-secondary/20",
-            "border-4 border-character-primary/40 shadow-2xl",
+            "border-2 sm:border-4 border-character-primary/40 shadow-xl sm:shadow-2xl",
             isInteracting && "scale-110 shadow-character-primary/40"
           )}>
             {/* Inner glow */}
@@ -178,11 +178,11 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
               isInteracting ? "opacity-100" : "opacity-50"
             )} />
             
-            {/* Character face */}
+            {/* Character face - responsive size handled in CharacterFace component */}
             <CharacterFace
               mood={mood}
               size={100}
-              className={cn("transition-all duration-500 z-10", getCharacterColor())}
+              className={cn("transition-all duration-500 z-10 scale-75 sm:scale-90 md:scale-100", getCharacterColor())}
             />
 
             {/* Interaction effects */}
@@ -197,9 +197,9 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
           {/* Level badge */}
           <Badge 
             className={cn(
-              "absolute -top-2 -right-2 text-white font-bold",
+              "absolute -top-1 -right-1 sm:-top-2 sm:-right-2 text-white font-bold text-xs sm:text-sm",
               "bg-gradient-to-r from-character-primary to-character-secondary",
-              "shadow-lg border-2 border-white/50",
+              "shadow-lg border border-white/50 sm:border-2 px-1.5 py-0.5 sm:px-2 sm:py-1",
               "transition-transform duration-300",
               isInteracting && "scale-110"
             )}
@@ -209,8 +209,8 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
 
           {/* Health status indicator */}
           <div className={cn(
-            "absolute -bottom-2 left-1/2 transform -translate-x-1/2",
-            "px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg",
+            "absolute -bottom-1 sm:-bottom-2 left-1/2 transform -translate-x-1/2",
+            "px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium text-white shadow-lg",
             healthStatus.color,
             "transition-all duration-300",
             isInteracting && "scale-105"
@@ -220,13 +220,13 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
         </div>
 
         {/* Health Information */}
-        <div className="w-full max-w-sm space-y-4">
+        <div className="w-full max-w-xs sm:max-w-sm space-y-3 sm:space-y-4">
           {/* Health Level Display */}
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">
               {healthStatus.text}
             </h3>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
               <span>健康レベル</span>
               <span className="font-medium">{healthLevel}%</span>
             </div>
@@ -258,17 +258,17 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
           </div>
 
           {/* Character Stats */}
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <div className="text-center p-3 bg-health-green/10 rounded-lg border border-health-green/20">
-              <div className="text-lg font-bold text-health-green">{streakDays}</div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-2">
+            <div className="text-center p-2 sm:p-3 bg-health-green/10 rounded-lg border border-health-green/20">
+              <div className="text-sm sm:text-lg font-bold text-health-green">{streakDays}</div>
               <div className="text-xs text-muted-foreground">連続日数</div>
             </div>
-            <div className="text-center p-3 bg-character-primary/10 rounded-lg border border-character-primary/20">
-              <div className="text-lg font-bold text-character-primary">{characterLevel}</div>
+            <div className="text-center p-2 sm:p-3 bg-character-primary/10 rounded-lg border border-character-primary/20">
+              <div className="text-sm sm:text-lg font-bold text-character-primary">{characterLevel}</div>
               <div className="text-xs text-muted-foreground">レベル</div>
             </div>
-            <div className="text-center p-3 bg-wellness-amber/10 rounded-lg border border-wellness-amber/20">
-              <div className="text-lg font-bold text-wellness-amber">
+            <div className="text-center p-2 sm:p-3 bg-wellness-amber/10 rounded-lg border border-wellness-amber/20">
+              <div className="text-sm sm:text-lg font-bold text-wellness-amber">
                 {experiencePoints > 1000 ? `${(experiencePoints / 1000).toFixed(1)}k` : experiencePoints}
               </div>
               <div className="text-xs text-muted-foreground">経験値</div>
@@ -277,8 +277,8 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
         </div>
 
         {/* Motivational message */}
-        <div className="text-center p-4 bg-muted/30 rounded-lg border border-muted/50 max-w-sm">
-          <p className="text-sm text-muted-foreground leading-relaxed">
+        <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg border border-muted/50 max-w-xs sm:max-w-sm">
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             {getMotivationalMessage()}
           </p>
         </div>

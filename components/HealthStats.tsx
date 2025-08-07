@@ -88,7 +88,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       {/* Today's Stats */}
       <Card>
         <CardHeader className="pb-3">

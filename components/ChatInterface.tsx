@@ -66,15 +66,15 @@ export default function ChatInterface({
   };
 
   return (
-    <Card className="h-[500px] flex flex-col">
+    <Card className="h-[400px] sm:h-[500px] flex flex-col">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>Chat with {characterName}</span>
+        <CardTitle className="text-base sm:text-lg flex items-center justify-between">
+          <span className="truncate">Chat with {characterName}</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsTTSEnabled(!isTTSEnabled)}
-            className="p-2"
+            className="p-2 flex-shrink-0 min-h-[44px] min-w-[44px]"
           >
             {isTTSEnabled ? (
               <Volume2 className="w-4 h-4 text-health-green" />
@@ -159,13 +159,13 @@ export default function ChatInterface({
             onKeyPress={handleKeyPress}
             placeholder="メッセージを入力してください..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 min-h-[44px]"
           />
           <Button
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isLoading}
             size="sm"
-            className="px-4"
+            className="px-3 sm:px-4 min-h-[44px] min-w-[44px]"
           >
             <Send className="w-4 h-4" />
           </Button>
