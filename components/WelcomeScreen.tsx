@@ -10,8 +10,8 @@ export default function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
   return (
     <div className="container mx-auto px-4 py-16 text-center safe-area-bottom">
       <div className="max-w-md mx-auto space-y-6">
-        <div className="float">
-          <HealthIcons.Heart size={80} className="text-health-green mx-auto" />
+        <div className="float w-full flex justify-center">
+          <img src="/images/logo.jpg" alt="Health Buddy Logo" className="w-24 h-24 sm:w-24 sm:h-24 rounded-full flex items-center justify-center shadow-lg" />
         </div>
         <div>
           <h2 className="text-3xl font-bold mb-3">ヘルスバディへようこそ</h2>

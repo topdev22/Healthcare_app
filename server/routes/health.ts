@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
 import HealthLog from '../models/HealthLog';
+import { checkAndUpdateAchievements } from './achievements';
 import { 
   validateHealthLog, 
   validateFoodData, 
@@ -75,6 +76,14 @@ router.post('/logs', authenticateToken, async (req: any, res) => {
     });
 
     await healthLog.save();
+
+    // Check for achievement progress
+    try {
+      await checkAndUpdateAchievements(userId);
+    } catch (achievementError) {
+      console.warn('Achievement check failed:', achievementError);
+      // Don't fail the health log creation if achievement check fails
+    }
 
     res.status(201).json({
       success: true,
@@ -251,6 +260,107 @@ router.get('/nutrition/:foodId', authenticateToken, async (req: any, res) => {
     });
   } catch (error) {
     console.error('Get nutrition data error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get health statistics for character
+router.get('/stats', authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user._id;
+    const period = req.query.period || '30days';
+
+    // Calculate date range
+    const now = new Date();
+    let daysBack = 30;
+    if (period === '7days') daysBack = 7;
+    else if (period === '90days') daysBack = 90;
+    
+    const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+
+    // Get health logs in period
+    const healthLogs = await HealthLog.find({ 
+      userId, 
+      date: { $gte: startDate } 
+    })
+      .sort({ date: -1 })
+      .lean();
+
+    // Calculate statistics
+    const totalLogs = await HealthLog.countDocuments({ userId });
+    const weeklyLogs = healthLogs.filter(log => {
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return new Date(log.date) >= oneWeekAgo;
+    }).length;
+
+    // Get logs by type
+    const exerciseLogs = healthLogs.filter(log => log.type === 'exercise');
+    const waterLogs = healthLogs.filter(log => log.type === 'water');
+    const sleepLogs = healthLogs.filter(log => log.type === 'sleep');
+    const moodLogs = healthLogs.filter(log => log.type === 'mood');
+    const weightLogs = healthLogs.filter(log => log.type === 'weight');
+
+    // Calculate recent mood
+    const recentMood = moodLogs.length > 0 ? moodLogs[0].data?.mood || 'neutral' : 'neutral';
+
+    // Calculate average weight
+    const averageWeight = weightLogs.length > 0 
+      ? weightLogs.reduce((sum, log) => sum + (log.data?.weight || 0), 0) / weightLogs.length
+      : undefined;
+
+    // Calculate today's water intake
+    const today = new Date().toDateString();
+    const todayWaterLogs = waterLogs.filter(log => 
+      new Date(log.date).toDateString() === today
+    );
+    const waterIntake = todayWaterLogs.reduce((sum, log) => 
+      sum + (log.data?.amount || 0), 0
+    );
+
+    // Get recent sleep hours
+    const recentSleepLog = sleepLogs[0];
+    const sleepHours = recentSleepLog?.data?.hours;
+
+    // Calculate streak
+    let streak = 0;
+    const logsByDate = new Map();
+    healthLogs.forEach(log => {
+      const logDate = new Date(log.date).toDateString();
+      if (!logsByDate.has(logDate)) {
+        logsByDate.set(logDate, []);
+      }
+      logsByDate.get(logDate).push(log);
+    });
+
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+      const dateString = checkDate.toDateString();
+      
+      if (logsByDate.has(dateString)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalLogs,
+        weeklyLogs,
+        recentMood,
+        averageWeight,
+        exerciseCount: exerciseLogs.length,
+        waterIntake,
+        sleepHours,
+        streak,
+        period,
+        healthLogs: healthLogs.slice(0, 20) // Return recent 20 logs for frontend processing
+      }
+    });
+
+  } catch (error) {
+    console.error('Get health stats error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
