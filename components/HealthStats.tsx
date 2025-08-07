@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, Scale, Smile, Camera } from 'lucide-react';
 import { MoodIcons } from '@/components/CharacterFaces';
 import { cn } from '@/lib/utils';
+import { useDashboard } from '@/hooks/useDashboard';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HealthData {
   weight?: number;
@@ -13,16 +15,34 @@ interface HealthData {
 }
 
 interface HealthStatsProps {
-  recentData: HealthData[];
+  recentData?: HealthData[]; // Optional for backward compatibility
   onLogHealth: () => void;
   onTakePhoto: () => void;
 }
 
-export default function HealthStats({ recentData, onLogHealth, onTakePhoto }: HealthStatsProps) {
+export default function HealthStats({ recentData: overrideRecentData, onLogHealth, onTakePhoto }: HealthStatsProps) {
+  const { currentUser } = useAuth();
+  const { dashboardStats, loading } = useDashboard(currentUser);
+  
+  // Use override data or transform dashboard stats to expected format
+  const recentData = overrideRecentData || (dashboardStats ? [{
+    weight: dashboardStats.currentWeight,
+    mood: dashboardStats.currentMood,
+    calories: dashboardStats.dailyCalories,
+    date: new Date().toISOString()
+  }] : []);
+  
   // Ensure recentData is always an array
   const safeRecentData = Array.isArray(recentData) ? recentData : [];
   const today = safeRecentData[0];
-  const weekAvg = safeRecentData.slice(0, 7).reduce((acc, day) => acc + (day.weight || 0), 0) / Math.max(safeRecentData.slice(0, 7).filter(d => d.weight).length, 1);
+  
+  // Calculate statistics from dashboard data if available
+  const weekAvg = dashboardStats?.currentWeight || 
+    (safeRecentData.slice(0, 7).reduce((acc, day) => acc + (day.weight || 0), 0) / 
+     Math.max(safeRecentData.slice(0, 7).filter(d => d.weight).length, 1));
+  
+  const weeklyLogs = dashboardStats?.dailyHealthLogs || safeRecentData.length;
+  const waterProgress = dashboardStats ? Math.round((dashboardStats.waterIntake / dashboardStats.waterGoal) * 100) : 0;
   
   const getMoodIcon = (mood: string) => {
     switch (mood) {
@@ -45,6 +65,27 @@ export default function HealthStats({ recentData, onLogHealth, onTakePhoto }: He
       default: return 'bg-gray-500 text-white';
     }
   };
+
+  if (loading && !dashboardStats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[...Array(2)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-3">
+              <div className="h-6 bg-muted rounded animate-pulse" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="h-4 bg-muted rounded animate-pulse" />
+                <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+              </div>
+              <div className="h-10 bg-muted rounded animate-pulse" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -99,24 +140,49 @@ export default function HealthStats({ recentData, onLogHealth, onTakePhoto }: He
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {dashboardStats?.currentWeight && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">現在の体重</span>
+              <span className="font-medium">{dashboardStats.currentWeight.toFixed(1)}kg</span>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">平均体重</span>
-            <span className="font-medium">{isNaN(weekAvg) ? '--' : weekAvg.toFixed(1)}kg</span>
+            <span className="text-sm text-muted-foreground">今日の記録数</span>
+            <span className="font-medium">{weeklyLogs}</span>
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">記録日数</span>
-            <span className="font-medium">{safeRecentData.slice(0, 7).length}/7</span>
+            <span className="text-sm text-muted-foreground">連続記録</span>
+            <span className="font-medium">{dashboardStats?.currentStreak || 0}日</span>
           </div>
+
+          {dashboardStats && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">水分摂取</span>
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{dashboardStats.waterIntake}/{dashboardStats.waterGoal}</span>
+                <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-health-blue transition-all duration-300"
+                    style={{ width: `${Math.min(waterProgress, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           
           <div>
-            <span className="text-sm text-muted-foreground mb-2 block">最近の気分</span>
-            <div className="flex gap-2">
-              {safeRecentData.slice(0, 5).map((day, i) => (
-                <div key={i} className="flex items-center justify-center w-6 h-6">
-                  {getMoodIcon(day.mood)}
-                </div>
-              ))}
+            <span className="text-sm text-muted-foreground mb-2 block">今日の気分</span>
+            <div className="flex items-center gap-2">
+              {getMoodIcon(today?.mood || 'neutral')}
+              <span className="text-sm font-medium">
+                {today?.mood === 'happy' ? '幸せ' : 
+                 today?.mood === 'sad' ? '悲しい' : 
+                 today?.mood === 'excited' ? '興奮' : 
+                 today?.mood === 'anxious' ? '不安' : 
+                 today?.mood || '未記録'}
+              </span>
             </div>
           </div>
           
