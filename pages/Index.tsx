@@ -176,19 +176,19 @@ export default function Index() {
 
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-3 glass h-auto space-y-2 sm:space-y-0 sm:h-14 flex justify-center items-center">
-              <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
-                <BarChart3 className="w-4 h-4" />
+            <TabsList className="grid w-full grid-cols-3 glass h-12 sm:h-14">
+              <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] px-2 sm:px-4">
+                <BarChart3 className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">ダッシュボード</span>
                 <span className="sm:hidden">統計</span>
               </TabsTrigger>
-              <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
-                <MessageCircle className="w-4 h-4" />
+              <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] px-2 sm:px-4">
+                <MessageCircle className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">チャット</span>
                 <span className="sm:hidden">会話</span>
               </TabsTrigger>
-              <TabsTrigger value="progress" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
-                <Sparkles className="w-4 h-4" />
+              <TabsTrigger value="progress" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] px-2 sm:px-4">
+                <Sparkles className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">成長記録</span>
                 <span className="sm:hidden">成長</span>
               </TabsTrigger>

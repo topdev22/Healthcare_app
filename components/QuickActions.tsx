@@ -27,7 +27,7 @@ export default function QuickActions({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Button 
             variant="outline" 
             className="h-auto p-4 sm:p-6 flex flex-col items-center gap-2 sm:gap-3 card-hover touch-target"
