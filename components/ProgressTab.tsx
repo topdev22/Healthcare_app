@@ -23,7 +23,10 @@ export default function ProgressTab({ healthLevel: overrideHealthLevel }: Progre
   const currentLevel = progressData?.characterLevel || 1;
   const experiencePoints = progressData?.experiencePoints || 0;
   const experienceToNextLevel = progressData?.experienceToNextLevel || 100;
-  const nextLevelProgress = Math.round((experiencePoints / experienceToNextLevel) * 100);
+  
+  // Calculate progress percentage correctly
+  const currentLevelExp = experiencePoints; // This is already the experience within current level
+  const nextLevelProgress = Math.round((currentLevelExp / 100) * 100); // Progress within current level
   
   const recentAchievements = getRecentAchievements(30); // Last 30 days
 
@@ -56,7 +59,7 @@ export default function ProgressTab({ healthLevel: overrideHealthLevel }: Progre
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>経験値</span>
-                <span>{experiencePoints}/{experienceToNextLevel}</span>
+                <span>{currentLevelExp}/100</span>
               </div>
               <div className="bg-muted rounded-full h-3 overflow-hidden">
                 <div 
@@ -65,7 +68,7 @@ export default function ProgressTab({ healthLevel: overrideHealthLevel }: Progre
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                次のレベルまであと{experienceToNextLevel - experiencePoints}ポイント！
+                次のレベルまであと{experienceToNextLevel}ポイント！
               </p>
             </div>
           </div>

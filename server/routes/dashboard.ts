@@ -1,10 +1,11 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
 import DashboardStats from '../models/DashboardStats';
-import Achievement from '../models/Achievement';
 import HealthLog from '../models/HealthLog';
 import ChatMessage from '../models/ChatMessage';
 import { User } from '../models/User';
+import Achievement from '../models/Achievement';
+import LevelUpService from '../services/levelUpService';
 
 const router = express.Router();
 
@@ -260,17 +261,36 @@ async function calculateDashboardStats(userId: string, date: Date) {
     characterLevel: characterProgression.level,
     experiencePoints: characterProgression.experience,
     experienceToNextLevel: characterProgression.expToNext,
+    totalExperiencePoints: characterProgression.totalExp,
     conversationMessages,
     foodPhotos,
     newAchievements: 0, // TODO: Calculate new achievements
     totalAchievements: await Achievement.countDocuments({ userId, isCompleted: true })
   };
 
-  return await DashboardStats.findOneAndUpdate(
+  const dashboardStats = await DashboardStats.findOneAndUpdate(
     { userId, date },
     statsData,
     { upsert: true, new: true }
   );
+
+  // Check for level up
+  try {
+    const levelUpInfo = await LevelUpService.checkLevelUp(
+      userId.toString(), 
+      characterProgression.level, 
+      characterProgression.totalExp
+    );
+    
+    if (levelUpInfo) {
+      console.log(`Level up detected for user ${userId}:`, levelUpInfo);
+      // Level up information is logged, could be used for notifications
+    }
+  } catch (error) {
+    console.warn('Level up check failed:', error);
+  }
+
+  return dashboardStats;
 }
 
 // Helper functions
@@ -349,11 +369,17 @@ function calculateCharacterProgression(totalLogs: number, streak: number) {
   const streakBonus = streak * 25;
   const totalExp = baseExp + streakBonus;
   
+  // Calculate level properly - each level requires 100 experience points
   const level = Math.floor(totalExp / 100) + 1;
-  const experience = totalExp % 100;
-  const expToNext = 100 - experience;
+  const currentLevelExp = totalExp % 100;
+  const expToNext = 100 - currentLevelExp;
   
-  return { level, experience, expToNext };
+  return { 
+    level, 
+    experience: currentLevelExp, // Experience within current level (0-99)
+    expToNext, // Experience needed to reach next level
+    totalExp // Total accumulated experience
+  };
 }
 
 function calculateConsistencyScore(logs: any[]): number {

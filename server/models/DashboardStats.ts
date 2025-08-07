@@ -44,8 +44,9 @@ export interface IDashboardStats extends Document {
   
   // Character progression
   characterLevel: number;
-  experiencePoints: number;
+  experiencePoints: number; // Experience within current level (0-99)
   experienceToNextLevel: number;
+  totalExperiencePoints: number; // Total accumulated experience
   
   // Achievement progress
   newAchievements: number; // count of new achievements today
@@ -213,11 +214,18 @@ const dashboardStatsSchema = new Schema<IDashboardStats>({
   experiencePoints: {
     type: Number,
     default: 0,
-    min: 0
+    min: 0,
+    max: 99 // Experience within current level
   },
   experienceToNextLevel: {
     type: Number,
     default: 100,
+    min: 1,
+    max: 100
+  },
+  totalExperiencePoints: {
+    type: Number,
+    default: 0,
     min: 0
   },
   
