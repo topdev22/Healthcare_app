@@ -4,14 +4,30 @@
 
 // Trigger character data refresh across components
 export const triggerCharacterRefresh = () => {
-  // Use localStorage to signal other components to refresh
-  localStorage.setItem('health_data_updated', Date.now().toString());
+  const timestamp = Date.now().toString();
   
-  // Trigger storage event for same-tab communication
+  // Use localStorage to signal other components to refresh
+  localStorage.setItem('health_data_updated', timestamp);
+  localStorage.setItem('dashboard_updated', timestamp);
+  localStorage.setItem('achievements_updated', timestamp);
+  
+  // Trigger storage events for same-tab communication
   window.dispatchEvent(new StorageEvent('storage', {
     key: 'health_data_updated',
-    newValue: Date.now().toString()
+    newValue: timestamp
   }));
+  
+  window.dispatchEvent(new StorageEvent('storage', {
+    key: 'dashboard_updated',
+    newValue: timestamp
+  }));
+  
+  window.dispatchEvent(new StorageEvent('storage', {
+    key: 'achievements_updated',
+    newValue: timestamp
+  }));
+  
+  console.log('🔄 Character data refresh triggered - all components should update');
 };
 
 // Character interaction helpers

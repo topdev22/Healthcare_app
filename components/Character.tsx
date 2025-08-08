@@ -204,7 +204,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
               isInteracting && "scale-110"
             )}
           >
-            Level {characterLevel}
+            レベル {characterLevel}
           </Badge>
 
           {/* Health status indicator */}

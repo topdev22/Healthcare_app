@@ -72,22 +72,36 @@ export const validateFoodData = (data: any): { isValid: boolean; errors: string[
 export const validateUserProfile = (data: any): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
-  if (data.age !== undefined && (typeof data.age !== 'number' || data.age < 1 || data.age > 120)) {
+  // Validate displayName
+  if (data.displayName !== undefined && (typeof data.displayName !== 'string' || data.displayName.trim().length === 0)) {
+    errors.push('Display name must be a non-empty string');
+  }
+
+  if (data.displayName !== undefined && data.displayName.trim().length > 50) {
+    errors.push('Display name must be 50 characters or less');
+  }
+
+  // Validate age
+  if (data.age !== undefined && (typeof data.age !== 'number' || isNaN(data.age) || data.age < 1 || data.age > 120)) {
     errors.push('Age must be a number between 1 and 120');
   }
 
+  // Validate gender
   if (data.gender !== undefined && !['male', 'female', 'other'].includes(data.gender)) {
     errors.push('Gender must be one of: male, female, other');
   }
 
-  if (data.height !== undefined && (typeof data.height !== 'number' || data.height < 50 || data.height > 300)) {
+  // Validate height
+  if (data.height !== undefined && (typeof data.height !== 'number' || isNaN(data.height) || data.height < 50 || data.height > 300)) {
     errors.push('Height must be a number between 50 and 300 cm');
   }
 
+  // Validate activity level
   if (data.activityLevel !== undefined && !['sedentary', 'light', 'moderate', 'active', 'very_active'].includes(data.activityLevel)) {
     errors.push('Activity level must be one of: sedentary, light, moderate, active, very_active');
   }
 
+  // Validate health goals
   if (data.healthGoals !== undefined && !Array.isArray(data.healthGoals)) {
     errors.push('Health goals must be an array');
   }
@@ -123,26 +137,46 @@ export const sanitizeFoodData = (data: any): FoodDataSchema => {
 export const sanitizeUserProfile = (data: any): UserProfileSchema => {
   const sanitized: UserProfileSchema = {};
 
-  if (data.displayName !== undefined) {
+  if (data.displayName !== undefined && data.displayName !== null && data.displayName !== '') {
     sanitized.displayName = String(data.displayName).trim();
   }
-  if (data.photoURL !== undefined) {
+  
+  if (data.photoURL !== undefined && data.photoURL !== null && data.photoURL !== '') {
     sanitized.photoURL = String(data.photoURL).trim();
   }
-  if (data.age !== undefined) {
-    sanitized.age = Number(data.age);
+  
+  if (data.age !== undefined && data.age !== null && data.age !== '') {
+    const ageNum = Number(data.age);
+    if (!isNaN(ageNum)) {
+      sanitized.age = ageNum;
+    }
   }
-  if (data.gender !== undefined) {
-    sanitized.gender = String(data.gender).trim() as 'male' | 'female' | 'other';
+  
+  if (data.gender !== undefined && data.gender !== null && data.gender !== '') {
+    const genderStr = String(data.gender).trim();
+    if (['male', 'female', 'other'].includes(genderStr)) {
+      sanitized.gender = genderStr as 'male' | 'female' | 'other';
+    }
   }
-  if (data.height !== undefined) {
-    sanitized.height = Number(data.height);
+  
+  if (data.height !== undefined && data.height !== null && data.height !== '') {
+    const heightNum = Number(data.height);
+    if (!isNaN(heightNum)) {
+      sanitized.height = heightNum;
+    }
   }
-  if (data.activityLevel !== undefined) {
-    sanitized.activityLevel = String(data.activityLevel).trim() as any;
+  
+  if (data.activityLevel !== undefined && data.activityLevel !== null && data.activityLevel !== '') {
+    const activityStr = String(data.activityLevel).trim();
+    if (['sedentary', 'light', 'moderate', 'active', 'very_active'].includes(activityStr)) {
+      sanitized.activityLevel = activityStr as any;
+    }
   }
-  if (data.healthGoals !== undefined && Array.isArray(data.healthGoals)) {
-    sanitized.healthGoals = data.healthGoals.map((goal: any) => String(goal).trim());
+  
+  if (data.healthGoals !== undefined && data.healthGoals !== null && Array.isArray(data.healthGoals)) {
+    sanitized.healthGoals = data.healthGoals
+      .filter(goal => goal !== null && goal !== undefined && goal !== '')
+      .map((goal: any) => String(goal).trim());
   }
 
   return sanitized;

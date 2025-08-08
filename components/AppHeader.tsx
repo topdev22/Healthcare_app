@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Settings, LogOut, Sun, Moon } from 'lucide-react';
+import { Heart, Settings, LogOut, Sun, Moon, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 interface AppHeaderProps {
@@ -62,21 +62,18 @@ export default function AppHeader({
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                   </Button>
                   
-                  <Avatar className="w-7 h-7 sm:w-8 sm:h-8 ring-2 ring-primary/20">
-                    <AvatarImage src={userProfile?.photoURL} />
-                    <AvatarFallback className="bg-gradient-to-br from-character-primary to-character-secondary text-white text-xs sm:text-sm">
-                      {userProfile?.displayName?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button 
                     onClick={onProfileClick}
-                    className="touch-target hidden sm:flex"
+                    className="touch-target rounded-full hover:ring-2 hover:ring-primary/30 transition-all"
+                    title="プロフィール編集"
                   >
-                    <Settings className="w-4 h-4" />
-                  </Button>
+                    <Avatar className="w-7 h-7 sm:w-8 sm:h-8 ring-2 ring-primary/20">
+                      <AvatarImage src={userProfile?.photoURL} />
+                      <AvatarFallback className="bg-gradient-to-br from-character-primary to-character-secondary text-white text-xs sm:text-sm">
+                        {userProfile?.displayName?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
                   
                   <Button
                     variant="ghost"
