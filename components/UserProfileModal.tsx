@@ -18,7 +18,7 @@ interface UserProfileModalProps {
 }
 
 export default function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
-  const { userProfile, updateUserProfile, currentUser } = useAuth();
+  const { userProfile, updateUserProfile, setUserProfile, currentUser } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -94,10 +94,12 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
     setImageUploading(true);
     try {
       const response = await userAPI.uploadProfileImage(file);
-      if (response.success) {
-        // The image upload already updated the database and returned the updated user data
-        // We don't need to call updateUserProfile since that would try to update the backend again
+      if (response.success && response.data.user) {
         console.log('Profile image uploaded successfully:', response.data.photoURL);
+        
+        // Update the profile state directly with the new user data from the server
+        // This will automatically update all UI components that display user profile
+        setUserProfile(response.data.user);
         
         // Show success toast
         toast({
@@ -105,9 +107,6 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
           description: "プロフィール画像を正常にアップロードしました。",
           variant: "default"
         });
-        
-        // Simple solution: refresh the page to get updated profile data
-        // window.location.reload();
       }
     } catch (error) {
       console.error('Profile image upload failed:', error);
@@ -126,9 +125,6 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
   const handleSave = async () => {
     try {
       setLoading(true);
-      
-      console.log('=== Frontend Profile Update ===');
-      console.log('Form data:', formData);
       
       const updateData: any = {};
 
@@ -168,7 +164,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
         updateData.healthGoals = formData.healthGoals.filter(goal => goal && goal.trim() !== '');
       }
 
-      console.log('Processed update data:', updateData);
+      // console.log('Processed update data:', updateData);
 
       // Ensure we have at least displayName to update
       if (Object.keys(updateData).length === 0) {

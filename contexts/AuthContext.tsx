@@ -50,6 +50,7 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
+  setUserProfile: (profile: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -289,6 +290,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setUserProfileDirectly = (profile: UserProfile) => {
+    setUserProfile(profile);
+  };
+
   const value: AuthContextType = {
     currentUser,
     userProfile,
@@ -297,7 +302,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmail,
     signUpWithEmail,
     logout,
-    updateUserProfile
+    updateUserProfile,
+    setUserProfile: setUserProfileDirectly
   };
 
   return (
