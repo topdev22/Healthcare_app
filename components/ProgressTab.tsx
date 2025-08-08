@@ -107,7 +107,7 @@ export default function ProgressTab({ healthLevel: overrideHealthLevel }: Progre
                       <p className="text-xs sm:text-sm text-muted-foreground">{achievement.description}</p>
                     </div>
                     <Badge variant="outline" className="bg-health-green/10 text-health-green border-health-green/20 text-xs">
-                      +{achievement.experiencePoints} XP
+                      +{achievement.experiencePoints} 経験値
                     </Badge>
                   </div>
                 ))}

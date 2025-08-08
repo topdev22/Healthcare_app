@@ -38,6 +38,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
   const [foodInput, setFoodInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const moodOptions = [
     { value: 'excited', label: '興奮', emoji: '🤩' },
@@ -46,6 +47,33 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
     { value: 'sad', label: '悲しい', emoji: '😢' },
     { value: 'anxious', label: '不安', emoji: '😰' },
   ];
+
+  // Simple calorie estimation based on common Japanese foods
+  const estimateFoodCalories = (foodName: string): number => {
+    const lowerFood = foodName.toLowerCase();
+    
+    // Rice and grains
+    if (lowerFood.includes('ご飯') || lowerFood.includes('米')) return 250;
+    if (lowerFood.includes('パン') || lowerFood.includes('bread')) return 200;
+    if (lowerFood.includes('麺') || lowerFood.includes('うどん') || lowerFood.includes('ラーメン')) return 300;
+    
+    // Proteins
+    if (lowerFood.includes('肉') || lowerFood.includes('チキン') || lowerFood.includes('鶏')) return 200;
+    if (lowerFood.includes('魚') || lowerFood.includes('サーモン') || lowerFood.includes('鮭')) return 150;
+    if (lowerFood.includes('卵') || lowerFood.includes('たまご')) return 80;
+    
+    // Vegetables and salads
+    if (lowerFood.includes('サラダ') || lowerFood.includes('野菜')) return 50;
+    if (lowerFood.includes('果物') || lowerFood.includes('フルーツ')) return 60;
+    
+    // Common dishes
+    if (lowerFood.includes('カレー')) return 400;
+    if (lowerFood.includes('寿司')) return 250;
+    if (lowerFood.includes('弁当')) return 500;
+    
+    // Default estimate
+    return 150;
+  };
 
   const resetForm = () => {
     setLogData({
@@ -57,11 +85,58 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
     });
     setFoodInput('');
     setError(null);
+    setSuccessMessage(null);
+  };
+
+  const validateForm = () => {
+    const errors = [];
+    
+    if (logData.weight && (logData.weight < 20 || logData.weight > 300)) {
+      errors.push('体重は20kgから300kgの間で入力してください');
+    }
+    
+    if (logData.sleep < 0 || logData.sleep > 24) {
+      errors.push('睡眠時間は0時間から24時間の間で入力してください');
+    }
+    
+    if (logData.water < 0 || logData.water > 20) {
+      errors.push('水分摂取は0杯から20杯の間で入力してください');
+    }
+    
+    if (logData.energy < 1 || logData.energy > 10) {
+      errors.push('エネルギーレベルは1から10の間で入力してください');
+    }
+
+    // Validate food items
+    if (logData.foodItems && logData.foodItems.length > 0) {
+      const invalidFoodItems = logData.foodItems.filter(item => 
+        !item || item.trim().length === 0 || item.trim().length > 100
+      );
+      if (invalidFoodItems.length > 0) {
+        errors.push('食事内容は1文字以上100文字以下で入力してください');
+      }
+    }
+
+    // Validate notes length
+    if (logData.notes && logData.notes.length > 500) {
+      errors.push('追加メモは500文字以下で入力してください');
+    }
+    
+    return errors;
   };
 
   const handleSave = async () => {
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
+
+    // Validate form data
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join('\n'));
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Save different types of health logs to the backend
@@ -102,12 +177,16 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
         })
       );
 
-      // Save water intake
+      // Save water intake (convert glasses to ml)
       promises.push(
         healthAPI.createHealthLog({
           type: 'water',
           title: '水分補給記録',
-          data: { amount: logData.water },
+          data: { 
+            amount: logData.water * 250, // Convert glasses to ml (1 glass = 250ml)
+            unit: 'ml',
+            glasses: logData.water
+          },
           date: new Date().toISOString()
         })
       );
@@ -115,6 +194,9 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
       // Save food items if any
       if (logData.foodItems && logData.foodItems.length > 0) {
         for (const foodItem of logData.foodItems) {
+          // Estimate calories based on common foods (basic estimation)
+          const estimatedCalories = estimateFoodCalories(foodItem);
+          
           promises.push(
             healthAPI.createHealthLog({
               type: 'food',
@@ -122,7 +204,9 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               description: foodItem,
               data: { 
                 name: foodItem,
-                hasPhoto: false
+                hasPhoto: false,
+                calories: estimatedCalories,
+                meal: 'other' // Could be enhanced to detect meal type
               },
               date: new Date().toISOString()
             })
@@ -144,7 +228,11 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
       }
 
       // Execute all API calls
-      await Promise.all(promises);
+      const results = await Promise.all(promises);
+
+      // Show success message
+      const savedCount = results.filter(result => result?.success).length;
+      setSuccessMessage(`✅ ${savedCount}件の健康ログを正常に保存しました！`);
 
       // Trigger character refresh
       triggerCharacterRefresh();
@@ -152,9 +240,11 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
       // Call original onSave callback for any additional handling
       onSave(logData);
       
-      // Close modal and reset form
-      onClose();
-      resetForm();
+      // Close modal after a brief delay to show success message
+      setTimeout(() => {
+        onClose();
+        resetForm();
+      }, 1500);
 
     } catch (err) {
       console.error('健康ログの保存に失敗しました:', err);
@@ -195,13 +285,19 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
         </DialogHeader>
 
         {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-sm text-destructive">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-sm text-destructive whitespace-pre-line">
             {error}
           </div>
         )}
 
-        <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+        {successMessage && (
+          <div className="bg-health-green/10 border border-health-green/20 rounded-md p-3 text-sm text-health-green font-medium">
+            {successMessage}
+          </div>
+        )}
+
+        <Tabs defaultValue="basic" className="space-y-4 h-auto">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="basic">基本データ</TabsTrigger>
             <TabsTrigger value="mood">気分・エネルギー</TabsTrigger>
             <TabsTrigger value="food">食事・メモ</TabsTrigger>
@@ -340,7 +436,11 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
                   value={logData.notes || ''}
                   onChange={(e) => setLogData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
+                  maxLength={500}
                 />
+                <p className="text-xs text-muted-foreground text-right">
+                  {(logData.notes || '').length}/500文字
+                </p>
               </div>
             </div>
           </TabsContent>
