@@ -220,9 +220,22 @@ async function calculateDashboardStats(userId: string, date: Date) {
     sleepHours
   });
 
-  // Calculate character progression
+  // Get total chat messages for experience calculation
+  const totalChatMessages = await ChatMessage.countDocuments({
+    userId,
+    sender: 'user'
+  });
+
+  // Get achievement experience
+  const achievementExperience = await Achievement.aggregate([
+    { $match: { userId, isCompleted: true } },
+    { $group: { _id: null, total: { $sum: '$experiencePoints' } } }
+  ]);
+  const totalAchievementExp = achievementExperience[0]?.total || 0;
+
+  // Calculate character progression including chat experience and achievements
   const totalLogs = allLogs.length;
-  const characterProgression = calculateCharacterProgression(totalLogs, streak);
+  const characterProgression = calculateCharacterProgression(totalLogs, streak, totalChatMessages, totalAchievementExp);
 
   // Get conversation count for today
   const conversationMessages = await ChatMessage.countDocuments({
@@ -364,10 +377,12 @@ function calculateHealthLevel(metrics: {
   return Math.min(Math.max(score, 0), 100);
 }
 
-function calculateCharacterProgression(totalLogs: number, streak: number) {
-  const baseExp = totalLogs * 10;
-  const streakBonus = streak * 25;
-  const totalExp = baseExp + streakBonus;
+function calculateCharacterProgression(totalLogs: number, streak: number, chatMessages: number = 0, achievementExp: number = 0) {
+  const baseExp = totalLogs * 10; // 10 XP per health log
+  const streakBonus = streak * 25; // 25 XP per streak day
+  const chatExp = chatMessages * 2; // 2 XP per chat message
+  const achievementBonus = achievementExp; // Full achievement experience
+  const totalExp = baseExp + streakBonus + chatExp + achievementBonus;
   
   // Calculate level properly - each level requires 100 experience points
   const level = Math.floor(totalExp / 100) + 1;
@@ -411,4 +426,5 @@ function getMoodScore(mood: string): number {
   }
 }
 
+export { calculateDashboardStats };
 export default router;

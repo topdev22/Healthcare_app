@@ -79,7 +79,18 @@ router.post('/logs', authenticateToken, async (req: any, res) => {
 
     // Check for achievement progress
     try {
-      await checkAndUpdateAchievements(userId);
+      const newlyCompleted = await checkAndUpdateAchievements(userId);
+      if (newlyCompleted.length > 0) {
+        console.log(`🎉 User ${userId} completed ${newlyCompleted.length} new achievements!`);
+        
+        // Trigger character refresh for achievement completion
+        try {
+          const { calculateDashboardStats } = await import('./dashboard');
+          await calculateDashboardStats(userId, new Date());
+        } catch (dashboardError) {
+          console.warn('Dashboard stats update failed after achievement:', dashboardError);
+        }
+      }
     } catch (achievementError) {
       console.warn('Achievement check failed:', achievementError);
       // Don't fail the health log creation if achievement check fails

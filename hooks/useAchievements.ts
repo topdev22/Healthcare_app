@@ -101,6 +101,12 @@ export function useAchievements(currentUser: any) {
       const response = await achievementsAPI.checkProgress();
       
       if (response.success && response.newlyCompleted.length > 0) {
+        // Show achievement completion notifications
+        response.newlyCompleted.forEach((achievement: any) => {
+          console.log(`🎉 Achievement unlocked: ${achievement.title}`);
+          // You can add toast notifications here when the toast system is working
+        });
+        
         // Reload achievements to get updated progress
         await loadAchievements();
         await loadAchievementStats();
@@ -169,7 +175,19 @@ export function useAchievements(currentUser: any) {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'health_data_updated') {
         // Check for new achievements after health data updates
-        setTimeout(checkProgress, 1000); // Small delay to allow backend processing
+        setTimeout(async () => {
+          const newlyCompleted = await checkProgress();
+          if (newlyCompleted.length > 0) {
+            console.log('🎉 New achievements completed:', newlyCompleted);
+            // Trigger character refresh for new achievements
+            try {
+              const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
+              triggerCharacterRefresh();
+            } catch (error) {
+              console.warn('Failed to trigger character refresh after achievements:', error);
+            }
+          }
+        }, 1000); // Small delay to allow backend processing
       }
     };
 

@@ -76,12 +76,14 @@ export function useCharacterData(currentUser: any) {
     return Math.min(Math.max(score, 0), 100);
   };
 
-  // Calculate character level and experience
-  const calculateLevelAndExperience = (healthLevel: number, totalLogs: number, streak: number) => {
-    const baseExp = totalLogs * 10;
-    const streakBonus = streak * 25;
-    const healthBonus = Math.floor(healthLevel / 10) * 5;
-    const totalExp = baseExp + streakBonus + healthBonus;
+  // Calculate character level and experience (including chat activity and achievements)
+  const calculateLevelAndExperience = (healthLevel: number, totalLogs: number, streak: number, chatMessages: number = 0, achievementExp: number = 0) => {
+    const baseExp = totalLogs * 10; // 10 XP per health log
+    const streakBonus = streak * 25; // 25 XP per streak day
+    const chatExp = chatMessages * 2; // 2 XP per chat message
+    const healthBonus = Math.floor(healthLevel / 10) * 5; // Health bonus
+    const achievementBonus = achievementExp; // Full achievement experience
+    const totalExp = baseExp + streakBonus + chatExp + healthBonus + achievementBonus;
     
     const level = Math.floor(totalExp / 100) + 1;
     const currentLevelExp = totalExp % 100;
@@ -168,7 +170,8 @@ export function useCharacterData(currentUser: any) {
 
       // Calculate character data
       const healthLevel = calculateHealthLevel(stats, profile);
-      const { level, experience } = calculateLevelAndExperience(healthLevel, stats.totalLogs, streak);
+      // Note: Chat messages count and achievement experience should come from backend stats in real implementation
+      const { level, experience } = calculateLevelAndExperience(healthLevel, stats.totalLogs, streak, 0, 0);
 
       const newCharacterData: CharacterData = {
         mood: stats.recentMood,
