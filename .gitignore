@@ -25,3 +25,7 @@ dist-ssr
 
 .config/
 !.env
+
+# User uploaded profile images
+public/profile/*
+!public/profile/.gitkeep

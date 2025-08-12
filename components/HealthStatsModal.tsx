@@ -160,15 +160,15 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
         <div className="space-y-6">
           {/* Period Selection */}
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Time Period:</span>
+            <span className="text-sm font-medium">期間:</span>
             <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => setSelectedPeriod(value)}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7days">7 Days</SelectItem>
-                <SelectItem value="30days">30 Days</SelectItem>
-                <SelectItem value="90days">90 Days</SelectItem>
+                <SelectItem value="7days">7日間</SelectItem>
+                <SelectItem value="30days">30日間</SelectItem>
+                <SelectItem value="90days">90日間</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -379,7 +379,7 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                           <span className="text-sm">{getMoodName(mood)}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{count} times</Badge>
+                          <Badge variant="secondary">{count}回</Badge>
                           <div className="text-xs text-muted-foreground">
                             {statistics.totalEntries > 0 ? ((count / statistics.totalEntries) * 100).toFixed(1) : 0}%
                           </div>

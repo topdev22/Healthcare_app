@@ -14,6 +14,8 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import healthRoutes from './routes/health';
 import chatRoutes from './routes/chat';
+import dashboardRoutes from './routes/dashboard';
+import achievementRoutes from './routes/achievements';
 
 
 const app = express();
@@ -76,6 +78,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -115,6 +119,8 @@ const server = app.listen(PORT, () => {
   console.log(`👤 User API: http://localhost:${PORT}/api/user`);
   console.log(`💊 Health API: http://localhost:${PORT}/api/health`);
   console.log(`💬 Chat API: http://localhost:${PORT}/api/chat`);
+  console.log(`📊 Dashboard API: http://localhost:${PORT}/api/dashboard`);
+  console.log(`🏆 Achievements API: http://localhost:${PORT}/api/achievements`);
 });
 
 // Graceful shutdown

@@ -5,6 +5,8 @@ import Conversation from '../models/Conversation';
 import { User } from '../models/User';
 import HealthLog from '../models/HealthLog';
 import OpenAIService from '../services/openaiService';
+import { checkAndUpdateAchievements } from './achievements';
+import { calculateDashboardStats } from './dashboard';
 import { 
   validateChatMessage, 
   validateConversation,
@@ -25,6 +27,137 @@ try {
   openaiInitError = (error as Error).message;
   console.warn('⚠️ OpenAI service initialization failed:', openaiInitError);
   console.warn('🔄 Chat will use fallback responses');
+}
+
+// Helper function to create health logs from extracted chat data
+async function createHealthLogsFromChatData(userId: string, extractedData: any) {
+  try {
+    const currentDate = new Date();
+    
+    // Create mood log if mood was detected
+    if (extractedData.mood) {
+      const moodLog = new HealthLog({
+        userId,
+        type: 'mood',
+        title: `気分: ${extractedData.mood}`,
+        description: 'チャットから自動記録',
+        data: {
+          mood: extractedData.mood,
+          source: 'chat_extraction'
+        },
+        date: currentDate
+      });
+      await moodLog.save();
+      console.log(`📝 Auto-created mood log: ${extractedData.mood}`);
+    }
+
+    // Create exercise log if exercise was mentioned
+    if (extractedData.exercise) {
+      const exerciseLog = new HealthLog({
+        userId,
+        type: 'exercise',
+        title: extractedData.exercise,
+        description: 'チャットから自動記録',
+        data: {
+          activity: extractedData.exercise,
+          source: 'chat_extraction'
+        },
+        date: currentDate
+      });
+      await exerciseLog.save();
+      console.log(`🏃‍♀️ Auto-created exercise log: ${extractedData.exercise}`);
+    }
+
+    // Create food log if food was mentioned
+    if (extractedData.food) {
+      const foodLog = new HealthLog({
+        userId,
+        type: 'food',
+        title: extractedData.food,
+        description: 'チャットから自動記録',
+        data: {
+          food: extractedData.food,
+          source: 'chat_extraction'
+        },
+        date: currentDate
+      });
+      await foodLog.save();
+      console.log(`🍽️ Auto-created food log: ${extractedData.food}`);
+    }
+
+    // Create water log if water intake was mentioned
+    if (extractedData.water && extractedData.water > 0) {
+      const waterLog = new HealthLog({
+        userId,
+        type: 'water',
+        title: `水分摂取: ${extractedData.water}杯`,
+        description: 'チャットから自動記録',
+        data: {
+          amount: extractedData.water,
+          unit: 'glasses',
+          source: 'chat_extraction'
+        },
+        date: currentDate
+      });
+      await waterLog.save();
+      console.log(`💧 Auto-created water log: ${extractedData.water} glasses`);
+    }
+
+    // Create sleep log if sleep was mentioned
+    if (extractedData.sleep && extractedData.sleep > 0) {
+      const sleepLog = new HealthLog({
+        userId,
+        type: 'sleep',
+        title: `睡眠: ${extractedData.sleep}時間`,
+        description: 'チャットから自動記録',
+        data: {
+          hours: extractedData.sleep,
+          source: 'chat_extraction'
+        },
+        date: currentDate
+      });
+      await sleepLog.save();
+      console.log(`😴 Auto-created sleep log: ${extractedData.sleep} hours`);
+    }
+
+    // Create weight log if weight was mentioned
+    if (extractedData.weight && extractedData.weight > 0) {
+      const weightLog = new HealthLog({
+        userId,
+        type: 'weight',
+        title: `体重: ${extractedData.weight}kg`,
+        description: 'チャットから自動記録',
+        data: {
+          weight: extractedData.weight,
+          unit: 'kg',
+          source: 'chat_extraction'
+        },
+        date: currentDate
+      });
+      await weightLog.save();
+      console.log(`⚖️ Auto-created weight log: ${extractedData.weight}kg`);
+    }
+
+    // Trigger character level updates and achievements check
+    try {
+      await checkAndUpdateAchievements(userId);
+      console.log('✅ Achievement check completed after chat health data');
+    } catch (achievementError) {
+      console.warn('⚠️ Achievement check failed:', achievementError);
+    }
+
+    // Recalculate dashboard stats to update character level and health metrics
+    try {
+      await calculateDashboardStats(userId, currentDate);
+      console.log('✅ Dashboard stats updated after chat health data');
+    } catch (dashboardError) {
+      console.warn('⚠️ Dashboard stats update failed:', dashboardError);
+    }
+
+    console.log('✅ Health logs auto-created from chat data');
+  } catch (error) {
+    console.error('❌ Error creating health logs from chat data:', error);
+  }
 }
 
 // Send chat message and get AI response
@@ -94,6 +227,15 @@ router.post('/message', authenticateToken, async (req: any, res) => {
     });
     await userMessage.save();
 
+    // Get recent conversation history for context
+    const recentMessages = await ChatMessage.find({ 
+      conversationId: conversation._id 
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('sender content createdAt')
+      .lean();
+
     // Prepare health context for GPT
     const healthContext = {
       recentHealthLogs,
@@ -105,7 +247,7 @@ router.post('/message', authenticateToken, async (req: any, res) => {
         healthGoals: user.healthGoals
       } : undefined,
       currentMood: userContext?.mood,
-      conversationHistory: [] // Could be populated with recent messages if needed
+      conversationHistory: recentMessages.reverse() // Oldest to newest for better context
     };
 
     // Generate AI response using GPT or fallback
@@ -145,14 +287,29 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       },
       metadata: {
         topics: aiResponseData.topics || extractTopics(aiResponseData.message),
-        intent: aiResponseData.intent || 'general_health_support'
+        intent: aiResponseData.intent || 'general_health_support',
+        extractedHealthData: aiResponseData.extractedHealthData
       }
     });
     await aiMessage.save();
 
+    // Auto-create health logs from extracted data
+    if (aiResponseData.extractedHealthData && Object.keys(aiResponseData.extractedHealthData).length > 0) {
+      await createHealthLogsFromChatData(userId, aiResponseData.extractedHealthData);
+    }
+
+    // Always trigger character updates for chat activity (experience gain)
+    try {
+      await calculateDashboardStats(userId, new Date());
+      console.log('✅ Dashboard stats updated for chat activity experience');
+    } catch (dashboardError) {
+      console.warn('⚠️ Dashboard stats update for chat activity failed:', dashboardError);
+    }
+
     // Update conversation with latest activity
     await Conversation.findByIdAndUpdate(conversation._id, {
       lastMessageAt: new Date(),
+      $inc: { messageCount: 2 }, // Increment by 2 (user message + AI response)
       'metadata.topics': Array.from(new Set([
         ...(conversation.metadata?.topics || []),
         ...extractTopics(sanitizedMessage.content)
@@ -166,6 +323,8 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       conversationId: conversation._id,
       messageId: aiMessage._id,
       userMessageId: userMessage._id,
+      healthDataExtracted: aiResponseData.extractedHealthData && Object.keys(aiResponseData.extractedHealthData).length > 0,
+      extractedHealthData: aiResponseData.extractedHealthData,
       metadata: {
         responseTime: aiResponseData.responseTime || 0,
         topics: aiResponseData.topics,

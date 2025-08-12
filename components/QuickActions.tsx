@@ -37,7 +37,7 @@ export default function QuickActions({
               <HealthIcons.Heart size={20} className="text-health-green sm:w-6 sm:h-6" />
             </div>
             <span className="text-xs sm:text-sm font-medium text-center">気分を記録</span>
-            <Badge variant="secondary" className="text-xs">+5 XP</Badge>
+            <Badge variant="secondary" className="text-xs">+5 経験値</Badge>
           </Button>
           
           <Button 
@@ -49,7 +49,7 @@ export default function QuickActions({
               <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-health-blue" />
             </div>
             <span className="text-xs sm:text-sm font-medium text-center">食事記録</span>
-            <Badge variant="secondary" className="text-xs">+3 XP</Badge>
+            <Badge variant="secondary" className="text-xs">+3 経験値</Badge>
           </Button>
           
           <Button 

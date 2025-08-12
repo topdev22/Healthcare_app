@@ -3,15 +3,44 @@ import { cn } from '@/lib/utils';
 import CharacterFace from '@/components/CharacterFaces';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { useCharacterData } from '@/hooks/useCharacterData';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CharacterProps {
-  mood: 'happy' | 'neutral' | 'sad' | 'sleeping';
-  healthLevel: number; // 0-100
-  isInteracting?: boolean;
   className?: string;
+  // Optional props to override data (for testing or specific scenarios)
+  mood?: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'sleeping';
+  healthLevel?: number;
+  isInteracting?: boolean;
 }
 
-export default function Character({ mood, healthLevel, isInteracting = false, className }: CharacterProps) {
+export default function Character({ className, mood: overrideMood, healthLevel: overrideHealthLevel, isInteracting: overrideInteracting }: CharacterProps) {
+  const { currentUser } = useAuth();
+  const { characterData, healthStats, userProfile, loading, error } = useCharacterData(currentUser);
+
+  // Map mood from extended set to character face mood
+  const mapMoodToFace = (mood: string): 'happy' | 'neutral' | 'sad' | 'sleeping' => {
+    switch (mood) {
+      case 'excited':
+        return 'happy';
+      case 'anxious':
+        return 'sad';
+      case 'sleeping':
+        return 'sleeping';
+      case 'happy':
+      case 'neutral':
+      case 'sad':
+        return mood as 'happy' | 'neutral' | 'sad';
+      default:
+        return 'neutral';
+    }
+  };
+
+  // Use override props or real data
+  const rawMood = overrideMood || characterData.mood || 'happy';
+  const mood = mapMoodToFace(rawMood);
+  const healthLevel = overrideHealthLevel !== undefined ? overrideHealthLevel : characterData.healthLevel;
+  const isInteracting = overrideInteracting !== undefined ? overrideInteracting : characterData.isInteracting || false;
   const getCharacterColor = () => {
     if (healthLevel >= 80) return 'text-health-green';
     if (healthLevel >= 60) return 'text-wellness-amber';
@@ -27,16 +56,84 @@ export default function Character({ mood, healthLevel, isInteracting = false, cl
   };
 
   const getCharacterLevel = () => {
-    return Math.floor(healthLevel / 25) + 1;
+    return characterData.level || Math.floor(healthLevel / 25) + 1;
   };
 
   const getLevelProgress = () => {
-    return (healthLevel % 25) * 4;
+    return characterData.experience || (healthLevel % 25) * 4;
   };
+
+  const getStreakDays = () => {
+    return characterData.streak || 0;
+  };
+
+  const getExperiencePoints = () => {
+    const baseExp = (healthStats?.totalLogs || 0) * 10;
+    const streakBonus = getStreakDays() * 20;
+    return baseExp + streakBonus;
+  };
+
+  const getMotivationalMessage = () => {
+    const userName = userProfile?.displayName ? `${userProfile.displayName}さん` : 'あなた';
+    const totalLogs = healthStats?.totalLogs || 0;
+    
+    if (healthLevel >= 80) {
+      if (streakDays >= 7) {
+        return `${userName}、${streakDays}日連続で記録を続けています！素晴らしい習慣ですね！💪✨`;
+      }
+      return `${userName}、とても良い健康状態を保っていますね！この調子で続けましょう！💪`;
+    } else if (healthLevel >= 60) {
+      if (totalLogs >= 10) {
+        return `${userName}、健康記録が${totalLogs}件になりました！良いペースですね！🌟`;
+      }
+      return `${userName}、良いペースで健康管理ができています。もう少し頑張りましょう！🌟`;
+    } else if (healthLevel >= 40) {
+      if (streakDays > 0) {
+        return `${userName}、${streakDays}日続けて頑張っていますね！継続が力になります！📈`;
+      }
+      return `${userName}、健康への意識を持って取り組んでいますね。継続が大切です！📈`;
+    } else {
+      if (totalLogs > 0) {
+        return `${userName}、記録を始めてくれてありがとう！小さな一歩が大きな変化の始まりです！🌱`;
+      }
+      return `${userName}、新しいスタートです！今日から健康記録を始めてみませんか？🌱`;
+    }
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className={cn("relative overflow-hidden", className)}>
+        <div className="flex flex-col items-center p-8 space-y-6">
+          <div className="w-36 h-36 rounded-full bg-muted animate-pulse" />
+          <div className="w-full max-w-sm space-y-4">
+            <div className="h-4 bg-muted rounded animate-pulse" />
+            <div className="h-3 bg-muted rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className={cn("relative overflow-hidden", className)}>
+        <div className="flex flex-col items-center p-8 space-y-6">
+          <div className="text-center text-muted-foreground">
+            <p className="text-sm">{error}</p>
+            <p className="text-xs mt-2">デフォルトデータを表示しています</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const healthStatus = getHealthStatus();
   const characterLevel = getCharacterLevel();
   const levelProgress = getLevelProgress();
+  const streakDays = getStreakDays();
+  const experiencePoints = getExperiencePoints();
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
@@ -107,7 +204,7 @@ export default function Character({ mood, healthLevel, isInteracting = false, cl
               isInteracting && "scale-110"
             )}
           >
-            Level {characterLevel}
+            レベル {characterLevel}
           </Badge>
 
           {/* Health status indicator */}
@@ -163,7 +260,7 @@ export default function Character({ mood, healthLevel, isInteracting = false, cl
           {/* Character Stats */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="text-center p-3 bg-health-green/10 rounded-lg border border-health-green/20">
-              <div className="text-lg font-bold text-health-green">7</div>
+              <div className="text-lg font-bold text-health-green">{streakDays}</div>
               <div className="text-xs text-muted-foreground">連続日数</div>
             </div>
             <div className="text-center p-3 bg-character-primary/10 rounded-lg border border-character-primary/20">
@@ -171,7 +268,9 @@ export default function Character({ mood, healthLevel, isInteracting = false, cl
               <div className="text-xs text-muted-foreground">レベル</div>
             </div>
             <div className="text-center p-3 bg-wellness-amber/10 rounded-lg border border-wellness-amber/20">
-              <div className="text-lg font-bold text-wellness-amber">2.1k</div>
+              <div className="text-lg font-bold text-wellness-amber">
+                {experiencePoints > 1000 ? `${(experiencePoints / 1000).toFixed(1)}k` : experiencePoints}
+              </div>
               <div className="text-xs text-muted-foreground">経験値</div>
             </div>
           </div>
@@ -180,14 +279,7 @@ export default function Character({ mood, healthLevel, isInteracting = false, cl
         {/* Motivational message */}
         <div className="text-center p-4 bg-muted/30 rounded-lg border border-muted/50 max-w-sm">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {healthLevel >= 80 
-              ? "素晴らしい健康状態を保っていますね！この調子で続けましょう！💪"
-              : healthLevel >= 60 
-              ? "良いペースで健康管理ができています。もう少し頑張りましょう！🌟"
-              : healthLevel >= 40 
-              ? "健康への意識を持って取り組んでいますね。継続が大切です！📈"
-              : "新しいスタートです！小さな一歩から始めましょう！🌱"
-            }
+            {getMotivationalMessage()}
           </p>
         </div>
       </div>

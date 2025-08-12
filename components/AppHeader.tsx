@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Settings, LogOut, Sun, Moon } from 'lucide-react';
+import { Heart, Settings, LogOut, Sun, Moon, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 interface AppHeaderProps {
@@ -35,9 +35,7 @@ export default function AppHeader({
       <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
+            <img src="/images/favicon.jpg" alt="Health Buddy Logo" className="w-12 h-12 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg" />
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-foreground">ヘルスバディ</h1>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">あなた専用の健康管理パートナー</p>
@@ -64,21 +62,18 @@ export default function AppHeader({
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                   </Button>
                   
-                  <Avatar className="w-7 h-7 sm:w-8 sm:h-8 ring-2 ring-primary/20">
-                    <AvatarImage src={userProfile?.photoURL} />
-                    <AvatarFallback className="bg-gradient-to-br from-character-primary to-character-secondary text-white text-xs sm:text-sm">
-                      {userProfile?.displayName?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button 
                     onClick={onProfileClick}
-                    className="touch-target hidden sm:flex"
+                    className="touch-target rounded-full hover:ring-2 hover:ring-primary/30 transition-all"
+                    title="プロフィール編集"
                   >
-                    <Settings className="w-4 h-4" />
-                  </Button>
+                    <Avatar className="w-7 h-7 sm:w-8 sm:h-8 ring-2 ring-primary/20">
+                      <AvatarImage src={userProfile?.photoURL} />
+                      <AvatarFallback className="bg-gradient-to-br from-character-primary to-character-secondary text-white text-xs sm:text-sm">
+                        {userProfile?.displayName?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
                   
                   <Button
                     variant="ghost"

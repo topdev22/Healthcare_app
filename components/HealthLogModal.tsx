@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Scale, Smile, Utensils, Save } from 'lucide-react';
+import { Scale, Smile, Utensils, Save, Loader2 } from 'lucide-react';
+import { healthAPI } from '@/lib/api';
+import { triggerCharacterRefresh } from '@/lib/characterHelpers';
 
 interface HealthLogModalProps {
   isOpen: boolean;
@@ -34,19 +36,46 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
   });
 
   const [foodInput, setFoodInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const moodOptions = [
-    { value: 'excited', label: 'Excited', emoji: '🤩' },
-    { value: 'happy', label: 'Happy', emoji: '😊' },
-    { value: 'neutral', label: 'Neutral', emoji: '😐' },
-    { value: 'sad', label: 'Sad', emoji: '😢' },
-    { value: 'anxious', label: 'Anxious', emoji: '😰' },
+    { value: 'excited', label: '興奮', emoji: '🤩' },
+    { value: 'happy', label: '幸せ', emoji: '😊' },
+    { value: 'neutral', label: '普通', emoji: '😐' },
+    { value: 'sad', label: '悲しい', emoji: '😢' },
+    { value: 'anxious', label: '不安', emoji: '😰' },
   ];
 
-  const handleSave = () => {
-    onSave(logData);
-    onClose();
-    // Reset form
+  // Simple calorie estimation based on common Japanese foods
+  const estimateFoodCalories = (foodName: string): number => {
+    const lowerFood = foodName.toLowerCase();
+    
+    // Rice and grains
+    if (lowerFood.includes('ご飯') || lowerFood.includes('米')) return 250;
+    if (lowerFood.includes('パン') || lowerFood.includes('bread')) return 200;
+    if (lowerFood.includes('麺') || lowerFood.includes('うどん') || lowerFood.includes('ラーメン')) return 300;
+    
+    // Proteins
+    if (lowerFood.includes('肉') || lowerFood.includes('チキン') || lowerFood.includes('鶏')) return 200;
+    if (lowerFood.includes('魚') || lowerFood.includes('サーモン') || lowerFood.includes('鮭')) return 150;
+    if (lowerFood.includes('卵') || lowerFood.includes('たまご')) return 80;
+    
+    // Vegetables and salads
+    if (lowerFood.includes('サラダ') || lowerFood.includes('野菜')) return 50;
+    if (lowerFood.includes('果物') || lowerFood.includes('フルーツ')) return 60;
+    
+    // Common dishes
+    if (lowerFood.includes('カレー')) return 400;
+    if (lowerFood.includes('寿司')) return 250;
+    if (lowerFood.includes('弁当')) return 500;
+    
+    // Default estimate
+    return 150;
+  };
+
+  const resetForm = () => {
     setLogData({
       mood: 'neutral',
       energy: 5,
@@ -55,6 +84,174 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
       foodItems: []
     });
     setFoodInput('');
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const validateForm = () => {
+    const errors = [];
+    
+    if (logData.weight && (logData.weight < 20 || logData.weight > 300)) {
+      errors.push('体重は20kgから300kgの間で入力してください');
+    }
+    
+    if (logData.sleep < 0 || logData.sleep > 24) {
+      errors.push('睡眠時間は0時間から24時間の間で入力してください');
+    }
+    
+    if (logData.water < 0 || logData.water > 20) {
+      errors.push('水分摂取は0杯から20杯の間で入力してください');
+    }
+    
+    if (logData.energy < 1 || logData.energy > 10) {
+      errors.push('エネルギーレベルは1から10の間で入力してください');
+    }
+
+    // Validate food items
+    if (logData.foodItems && logData.foodItems.length > 0) {
+      const invalidFoodItems = logData.foodItems.filter(item => 
+        !item || item.trim().length === 0 || item.trim().length > 100
+      );
+      if (invalidFoodItems.length > 0) {
+        errors.push('食事内容は1文字以上100文字以下で入力してください');
+      }
+    }
+
+    // Validate notes length
+    if (logData.notes && logData.notes.length > 500) {
+      errors.push('追加メモは500文字以下で入力してください');
+    }
+    
+    return errors;
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    // Validate form data
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join('\n'));
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Save different types of health logs to the backend
+      const promises = [];
+
+      // Save weight if provided
+      if (logData.weight) {
+        promises.push(
+          healthAPI.createHealthLog({
+            type: 'weight',
+            title: '体重記録',
+            data: { weight: logData.weight },
+            date: new Date().toISOString()
+          })
+        );
+      }
+
+      // Save mood
+      promises.push(
+        healthAPI.createHealthLog({
+          type: 'mood',
+          title: '気分記録',
+          data: { 
+            mood: logData.mood,
+            energy: logData.energy
+          },
+          date: new Date().toISOString()
+        })
+      );
+
+      // Save sleep
+      promises.push(
+        healthAPI.createHealthLog({
+          type: 'sleep',
+          title: '睡眠記録',
+          data: { hours: logData.sleep },
+          date: new Date().toISOString()
+        })
+      );
+
+      // Save water intake (convert glasses to ml)
+      promises.push(
+        healthAPI.createHealthLog({
+          type: 'water',
+          title: '水分補給記録',
+          data: { 
+            amount: logData.water * 250, // Convert glasses to ml (1 glass = 250ml)
+            unit: 'ml',
+            glasses: logData.water
+          },
+          date: new Date().toISOString()
+        })
+      );
+
+      // Save food items if any
+      if (logData.foodItems && logData.foodItems.length > 0) {
+        for (const foodItem of logData.foodItems) {
+          // Estimate calories based on common foods (basic estimation)
+          const estimatedCalories = estimateFoodCalories(foodItem);
+          
+          promises.push(
+            healthAPI.createHealthLog({
+              type: 'food',
+              title: '食事記録',
+              description: foodItem,
+              data: { 
+                name: foodItem,
+                hasPhoto: false,
+                calories: estimatedCalories,
+                meal: 'other' // Could be enhanced to detect meal type
+              },
+              date: new Date().toISOString()
+            })
+          );
+        }
+      }
+
+      // Save notes as a general health log if provided
+      if (logData.notes && logData.notes.trim()) {
+        promises.push(
+          healthAPI.createHealthLog({
+            type: 'other',
+            title: '健康メモ',
+            description: logData.notes,
+            data: {},
+            date: new Date().toISOString()
+          })
+        );
+      }
+
+      // Execute all API calls
+      const results = await Promise.all(promises);
+
+      // Show success message
+      const savedCount = results.filter(result => result?.success).length;
+      setSuccessMessage(`✅ ${savedCount}件の健康ログを正常に保存しました！`);
+
+      // Trigger character refresh
+      triggerCharacterRefresh();
+
+      // Call original onSave callback for any additional handling
+      onSave(logData);
+      
+      // Close modal after a brief delay to show success message
+      setTimeout(() => {
+        onClose();
+        resetForm();
+      }, 1500);
+
+    } catch (err) {
+      console.error('健康ログの保存に失敗しました:', err);
+      setError('健康ログの保存に失敗しました。もう一度お試しください。');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const addFoodItem = () => {
@@ -80,24 +277,36 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scale className="w-5 h-5 text-health-green" />
-            Log Your Health Data
+            健康データを記録
           </DialogTitle>
           <DialogDescription>
-            Track your daily wellness metrics to help your character grow!
+            毎日の健康指標を記録して、あなたのキャラクターを成長させましょう！
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="basic">Basic Stats</TabsTrigger>
-            <TabsTrigger value="mood">Mood & Energy</TabsTrigger>
-            <TabsTrigger value="food">Food & Notes</TabsTrigger>
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-sm text-destructive whitespace-pre-line">
+            {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="bg-health-green/10 border border-health-green/20 rounded-md p-3 text-sm text-health-green font-medium">
+            {successMessage}
+          </div>
+        )}
+
+        <Tabs defaultValue="basic" className="space-y-4 h-auto">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="basic">基本データ</TabsTrigger>
+            <TabsTrigger value="mood">気分・エネルギー</TabsTrigger>
+            <TabsTrigger value="food">食事・メモ</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
+                <Label htmlFor="weight">体重 (kg)</Label>
                 <Input
                   id="weight"
                   type="number"
@@ -109,7 +318,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="sleep">Sleep Hours</Label>
+                <Label htmlFor="sleep">睡眠時間（時間）</Label>
                 <Input
                   id="sleep"
                   type="number"
@@ -121,7 +330,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="water">Water Glasses</Label>
+                <Label htmlFor="water">水分摂取（コップ）</Label>
                 <Input
                   id="water"
                   type="number"
@@ -133,7 +342,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               </div>
               
               <div className="space-y-2">
-                <Label>Energy Level (1-10)</Label>
+                <Label>エネルギーレベル（1-10）</Label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm">1</span>
                   <Input
@@ -155,7 +364,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
             <div className="space-y-4">
               <Label className="text-base font-medium flex items-center gap-2">
                 <Smile className="w-4 h-4" />
-                How are you feeling today?
+                今日の気分はいかがですか？
               </Label>
               
               <RadioGroup
@@ -181,24 +390,24 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               <div>
                 <Label className="text-base font-medium flex items-center gap-2 mb-3">
                   <Utensils className="w-4 h-4" />
-                  What did you eat today?
+                  今日は何を食べましたか？
                 </Label>
                 
                 <div className="flex gap-2 mb-3">
                   <Input
-                    placeholder="e.g., Grilled chicken salad"
+                    placeholder="例：グリルチキンサラダ"
                     value={foodInput}
                     onChange={(e) => setFoodInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addFoodItem()}
                   />
                   <Button type="button" onClick={addFoodItem} variant="outline">
-                    Add
+                    追加
                   </Button>
                 </div>
                 
                 {logData.foodItems && logData.foodItems.length > 0 && (
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Food Items:</Label>
+                    <Label className="text-sm font-medium">食事内容：</Label>
                     <div className="space-y-1">
                       {logData.foodItems.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
@@ -220,26 +429,43 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
+                <Label htmlFor="notes">追加メモ</Label>
                 <Textarea
                   id="notes"
-                  placeholder="How did you feel today? Any symptoms or observations?"
+                  placeholder="今日の体調はいかがでしたか？気になる症状や観察事項があれば記録してください。"
                   value={logData.notes || ''}
                   onChange={(e) => setLogData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
+                  maxLength={500}
                 />
+                <p className="text-xs text-muted-foreground text-right">
+                  {(logData.notes || '').length}/500文字
+                </p>
               </div>
             </div>
           </TabsContent>
         </Tabs>
 
         <div className="flex gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Cancel
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="flex-1"
+            disabled={isLoading}
+          >
+            キャンセル
           </Button>
-          <Button onClick={handleSave} className="flex-1 flex items-center gap-2">
-            <Save className="w-4 h-4" />
-            Save Health Log
+          <Button 
+            onClick={handleSave} 
+            className="flex-1 flex items-center gap-2"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {isLoading ? '保存中...' : '健康ログを保存'}
           </Button>
         </div>
       </DialogContent>
