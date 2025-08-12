@@ -34,9 +34,6 @@ export default function Index() {
   const { messages, isLoadingResponse, handleSendMessage, addMessage, triggerHaptics } = useChat(userProfile);
 
   // Component state
-  const [characterMood, setCharacterMood] = useState<'happy' | 'neutral' | 'sad' | 'sleeping'>('happy');
-  const [healthLevel, setHealthLevel] = useState(85);
-  const [isCharacterInteracting, setIsCharacterInteracting] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -67,31 +64,11 @@ export default function Index() {
   };
 
   const handleSaveHealthLog = async (data: any) => {
+    // HealthLogModal now handles saving to backend directly
+    // This callback is mainly for UI feedback
     try {
       await triggerHaptics(ImpactStyle.Heavy);
-      
-      // Transform health log data to match API schema
-      const healthLogPayload = {
-        type: 'health_log',
-        title: `Health Log - ${new Date().toLocaleDateString()}`,
-        description: `Mood: ${data.mood}, Energy: ${data.energy}/10, Sleep: ${data.sleep}h, Water: ${data.water} glasses`,
-        data: {
-          weight: data.weight,
-          mood: data.mood,
-          energy: data.energy,
-          sleep: data.sleep,
-          water: data.water,
-          notes: data.notes,
-          foodItems: data.foodItems || []
-        },
-        date: new Date().toISOString()
-      };
-
-      await healthAPI.createHealthLog(healthLogPayload);
-      await loadHealthData();
-      
-      setHealthLevel(prev => Math.min(100, prev + 5));
-      setCharacterMood('happy');
+      await loadHealthData(); // Refresh health data after save
       
       addMessage({
         id: Date.now().toString(),
@@ -100,13 +77,7 @@ export default function Index() {
         timestamp: new Date()
       });
     } catch (error) {
-      console.error('健康ログ保存エラー:', error);
-      addMessage({
-        id: Date.now().toString(),
-        content: "申し訳ございません。健康データの保存に失敗しました。ネットワーク接続を確認してから再度お試しください。",
-        sender: 'character',
-        timestamp: new Date()
-      });
+      console.error('データ更新エラー:', error);
     }
   };
 
@@ -166,9 +137,7 @@ export default function Index() {
   };
 
   const handleChatMessage = async (message: string) => {
-    setIsCharacterInteracting(true);
     await handleSendMessage(message);
-    setIsCharacterInteracting(false);
   };
 
   if (loading) {
@@ -198,31 +167,27 @@ export default function Index() {
           {/* Character Section */}
           <Card className="character-bg border-character-primary/20 card-hover overflow-hidden">
             <CardContent className="p-0">
-              <Character 
-                mood={characterMood}
-                healthLevel={healthLevel}
-                isInteracting={isCharacterInteracting}
-              />
+              <Character />
             </CardContent>
           </Card>
 
           {/* Quick Stats */}
-          <QuickStatsCards healthLevel={healthLevel} />
+          <QuickStatsCards />
 
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-3 glass h-12 sm:h-14">
-              <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm">
+            <TabsList className="grid w-full grid-cols-3 glass h-auto space-y-2 sm:space-y-0 sm:h-14 flex justify-center items-center">
+              <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
                 <BarChart3 className="w-4 h-4" />
                 <span className="hidden sm:inline">ダッシュボード</span>
                 <span className="sm:hidden">統計</span>
               </TabsTrigger>
-              <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm">
+              <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
                 <MessageCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">チャット</span>
                 <span className="sm:hidden">会話</span>
               </TabsTrigger>
-              <TabsTrigger value="progress" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm">
+              <TabsTrigger value="progress" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
                 <Sparkles className="w-4 h-4" />
                 <span className="hidden sm:inline">成長記録</span>
                 <span className="sm:hidden">成長</span>
@@ -231,7 +196,6 @@ export default function Index() {
 
             <TabsContent value="dashboard" className="space-y-4 sm:space-y-6">
               <HealthStats 
-                recentData={healthData}
                 onLogHealth={handleLogHealth}
                 onTakePhoto={handleTakePhoto}
               />
@@ -254,7 +218,7 @@ export default function Index() {
             </TabsContent>
 
             <TabsContent value="progress">
-              <ProgressTab healthLevel={healthLevel} />
+              <ProgressTab />
             </TabsContent>
           </Tabs>
         </div>

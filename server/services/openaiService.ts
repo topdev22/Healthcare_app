@@ -32,6 +32,16 @@ interface ChatCompletionResponse {
   responseTime: number;
   tokens?: number;
   model: string;
+  extractedHealthData?: {
+    weight?: number;
+    mood?: string;
+    exercise?: string;
+    food?: string;
+    water?: number;
+    sleep?: number;
+    symptoms?: string[];
+    medications?: string[];
+  };
 }
 
 class OpenAIService {
@@ -83,6 +93,9 @@ class OpenAIService {
 
       // Analyze the response to extract metadata
       const analysis = this.analyzeResponse(request.message, aiMessage);
+      
+      // Extract health data from user message
+      const extractedHealthData = await this.extractHealthData(request.message);
 
       return {
         message: aiMessage,
@@ -92,7 +105,8 @@ class OpenAIService {
         intent: analysis.intent,
         responseTime,
         tokens: completion.usage?.total_tokens,
-        model: this.defaultModel
+        model: this.defaultModel,
+        extractedHealthData
       };
 
     } catch (error) {
@@ -274,6 +288,59 @@ class OpenAIService {
       intent: 'general_health_support',
       tokens: 0
     };
+  }
+
+  // Extract health data from user message using GPT
+  async extractHealthData(userMessage: string): Promise<{
+    weight?: number;
+    mood?: string;
+    exercise?: string;
+    food?: string;
+    water?: number;
+    sleep?: number;
+    symptoms?: string[];
+    medications?: string[];
+  }> {
+    try {
+      const extractionPrompt = `以下のユーザーメッセージから健康データを抽出してください。JSON形式で返してください。
+
+ユーザーメッセージ: "${userMessage}"
+
+抽出する項目:
+- weight: 体重（数値、例: 65.5）
+- mood: 気分（happy, sad, tired, energetic, stressed, relaxed のいずれか）
+- exercise: 運動内容（文字列、例: "ランニング30分"）
+- food: 食事内容（文字列、例: "サラダとチキン"）
+- water: 水分摂取量（数値、グラス数）
+- sleep: 睡眠時間（数値、時間）
+- symptoms: 症状（配列、例: ["頭痛", "疲労"]）
+- medications: 薬（配列、例: ["ビタミンC", "風邪薬"]）
+
+該当する情報がない場合は、そのフィールドを含めないでください。
+必ずJSONのみを返してください。`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: extractionPrompt }],
+        max_tokens: 200,
+        temperature: 0.3,
+      });
+
+      const responseText = completion.choices[0]?.message?.content || '{}';
+      
+      // Try to parse JSON response
+      try {
+        const extractedData = JSON.parse(responseText);
+        console.log('Extracted health data:', extractedData);
+        return extractedData;
+      } catch (jsonError) {
+        console.warn('Failed to parse health data extraction JSON:', responseText);
+        return {};
+      }
+    } catch (error) {
+      console.error('Health data extraction error:', error);
+      return {};
+    }
   }
 
   // Health data analysis for context

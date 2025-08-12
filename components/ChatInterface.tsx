@@ -10,6 +10,8 @@ interface Message {
   content: string;
   sender: 'user' | 'character';
   timestamp: Date;
+  healthDataExtracted?: boolean;
+  extractedData?: any;
 }
 
 interface ChatInterfaceProps {
@@ -117,6 +119,23 @@ export default function ChatInterface({
                   )}>
                     {formatTime(message.timestamp)}
                   </p>
+                  
+                  {message.healthDataExtracted && (
+                    <div className="text-xs mt-2 p-2 bg-green-100 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                      <p className="text-green-700 dark:text-green-300 font-medium">
+                        📊 健康データを自動記録しました！
+                      </p>
+                      {message.extractedData && (
+                        <div className="mt-1 text-green-600 dark:text-green-400 text-xs">
+                          {Object.entries(message.extractedData).map(([key, value]: [string, any]) => (
+                            <span key={key} className="inline-block mr-2">
+                              {key}: {Array.isArray(value) ? value.join(', ') : value}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   {message.sender === 'character' && (
                     <Button

@@ -7,6 +7,8 @@ interface Message {
   content: string;
   sender: 'user' | 'character';
   timestamp: Date;
+  healthDataExtracted?: boolean;
+  extractedData?: any;
 }
 
 export function useChat(userProfile: any) {
@@ -50,11 +52,27 @@ export function useChat(userProfile: any) {
         id: (Date.now() + 1).toString(),
         content: response.message,
         sender: 'character',
-        timestamp: new Date()
+        timestamp: new Date(),
+        healthDataExtracted: response.healthDataExtracted,
+        extractedData: response.extractedHealthData
       };
       
       setMessages(prev => [...prev, characterResponse]);
       await triggerHaptics(ImpactStyle.Light);
+
+      // Always trigger character data refresh for chat activity (experience gain)
+      console.log('💬 Chat interaction completed, refreshing character data for experience...');
+      try {
+        const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
+        triggerCharacterRefresh();
+        
+        // Show additional feedback if health data was extracted
+        if (response.healthDataExtracted) {
+          console.log('🎯 Health data also extracted from chat!');
+        }
+      } catch (error) {
+        console.warn('Failed to trigger character refresh:', error);
+      }
     } catch (error) {
       console.error('チャットエラー:', error);
       
