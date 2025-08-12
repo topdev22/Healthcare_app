@@ -1,10 +1,3 @@
-#!/usr/bin/env node
-
-/**
- * Express + MongoDB Authentication Server
- * Integrated server with all functionality in one file
- */
-
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -114,13 +107,13 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
-  console.log(`👤 User API: http://localhost:${PORT}/api/user`);
-  console.log(`💊 Health API: http://localhost:${PORT}/api/health`);
-  console.log(`💬 Chat API: http://localhost:${PORT}/api/chat`);
-  console.log(`📊 Dashboard API: http://localhost:${PORT}/api/dashboard`);
-  console.log(`🏆 Achievements API: http://localhost:${PORT}/api/achievements`);
+  // console.log(`📱 Health check: http://localhost:${PORT}/health`);
+  // console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
+  // console.log(`👤 User API: http://localhost:${PORT}/api/user`);
+  // console.log(`💊 Health API: http://localhost:${PORT}/api/health`);
+  // console.log(`💬 Chat API: http://localhost:${PORT}/api/chat`);
+  // console.log(`📊 Dashboard API: http://localhost:${PORT}/api/dashboard`);
+  // console.log(`🏆 Achievements API: http://localhost:${PORT}/api/achievements`);
 });
 
 // Graceful shutdown
