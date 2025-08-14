@@ -2,8 +2,8 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { io, Socket } from 'socket.io-client';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 // Create Axios instance
 const apiClient: AxiosInstance = axios.create({
