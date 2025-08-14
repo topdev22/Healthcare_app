@@ -176,21 +176,21 @@ export default function Index() {
 
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-3 glass h-auto space-y-2 sm:space-y-0 sm:h-14 flex justify-center items-center">
-              <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">ダッシュボード</span>
-                <span className="sm:hidden">統計</span>
+            <TabsList className="grid w-full grid-cols-3 glass h-auto p-1 sm:h-14 justify-center items-center">
+              <TabsTrigger value="dashboard" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent">
+                <BarChart3 className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
+                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">ダッシュボード</span>
+                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">統計</span>
               </TabsTrigger>
-              <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
-                <MessageCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">チャット</span>
-                <span className="sm:hidden">会話</span>
+              <TabsTrigger value="chat" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent">
+                <MessageCircle className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
+                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">チャット</span>
+                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">会話</span>
               </TabsTrigger>
-              <TabsTrigger value="progress" className="flex items-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full">
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">成長記録</span>
-                <span className="sm:hidden">成長</span>
+              <TabsTrigger value="progress" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent">
+                <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
+                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">成長記録</span>
+                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">成長</span>
               </TabsTrigger>
             </TabsList>
 
