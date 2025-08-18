@@ -19,7 +19,6 @@ interface FoodItem {
 interface FoodAnalysisResult {
   foodItems: FoodItem[];
   totalCalories: number;
-  imageUrl: string;
 }
 
 interface GeminiServiceConfig {
@@ -37,8 +36,8 @@ class GeminiService {
   constructor(config: GeminiServiceConfig = {}) {
     this.config = {
       apiKey: config.apiKey || process.env.GEMINI_API_KEY || '',
-      model: config.model || 'gemini-pro-vision',
-      maxTokens: config.maxTokens || 1000,
+      model: config.model || 'gemini-2.5-flash',
+      maxTokens: config.maxTokens || 5000,
       temperature: config.temperature || 0.3
     };
 
@@ -80,6 +79,7 @@ class GeminiService {
       
       const prompt = this.buildFoodAnalysisPrompt();
       const base64Data = this.extractBase64Data(imageData);
+    //   console.log(base64Data);
       
       const result = await this.model.generateContent([
         prompt,
@@ -96,8 +96,7 @@ class GeminiService {
       
       console.log('📝 Gemini API response received');
       
-      return this.parseFoodAnalysisResponse(text, imageData);
-      
+      return this.parseFoodAnalysisResponse(text);      
     } catch (error) {
       console.error('❌ Gemini API error:', error);
       throw new Error(`Food analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -153,18 +152,26 @@ class GeminiService {
   /**
    * Parse the Gemini API response into structured data
    */
-  private parseFoodAnalysisResponse(responseText: string, imageUrl: string): FoodAnalysisResult {
+  private parseFoodAnalysisResponse(responseText: string): FoodAnalysisResult {
     try {
+      console.log('🔍 Parsing Gemini response:', responseText.substring(0, 200) + '...');
+      
       // Clean the response text to extract JSON
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
+        console.error('❌ No JSON found in response');
         throw new Error('No JSON found in response');
       }
 
-      const parsedResult = JSON.parse(jsonMatch[0]);
+      const jsonString = jsonMatch[0];
+      console.log('📋 Extracted JSON string:', jsonString);
+      
+      const parsedResult = JSON.parse(jsonString);
+      console.log('✅ Successfully parsed JSON:', JSON.stringify(parsedResult, null, 2));
       
       // Validate the response structure
       if (!parsedResult.foodItems || !Array.isArray(parsedResult.foodItems)) {
+        console.error('❌ Invalid response structure: foodItems array missing');
         throw new Error('Invalid response structure: foodItems array missing');
       }
 
@@ -172,7 +179,7 @@ class GeminiService {
       const totalCalories = parsedResult.totalCalories || 
         parsedResult.foodItems.reduce((sum: number, item: FoodItem) => sum + (item.calories || 0), 0);
 
-      return {
+      const result: FoodAnalysisResult = {
         foodItems: parsedResult.foodItems.map((item: any) => ({
           name: item.name || 'Unknown Food',
           calories: item.calories || 0,
@@ -185,9 +192,11 @@ class GeminiService {
             fat: item.nutrition?.fat || 0
           }
         })),
-        totalCalories,
-        imageUrl
+        totalCalories
       };
+
+      console.log('🎯 Final parsed result:', JSON.stringify(result, null, 2));
+      return result;
 
     } catch (parseError) {
       console.error('❌ Failed to parse Gemini response as JSON:', parseError);
@@ -242,7 +251,6 @@ class GeminiService {
         }
       ],
       totalCalories: 483,
-      imageUrl
     };
   }
 
@@ -262,6 +270,33 @@ class GeminiService {
       configured: this.isConfigured(),
       model: 'gemini-pro-vision'
     };
+  }
+
+  /**
+   * Get raw JSON response for debugging (development only)
+   */
+  async getRawJsonResponse(imageData: string): Promise<string> {
+    try {
+      const prompt = this.buildFoodAnalysisPrompt();
+      const base64Data = this.extractBase64Data(imageData);
+      
+      const result = await this.model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: 'image/jpeg'
+          }
+        }
+      ]);
+
+      const response = await result.response;
+      return response.text();
+      
+    } catch (error) {
+      console.error('❌ Error getting raw JSON response:', error);
+      throw error;
+    }
   }
 }
 

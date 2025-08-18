@@ -8,7 +8,7 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 // Create Axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
