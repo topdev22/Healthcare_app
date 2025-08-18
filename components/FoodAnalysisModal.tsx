@@ -58,9 +58,7 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
 
     try {
       // バックエンドAPI経由で食事画像を解析
-      console.log('Analyzing image:', selectedImage);
       const result = await healthAPI.analyzeFoodImage(selectedImage);
-      console.log(result);
 
       if (result.success && result.data) {
         const analysisResult: FoodAnalysisResult = {
@@ -70,7 +68,6 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
         };
         
         setAnalysisResult(analysisResult);
-        console.log('Analysis result:', analysisResult);
       } else {
         throw new Error(result.message || 'Analysis failed');
       }
@@ -123,7 +120,10 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Button
-                  onClick={openCamera}
+                  // onClick={openCamera}
+                  onClick={() => {
+                    alert('今後、発売予定となっています。');
+                  }}
                   variant="outline"
                   className="h-24 flex flex-col items-center gap-2"
                 >

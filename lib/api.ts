@@ -218,6 +218,47 @@ export const healthAPI = {
     return response.data;
   },
 
+  // Real-time health data methods
+  // Subscribe to health data updates
+  subscribeToHealthUpdates() {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.emit('subscribe_health_updates');
+    }
+  },
+
+  // Unsubscribe from health data updates
+  unsubscribeFromHealthUpdates() {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.emit('unsubscribe_health_updates');
+    }
+  },
+
+  // Listen for health data updates
+  onHealthDataUpdate(callback: (data: any) => void) {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.on('health_data_updated', callback);
+    }
+  },
+
+  // Listen for new health logs
+  onNewHealthLog(callback: (logData: any) => void) {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.on('new_health_log', callback);
+    }
+  },
+
+  // Listen for health log updates
+  onHealthLogUpdated(callback: (logData: any) => void) {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.on('health_log_updated', callback);
+    }
+  },
+
   // Create health log
   async createHealthLog(logData: any) {
     const response = await apiClient.post('/health/logs', logData);
