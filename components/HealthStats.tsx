@@ -42,7 +42,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
      Math.max(safeRecentData.slice(0, 7).filter(d => d.weight).length, 1));
   
   const weeklyLogs = dashboardStats?.dailyHealthLogs || safeRecentData.length;
-  const waterProgress = dashboardStats ? Math.round((dashboardStats.waterIntake / dashboardStats.waterGoal) * 100) : 0;
+  const waterProgress = dashboardStats && dashboardStats.waterGoal > 0 ? Math.round((dashboardStats.waterIntake / dashboardStats.waterGoal*1000) * 100) : 0;
   
   const getMoodIcon = (mood: string) => {
     switch (mood) {
@@ -140,12 +140,12 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {dashboardStats?.currentWeight && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">現在の体重</span>
-              <span className="font-medium">{dashboardStats.currentWeight.toFixed(1)}kg</span>
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">現在の体重</span>
+            <span className="font-medium">
+              {dashboardStats?.currentWeight ? `${dashboardStats.currentWeight.toFixed(1)}kg` : '未記録'}
+            </span>
+          </div>
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">今日の記録数</span>
@@ -161,7 +161,9 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">水分摂取</span>
               <div className="flex items-center gap-2">
-                <span className="font-medium">{dashboardStats.waterIntake}/{dashboardStats.waterGoal}</span>
+                <span className="font-medium">
+                  {dashboardStats.waterIntake}/{dashboardStats.waterGoal*1000 || 0}ml
+                </span>
                 <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-health-blue transition-all duration-300"
