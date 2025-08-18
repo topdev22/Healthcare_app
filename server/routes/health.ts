@@ -223,20 +223,37 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
         const geminiService = new GeminiService();
         const analysisResult = await geminiService.analyzeFoodImage(imageData);
         
-        res.json({
+        // Ensure the response is properly formatted JSON
+        const jsonResponse = {
           success: true,
           message: 'Food analysis completed successfully',
-          data: analysisResult
-        });
+          data: {
+            foodItems: analysisResult.foodItems || [],
+            totalCalories: analysisResult.totalCalories || 0,
+            analysisTimestamp: new Date().toISOString(),
+            source: 'gemini-api'
+          }
+        };
+        
+        console.log('📊 Food analysis JSON response:', JSON.stringify(jsonResponse, null, 2));
+        res.json(jsonResponse);
+        
       } else {
         // Use fallback data if Gemini is not configured
         const fallbackResult = GeminiService.getFallbackAnalysis(imageData);
         
-        res.json({
+        const jsonResponse = {
           success: true,
           message: 'Using fallback analysis (Gemini API not configured)',
-          data: fallbackResult
-        });
+          data: {
+            ...fallbackResult,
+            analysisTimestamp: new Date().toISOString(),
+            source: 'fallback-data'
+          }
+        };
+        
+        console.log('📊 Fallback analysis JSON response:', JSON.stringify(jsonResponse, null, 2));
+        res.json(jsonResponse);
       }
     } catch (apiError) {
       console.error('Food analysis error:', apiError);
@@ -244,11 +261,19 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
       // Fallback to mock data if API fails
       const fallbackResult = GeminiService.getFallbackAnalysis(imageData);
       
-      res.json({
+      const jsonResponse = {
         success: true,
         message: 'Using fallback analysis due to API error',
-        data: fallbackResult
-      });
+        data: {
+          ...fallbackResult,
+          analysisTimestamp: new Date().toISOString(),
+          source: 'error-fallback',
+          error: apiError instanceof Error ? apiError.message : 'Unknown error'
+        }
+      };
+      
+      console.log('📊 Error fallback JSON response:', JSON.stringify(jsonResponse, null, 2));
+      res.json(jsonResponse);
     }
   } catch (error) {
     console.error('Analyze food error:', error);
@@ -278,6 +303,47 @@ router.get('/gemini-status', authenticateToken, async (req: any, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Failed to check Gemini service status' 
+    });
+  }
+});
+
+// Debug endpoint to get raw JSON response (development only)
+router.post('/analyze-food-debug', authenticateToken, upload.single('image'), async (req: any, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'No image file provided' 
+      });
+    }
+
+    if (!GeminiService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Gemini API is not configured'
+      });
+    }
+
+    const imageBase64 = req.file.buffer.toString('base64');
+    const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
+
+    const geminiService = new GeminiService();
+    const rawResponse = await geminiService.getRawJsonResponse(imageData);
+    
+    res.json({
+      success: true,
+      message: 'Raw JSON response from Gemini API',
+      data: {
+        rawResponse,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Debug analysis error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get raw JSON response',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

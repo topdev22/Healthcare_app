@@ -60,6 +60,7 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
       // バックエンドAPI経由で食事画像を解析
       console.log('Analyzing image:', selectedImage);
       const result = await healthAPI.analyzeFoodImage(selectedImage);
+      console.log(result);
 
       if (result.success && result.data) {
         const analysisResult: FoodAnalysisResult = {
