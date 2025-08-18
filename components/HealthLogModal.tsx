@@ -9,26 +9,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Scale, Smile, Utensils, Save, Loader2 } from 'lucide-react';
 import { healthAPI } from '@/lib/api';
 import { triggerCharacterRefresh } from '@/lib/characterHelpers';
+import { 
+  HealthLogFormData, 
+  MoodType 
+} from '@/shared/types/health';
+import { 
+  transformFormDataToApiRequests, 
+  validateFormData, 
+  getMoodEmoji, 
+  getMoodLabel 
+} from '@/lib/healthHelpers';
 
 interface HealthLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: HealthLogData) => void;
-}
-
-interface HealthLogData {
-  weight?: number;
-  mood: string;
-  energy: number;
-  sleep: number;
-  water: number;
-  notes?: string;
-  foodItems?: string[];
+  onSave: (data: HealthLogFormData) => void;
 }
 
 export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogModalProps) {
-  const [logData, setLogData] = useState<HealthLogData>({
-    mood: 'neutral',
+  const [logData, setLogData] = useState<HealthLogFormData>({
+    weight: undefined,
+    height: undefined,
+    bmi: undefined,
+    bmr: undefined,
+    calories: undefined,
+    tdee: undefined,
+    mood: 'neutral' as MoodType,
     energy: 5,
     sleep: 8,
     water: 8,
@@ -40,44 +46,19 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const moodOptions = [
-    { value: 'excited', label: '興奮', emoji: '🤩' },
-    { value: 'happy', label: '幸せ', emoji: '😊' },
-    { value: 'neutral', label: '普通', emoji: '😐' },
-    { value: 'sad', label: '悲しい', emoji: '😢' },
-    { value: 'anxious', label: '不安', emoji: '😰' },
+  const moodOptions: Array<{ value: MoodType; label: string; emoji: string }> = [
+    { value: 'excited', label: getMoodLabel('excited'), emoji: getMoodEmoji('excited') },
+    { value: 'happy', label: getMoodLabel('happy'), emoji: getMoodEmoji('happy') },
+    { value: 'neutral', label: getMoodLabel('neutral'), emoji: getMoodEmoji('neutral') },
+    { value: 'sad', label: getMoodLabel('sad'), emoji: getMoodEmoji('sad') },
+    { value: 'anxious', label: getMoodLabel('anxious'), emoji: getMoodEmoji('anxious') },
   ];
 
-  // Simple calorie estimation based on common Japanese foods
-  const estimateFoodCalories = (foodName: string): number => {
-    const lowerFood = foodName.toLowerCase();
-    
-    // Rice and grains
-    if (lowerFood.includes('ご飯') || lowerFood.includes('米')) return 250;
-    if (lowerFood.includes('パン') || lowerFood.includes('bread')) return 200;
-    if (lowerFood.includes('麺') || lowerFood.includes('うどん') || lowerFood.includes('ラーメン')) return 300;
-    
-    // Proteins
-    if (lowerFood.includes('肉') || lowerFood.includes('チキン') || lowerFood.includes('鶏')) return 200;
-    if (lowerFood.includes('魚') || lowerFood.includes('サーモン') || lowerFood.includes('鮭')) return 150;
-    if (lowerFood.includes('卵') || lowerFood.includes('たまご')) return 80;
-    
-    // Vegetables and salads
-    if (lowerFood.includes('サラダ') || lowerFood.includes('野菜')) return 50;
-    if (lowerFood.includes('果物') || lowerFood.includes('フルーツ')) return 60;
-    
-    // Common dishes
-    if (lowerFood.includes('カレー')) return 400;
-    if (lowerFood.includes('寿司')) return 250;
-    if (lowerFood.includes('弁当')) return 500;
-    
-    // Default estimate
-    return 150;
-  };
+
 
   const resetForm = () => {
     setLogData({
-      mood: 'neutral',
+      mood: 'neutral' as MoodType,
       energy: 5,
       sleep: 8,
       water: 8,
@@ -88,146 +69,25 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
     setSuccessMessage(null);
   };
 
-  const validateForm = () => {
-    const errors = [];
-    
-    if (logData.weight && (logData.weight < 20 || logData.weight > 300)) {
-      errors.push('体重は20kgから300kgの間で入力してください');
-    }
-    
-    if (logData.sleep < 0 || logData.sleep > 24) {
-      errors.push('睡眠時間は0時間から24時間の間で入力してください');
-    }
-    
-    if (logData.water < 0 || logData.water > 20) {
-      errors.push('水分摂取は0杯から20杯の間で入力してください');
-    }
-    
-    if (logData.energy < 1 || logData.energy > 10) {
-      errors.push('エネルギーレベルは1から10の間で入力してください');
-    }
-
-    // Validate food items
-    if (logData.foodItems && logData.foodItems.length > 0) {
-      const invalidFoodItems = logData.foodItems.filter(item => 
-        !item || item.trim().length === 0 || item.trim().length > 100
-      );
-      if (invalidFoodItems.length > 0) {
-        errors.push('食事内容は1文字以上100文字以下で入力してください');
-      }
-    }
-
-    // Validate notes length
-    if (logData.notes && logData.notes.length > 500) {
-      errors.push('追加メモは500文字以下で入力してください');
-    }
-    
-    return errors;
-  };
-
   const handleSave = async () => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     // Validate form data
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join('\n'));
+    const validation = validateFormData(logData);
+    if (!validation.isValid) {
+      setError(validation.errors.join('\n'));
       setIsLoading(false);
       return;
     }
 
     try {
-      // Save different types of health logs to the backend
-      const promises = [];
-
-      // Save weight if provided
-      if (logData.weight) {
-        promises.push(
-          healthAPI.createHealthLog({
-            type: 'weight',
-            title: '体重記録',
-            data: { weight: logData.weight },
-            date: new Date().toISOString()
-          })
-        );
-      }
-
-      // Save mood
-      promises.push(
-        healthAPI.createHealthLog({
-          type: 'mood',
-          title: '気分記録',
-          data: { 
-            mood: logData.mood,
-            energy: logData.energy
-          },
-          date: new Date().toISOString()
-        })
-      );
-
-      // Save sleep
-      promises.push(
-        healthAPI.createHealthLog({
-          type: 'sleep',
-          title: '睡眠記録',
-          data: { hours: logData.sleep },
-          date: new Date().toISOString()
-        })
-      );
-
-      // Save water intake (convert glasses to ml)
-      promises.push(
-        healthAPI.createHealthLog({
-          type: 'water',
-          title: '水分補給記録',
-          data: { 
-            amount: logData.water * 250, // Convert glasses to ml (1 glass = 250ml)
-            unit: 'ml',
-            glasses: logData.water
-          },
-          date: new Date().toISOString()
-        })
-      );
-
-      // Save food items if any
-      if (logData.foodItems && logData.foodItems.length > 0) {
-        for (const foodItem of logData.foodItems) {
-          // Estimate calories based on common foods (basic estimation)
-          const estimatedCalories = estimateFoodCalories(foodItem);
-          
-          promises.push(
-            healthAPI.createHealthLog({
-              type: 'food',
-              title: '食事記録',
-              description: foodItem,
-              data: { 
-                name: foodItem,
-                hasPhoto: false,
-                calories: estimatedCalories,
-                meal: 'other' // Could be enhanced to detect meal type
-              },
-              date: new Date().toISOString()
-            })
-          );
-        }
-      }
-
-      // Save notes as a general health log if provided
-      if (logData.notes && logData.notes.trim()) {
-        promises.push(
-          healthAPI.createHealthLog({
-            type: 'other',
-            title: '健康メモ',
-            description: logData.notes,
-            data: {},
-            date: new Date().toISOString()
-          })
-        );
-      }
+      // Transform form data to API requests
+      const requests = transformFormDataToApiRequests(logData);
 
       // Execute all API calls
+      const promises = requests.map(request => healthAPI.createHealthLog(request));
       const results = await Promise.all(promises);
 
       // Show success message
@@ -369,7 +229,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
               
               <RadioGroup
                 value={logData.mood}
-                onValueChange={(value) => setLogData(prev => ({ ...prev, mood: value }))}
+                onValueChange={(value) => setLogData(prev => ({ ...prev, mood: value as MoodType }))}
                 className="grid grid-cols-1 gap-3"
               >
                 {moodOptions.map((option) => (

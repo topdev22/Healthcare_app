@@ -58,20 +58,21 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
 
     try {
       // バックエンドAPI経由で食事画像を解析
+      console.log('Analyzing image:', selectedImage);
       const result = await healthAPI.analyzeFoodImage(selectedImage);
 
-      const analysisResult: FoodAnalysisResult = {
-        foodItems: result.foodItems || [
-          { name: 'ご飯', calories: 268, confidence: 0.95 },
-          { name: '鮭の塩焼き', calories: 180, confidence: 0.88 },
-          { name: '味噌汁', calories: 35, confidence: 0.92 },
-          { name: 'サラダ', calories: 45, confidence: 0.85 }
-        ],
-        totalCalories: result.totalCalories || 528,
-        imageUrl: imagePreview
-      };
-
-      setAnalysisResult(analysisResult);
+      if (result.success && result.data) {
+        const analysisResult: FoodAnalysisResult = {
+          foodItems: result.data.foodItems || [],
+          totalCalories: result.data.totalCalories || 0,
+          imageUrl: imagePreview
+        };
+        
+        setAnalysisResult(analysisResult);
+        console.log('Analysis result:', analysisResult);
+      } else {
+        throw new Error(result.message || 'Analysis failed');
+      }
     } catch (err) {
       console.error('食事画像解析エラー:', err);
       setError('画像の解析に失敗しました。別の画像を試してください。');
