@@ -60,18 +60,17 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
       // バックエンドAPI経由で食事画像を解析
       const result = await healthAPI.analyzeFoodImage(selectedImage);
 
-      const analysisResult: FoodAnalysisResult = {
-        foodItems: result.foodItems || [
-          { name: 'ご飯', calories: 268, confidence: 0.95 },
-          { name: '鮭の塩焼き', calories: 180, confidence: 0.88 },
-          { name: '味噌汁', calories: 35, confidence: 0.92 },
-          { name: 'サラダ', calories: 45, confidence: 0.85 }
-        ],
-        totalCalories: result.totalCalories || 528,
-        imageUrl: imagePreview
-      };
-
-      setAnalysisResult(analysisResult);
+      if (result.success && result.data) {
+        const analysisResult: FoodAnalysisResult = {
+          foodItems: result.data.foodItems || [],
+          totalCalories: result.data.totalCalories || 0,
+          imageUrl: imagePreview
+        };
+        
+        setAnalysisResult(analysisResult);
+      } else {
+        throw new Error(result.message || 'Analysis failed');
+      }
     } catch (err) {
       console.error('食事画像解析エラー:', err);
       setError('画像の解析に失敗しました。別の画像を試してください。');
@@ -121,7 +120,10 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Button
-                  onClick={openCamera}
+                  // onClick={openCamera}
+                  onClick={() => {
+                    alert('今後、発売予定となっています。');
+                  }}
                   variant="outline"
                   className="h-24 flex flex-col items-center gap-2"
                 >

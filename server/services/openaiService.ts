@@ -11,6 +11,7 @@ interface HealthContext {
     height?: number;
     activityLevel?: string;
     healthGoals?: string[];
+    weight?: number;
   };
   currentMood?: string;
   conversationHistory?: any[];
@@ -125,14 +126,25 @@ class OpenAIService {
 
   private buildSystemPrompt(healthContext?: HealthContext, userName?: string): string {
     const name = userName || 'ユーザー';
+    const age = healthContext?.userProfile?.age || 0;
+    const gender = healthContext?.userProfile?.gender || '';
+    const height = healthContext?.userProfile?.height || 0;
+    const weight = healthContext?.userProfile?.weight || 0;
+    const activityLevel = healthContext?.userProfile?.activityLevel || '';
+    const healthGoals = healthContext?.userProfile?.healthGoals || [];
+    const recentHealthLogs = healthContext?.recentHealthLogs || [];
+    const currentMood = healthContext?.currentMood || '';
     
     let systemPrompt = `あなたは健康管理アプリの親しみやすいAIアシスタントです。以下の特徴を持ってください：
 
 **基本性格:**
+-${name}様の年齢は${age}歳で、性別は${gender}です。身長は${height}cm 体重は ${weight}kg 最近の活動レベルは${activityLevel}、健康目標は${healthGoals}、最近の健康ログは${recentHealthLogs}、現在の気分状態は${currentMood}です。
+上記のデータを参照してください。
 - 温かく親しみやすい口調で日本語で応答
 - ${name}さんの健康目標達成を全力でサポート
 - 励ましと共感の気持ちを込めて対話
-- 医療アドバイスではなく、一般的な健康情報の提供に留める
+- 医療的な助言を含む、一般的な健康情報提供を含む豊富なデータを提供してください。
+
 
 **対応分野:**
 - 体重管理・ダイエット

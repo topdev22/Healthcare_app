@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Scale, Smile, Camera } from 'lucide-react';
+import { Heart, Scale, Smile, Camera, RefreshCw } from 'lucide-react';
 import { MoodIcons } from '@/components/CharacterFaces';
 import { cn } from '@/lib/utils';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useRealTimeHealthData } from '@/hooks/useRealTimeHealthData';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface HealthData {
@@ -22,27 +22,29 @@ interface HealthStatsProps {
 
 export default function HealthStats({ recentData: overrideRecentData, onLogHealth, onTakePhoto }: HealthStatsProps) {
   const { currentUser } = useAuth();
-  const { dashboardStats, loading } = useDashboard(currentUser);
+  const { 
+    realTimeStats, 
+    todayData, 
+    recentData, 
+    loading, 
+    error, 
+    lastUpdate, 
+    refreshData,
+    simulateUpdate
+  } = useRealTimeHealthData(currentUser);
   
-  // Use override data or transform dashboard stats to expected format
-  const recentData = overrideRecentData || (dashboardStats ? [{
-    weight: dashboardStats.currentWeight,
-    mood: dashboardStats.currentMood,
-    calories: dashboardStats.dailyCalories,
-    date: new Date().toISOString()
-  }] : []);
+  // Use override data or real-time data
+  const displayData = overrideRecentData || recentData;
+  const today = todayData || displayData[0];
   
-  // Ensure recentData is always an array
-  const safeRecentData = Array.isArray(recentData) ? recentData : [];
-  const today = safeRecentData[0];
+  // Calculate statistics from real-time data
+  const weekAvg = realTimeStats?.currentWeight || 
+    (displayData.slice(0, 7).reduce((acc, day) => acc + (day.weight || 0), 0) / 
+     Math.max(displayData.slice(0, 7).filter(d => d.weight).length, 1));
   
-  // Calculate statistics from dashboard data if available
-  const weekAvg = dashboardStats?.currentWeight || 
-    (safeRecentData.slice(0, 7).reduce((acc, day) => acc + (day.weight || 0), 0) / 
-     Math.max(safeRecentData.slice(0, 7).filter(d => d.weight).length, 1));
-  
-  const weeklyLogs = dashboardStats?.dailyHealthLogs || safeRecentData.length;
-  const waterProgress = dashboardStats ? Math.round((dashboardStats.waterIntake / dashboardStats.waterGoal) * 100) : 0;
+  const weeklyLogs = realTimeStats?.dailyHealthLogs || displayData.length;
+  const waterProgress = realTimeStats && realTimeStats.waterGoal > 0 ? 
+    Math.round((realTimeStats.waterIntake / realTimeStats.waterGoal) * 100) : 0;
   
   const getMoodIcon = (mood: string) => {
     switch (mood) {
@@ -66,7 +68,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
     }
   };
 
-  if (loading && !dashboardStats) {
+  if (loading && !realTimeStats) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[...Array(2)].map((_, i) => (
@@ -88,7 +90,40 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4">
+      {/* Real-time indicator and refresh button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-sm text-muted-foreground">
+            リアルタイム更新中 - 最終更新: {lastUpdate.toLocaleTimeString()}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refreshData}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            更新
+          </button>
+          <button
+            onClick={simulateUpdate}
+            className="flex items-center gap-2 px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          >
+            🧪 テスト更新
+          </button>
+        </div>
+      </div>
+      
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Today's Stats */}
       <Card>
         <CardHeader className="pb-3">
@@ -140,12 +175,12 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {dashboardStats?.currentWeight && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">現在の体重</span>
-              <span className="font-medium">{dashboardStats.currentWeight.toFixed(1)}kg</span>
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">現在の体重</span>
+            <span className="font-medium">
+              {realTimeStats?.currentWeight ? `${realTimeStats.currentWeight.toFixed(1)}kg` : '未記録'}
+            </span>
+          </div>
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">今日の記録数</span>
@@ -154,14 +189,16 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">連続記録</span>
-            <span className="font-medium">{dashboardStats?.currentStreak || 0}日</span>
+            <span className="font-medium">{realTimeStats?.currentStreak || 0}日</span>
           </div>
 
-          {dashboardStats && (
+          {realTimeStats && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">水分摂取</span>
               <div className="flex items-center gap-2">
-                <span className="font-medium">{dashboardStats.waterIntake}/{dashboardStats.waterGoal}</span>
+                <span className="font-medium">
+                  {realTimeStats.waterIntake}/{realTimeStats.waterGoal || 0}ml
+                </span>
                 <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-health-blue transition-all duration-300"
@@ -195,6 +232,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
           </button>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
