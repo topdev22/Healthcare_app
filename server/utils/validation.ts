@@ -1,11 +1,24 @@
 // Validation schemas and utilities
+import { 
+  HealthLogType, 
+  MoodType, 
+  MealType, 
+  ExerciseIntensity,
+  BaseHealthLogData,
+  HealthLogDataUnion,
+  WeightLogData,
+  MoodLogData,
+  SleepLogData,
+  WaterLogData,
+  FoodLogData,
+  ExerciseLogData,
+  MedicationLogData,
+  OtherLogData,
+  ValidationResult
+} from '../../shared/types/health';
 
-export interface HealthLogSchema {
-  type: string;
-  title: string;
-  description?: string;
-  data?: any;
-  date?: string;
+export interface HealthLogSchema extends BaseHealthLogData {
+  data: HealthLogDataUnion;
 }
 
 export interface FoodDataSchema {
@@ -27,11 +40,104 @@ export interface UserProfileSchema {
   healthGoals?: string[];
 }
 
-export const validateHealthLog = (data: any): { isValid: boolean; errors: string[] } => {
+// Validate specific health log data based on type
+export const validateHealthLogData = (type: HealthLogType, data: any): ValidationResult => {
   const errors: string[] = [];
 
+  switch (type) {
+    case 'weight':
+      if (typeof data.weight !== 'number' || data.weight < 20 || data.weight > 300) {
+        errors.push('Weight must be a number between 20 and 300 kg');
+      }
+      break;
+
+    case 'mood':
+      const validMoods: MoodType[] = ['excited', 'happy', 'neutral', 'sad', 'anxious'];
+      if (!validMoods.includes(data.mood)) {
+        errors.push('Mood must be one of: excited, happy, neutral, sad, anxious');
+      }
+      if (typeof data.energy !== 'number' || data.energy < 1 || data.energy > 10) {
+        errors.push('Energy must be a number between 1 and 10');
+      }
+      break;
+
+    case 'sleep':
+      if (typeof data.hours !== 'number' || data.hours < 0 || data.hours > 24) {
+        errors.push('Sleep hours must be a number between 0 and 24');
+      }
+      break;
+
+    case 'water':
+      if (typeof data.amount !== 'number' || data.amount < 0) {
+        errors.push('Water amount must be a positive number');
+      }
+      if (data.unit && !['ml', 'oz', 'cups'].includes(data.unit)) {
+        errors.push('Water unit must be one of: ml, oz, cups');
+      }
+      break;
+
+    case 'food':
+      if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+        errors.push('Food name is required and cannot be empty');
+      }
+      if (typeof data.calories !== 'number' || data.calories < 0) {
+        errors.push('Calories must be a non-negative number');
+      }
+      const validMeals: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack', 'other'];
+      if (data.meal && !validMeals.includes(data.meal)) {
+        errors.push('Meal must be one of: breakfast, lunch, dinner, snack, other');
+      }
+      break;
+
+    case 'exercise':
+      if (!data.exerciseType || typeof data.exerciseType !== 'string') {
+        errors.push('Exercise type is required and must be a string');
+      }
+      if (typeof data.duration !== 'number' || data.duration <= 0) {
+        errors.push('Duration must be a positive number');
+      }
+      const validIntensities: ExerciseIntensity[] = ['low', 'moderate', 'high', 'very_high'];
+      if (data.intensity && !validIntensities.includes(data.intensity)) {
+        errors.push('Intensity must be one of: low, moderate, high, very_high');
+      }
+      break;
+
+    case 'medication':
+      if (!data.medicationName || typeof data.medicationName !== 'string') {
+        errors.push('Medication name is required and must be a string');
+      }
+      if (!data.dosage || typeof data.dosage !== 'string') {
+        errors.push('Dosage is required and must be a string');
+      }
+      break;
+
+    case 'other':
+      // Allow flexible data for other types
+      break;
+
+    default:
+      errors.push('Invalid health log type');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+export const validateHealthLog = (data: any): ValidationResult => {
+  const errors: string[] = [];
+
+  // Validate basic required fields
   if (!data.type || typeof data.type !== 'string') {
     errors.push('Type is required and must be a string');
+    return { isValid: false, errors };
+  }
+
+  const validTypes: HealthLogType[] = ['food', 'exercise', 'water', 'weight', 'medication', 'mood', 'sleep', 'other'];
+  if (!validTypes.includes(data.type as HealthLogType)) {
+    errors.push('Invalid health log type');
+    return { isValid: false, errors };
   }
 
   if (!data.title || typeof data.title !== 'string') {
@@ -40,6 +146,12 @@ export const validateHealthLog = (data: any): { isValid: boolean; errors: string
 
   if (data.date && isNaN(Date.parse(data.date))) {
     errors.push('Date must be a valid ISO string');
+  }
+
+  // Validate data field based on type
+  if (data.data) {
+    const dataValidation = validateHealthLogData(data.type as HealthLogType, data.data);
+    errors.push(...dataValidation.errors);
   }
 
   return {
@@ -114,13 +226,95 @@ export const validateUserProfile = (data: any): { isValid: boolean; errors: stri
 
 // Sanitize data to prevent injection attacks
 export const sanitizeHealthLogData = (data: any): HealthLogSchema => {
-  return {
-    type: String(data.type || '').trim(),
+  const sanitized: any = {
+    type: String(data.type || '').trim() as HealthLogType,
     title: String(data.title || '').trim(),
     description: data.description ? String(data.description).trim() : undefined,
-    data: data.data || {},
-    date: data.date ? String(data.date).trim() : undefined
+    date: data.date ? String(data.date).trim() : new Date().toISOString()
   };
+
+  // Sanitize data field based on type
+  const type = sanitized.type as HealthLogType;
+  const logData = data.data || {};
+
+  switch (type) {
+    case 'weight':
+      sanitized.data = {
+        weight: Number(logData.weight) || 0,
+        bmi: logData.bmi ? Number(logData.bmi) : undefined,
+        bodyFat: logData.bodyFat ? Number(logData.bodyFat) : undefined
+      };
+      break;
+
+    case 'mood':
+      sanitized.data = {
+        mood: String(logData.mood || 'neutral').trim() as MoodType,
+        energy: Number(logData.energy) || 5,
+        stress: logData.stress ? Number(logData.stress) : undefined,
+        notes: logData.notes ? String(logData.notes).trim() : undefined
+      };
+      break;
+
+    case 'sleep':
+      sanitized.data = {
+        hours: Number(logData.hours) || 8,
+        quality: logData.quality ? Number(logData.quality) : undefined,
+        bedTime: logData.bedTime ? String(logData.bedTime).trim() : undefined,
+        wakeTime: logData.wakeTime ? String(logData.wakeTime).trim() : undefined
+      };
+      break;
+
+    case 'water':
+      sanitized.data = {
+        amount: Number(logData.amount) || 0,
+        unit: String(logData.unit || 'ml').trim(),
+        glasses: logData.glasses ? Number(logData.glasses) : undefined
+      };
+      break;
+
+    case 'food':
+      sanitized.data = {
+        name: String(logData.name || '').trim(),
+        calories: Number(logData.calories) || 0,
+        nutrition: logData.nutrition || {},
+        meal: String(logData.meal || 'other').trim() as MealType,
+        hasPhoto: Boolean(logData.hasPhoto),
+        imageUrl: logData.imageUrl ? String(logData.imageUrl).trim() : undefined,
+        portion: logData.portion ? String(logData.portion).trim() : undefined
+      };
+      break;
+
+    case 'exercise':
+      sanitized.data = {
+        exerciseType: String(logData.exerciseType || '').trim(),
+        duration: Number(logData.duration) || 0,
+        intensity: String(logData.intensity || 'moderate').trim() as ExerciseIntensity,
+        caloriesBurned: logData.caloriesBurned ? Number(logData.caloriesBurned) : undefined,
+        notes: logData.notes ? String(logData.notes).trim() : undefined
+      };
+      break;
+
+    case 'medication':
+      sanitized.data = {
+        medicationName: String(logData.medicationName || '').trim(),
+        dosage: String(logData.dosage || '').trim(),
+        time: String(logData.time || '').trim(),
+        notes: logData.notes ? String(logData.notes).trim() : undefined
+      };
+      break;
+
+    case 'other':
+    default:
+      sanitized.data = {
+        category: logData.category ? String(logData.category).trim() : undefined,
+        value: logData.value,
+        notes: logData.notes ? String(logData.notes).trim() : undefined,
+        ...logData // Allow additional fields for flexibility
+      };
+      break;
+  }
+
+  return sanitized as HealthLogSchema;
 };
 
 export const sanitizeFoodData = (data: any): FoodDataSchema => {

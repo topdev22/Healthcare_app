@@ -62,6 +62,7 @@ export function useDashboard(currentUser: any) {
       setError(null);
 
       const response = await dashboardAPI.getDashboardStats();
+      console.log('Dashboard stats:', response.data);
       if (response.success) {
         setDashboardStats(response.data);
       }

@@ -2,13 +2,13 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { io, Socket } from 'socket.io-client';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 // Create Axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -216,6 +216,47 @@ export const healthAPI = {
       params: { limit, offset }
     });
     return response.data;
+  },
+
+  // Real-time health data methods
+  // Subscribe to health data updates
+  subscribeToHealthUpdates() {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.emit('subscribe_health_updates');
+    }
+  },
+
+  // Unsubscribe from health data updates
+  unsubscribeFromHealthUpdates() {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.emit('unsubscribe_health_updates');
+    }
+  },
+
+  // Listen for health data updates
+  onHealthDataUpdate(callback: (data: any) => void) {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.on('health_data_updated', callback);
+    }
+  },
+
+  // Listen for new health logs
+  onNewHealthLog(callback: (logData: any) => void) {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.on('new_health_log', callback);
+    }
+  },
+
+  // Listen for health log updates
+  onHealthLogUpdated(callback: (logData: any) => void) {
+    const socket = socketManager.getSocket();
+    if (socket) {
+      socket.on('health_log_updated', callback);
+    }
   },
 
   // Create health log
