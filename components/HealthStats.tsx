@@ -92,7 +92,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
   return (
     <div className="space-y-4">
       {/* Real-time indicator and refresh button */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span className="text-sm text-muted-foreground">
@@ -115,7 +115,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
             🧪 テスト更新
           </button>
         </div>
-      </div>
+      </div> */}
       
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">

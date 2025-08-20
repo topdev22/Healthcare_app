@@ -17,7 +17,7 @@
     "dev:full": "concurrently \"npm run dev:server\" \"npm run dev\"",
     "build": "vite build",
     "build:server": "tsc --project tsconfig.server.json",
-    "start:server": "node dist/server/server.js",
+    "start:server": "cd dist/server && node -r dotenv/config server.js dotenv_config_path=../.env",
     "preview": "vite preview",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
@@ -26,7 +26,7 @@
     "build:mobile": "npm run build && npx cap sync",
     "android": "npx cap run android",
     "ios": "npx cap run ios",
-    "android:dev": "npx cap run android --livereload --external",
+    "android:dev": "npx cap run android --live-reload",
     "ios:dev": "npx cap run ios --livereload --external"
   },
   "dependencies": {
@@ -53,6 +53,8 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "openai": "^5.12.0",
+    "react-webcam": "^7.2.0",
+    "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "zod": "^3.23.8"
   },

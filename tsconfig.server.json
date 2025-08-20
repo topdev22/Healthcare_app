@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "CommonJS",
     "lib": ["ES2022"],
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
@@ -12,15 +12,15 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "outDir": "./dist/server",
-    "rootDir": "./server",
+    "outDir": "./dist",
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["node"]
   },
   "include": [
-    "server/**/*"
+    "server/**/*",
+    "shared/**/*"
   ],
   "exclude": [
     "node_modules",

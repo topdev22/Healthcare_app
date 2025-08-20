@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
@@ -12,6 +14,14 @@ import achievementRoutes from './routes/achievements';
 
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 const PORT = process.env.PORT || 8000;
 
 console.log('🔄 Starting server...');
@@ -74,6 +84,60 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/achievements', achievementRoutes);
 
+// Socket.IO event handlers
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id);
+  
+  // Handle authentication
+  socket.on('authenticate', (token) => {
+    // TODO: Implement token verification
+    console.log('🔐 Socket authentication attempt:', socket.id);
+  });
+  
+  // Handle health data subscriptions
+  socket.on('subscribe_health_updates', () => {
+    socket.join('health_updates');
+    console.log('📊 Client subscribed to health updates:', socket.id);
+  });
+  
+  socket.on('unsubscribe_health_updates', () => {
+    socket.leave('health_updates');
+    console.log('📊 Client unsubscribed from health updates:', socket.id);
+  });
+  
+  // Handle chat room management
+  socket.on('join_room', (roomId) => {
+    socket.join(roomId);
+    console.log('💬 Client joined room:', roomId, socket.id);
+  });
+  
+  socket.on('leave_room', (roomId) => {
+    socket.leave(roomId);
+    console.log('💬 Client left room:', roomId, socket.id);
+  });
+  
+  // Handle chat messages
+  socket.on('chat_message', (data) => {
+    socket.to(data.roomId).emit('chat_message', {
+      ...data,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle typing indicators
+  socket.on('typing', (data) => {
+    socket.to(data.roomId).emit('user_typing', {
+      userId: socket.id,
+      isTyping: data.isTyping
+    });
+  });
+  
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected:', socket.id);
+  });
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
@@ -105,8 +169,9 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Start server
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔌 Socket.IO server ready`);
   // console.log(`📱 Health check: http://localhost:${PORT}/health`);
   // console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
   // console.log(`👤 User API: http://localhost:${PORT}/api/user`);

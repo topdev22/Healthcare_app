@@ -369,7 +369,7 @@ export const sanitizeUserProfile = (data: any): UserProfileSchema => {
   
   if (data.healthGoals !== undefined && data.healthGoals !== null && Array.isArray(data.healthGoals)) {
     sanitized.healthGoals = data.healthGoals
-      .filter(goal => goal !== null && goal !== undefined && goal !== '')
+      .filter((goal: any) => goal !== null && goal !== undefined && goal !== '')
       .map((goal: any) => String(goal).trim());
   }
 
