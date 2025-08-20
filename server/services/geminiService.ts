@@ -29,7 +29,7 @@ interface GeminiServiceConfig {
 }
 
 class GeminiService {
-  private genAI: GoogleGenerativeAI;
+  private genAI!: GoogleGenerativeAI;
   private model: any;
   private config: Required<GeminiServiceConfig>;
 
