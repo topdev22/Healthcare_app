@@ -650,7 +650,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'weight_management',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -663,7 +664,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'nutrition_guidance',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -676,7 +678,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'exercise_support',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -689,7 +692,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'mental_health_support',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -702,7 +706,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'sleep_guidance',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -715,7 +720,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'hydration_guidance',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -729,7 +735,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'greeting',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -742,7 +749,8 @@ function generateHealthResponse(message: string, userContext: any) {
       intent: 'appreciation',
       responseTime,
       tokens: 0,
-      model: 'fallback-health-assistant'
+      model: 'fallback-health-assistant',
+      extractedHealthData: undefined
     };
   }
 
@@ -755,7 +763,8 @@ function generateHealthResponse(message: string, userContext: any) {
     intent: 'general_health_support',
     responseTime,
     tokens: 0,
-    model: 'fallback-health-assistant'
+    model: 'fallback-health-assistant',
+    extractedHealthData: undefined
   };
 }
 

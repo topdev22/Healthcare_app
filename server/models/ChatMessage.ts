@@ -209,8 +209,9 @@ chatMessageSchema.index({ content: 'text' });
 // Soft delete - don't return deleted messages by default
 chatMessageSchema.pre(/^find/, function() {
   // Only apply filter if deletedAt is not explicitly queried
-  if (!this.getQuery().deletedAt) {
-    this.where({ deletedAt: { $exists: false } });
+  const query = (this as any).getQuery();
+  if (!query.deletedAt) {
+    (this as any).where({ deletedAt: { $exists: false } });
   }
 });
 
