@@ -106,7 +106,7 @@ export default function ChatInterface({
               >
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-lg p-3 text-sm",
+                    "max-w-[90%] rounded-lg p-3 text-sm",
                     message.sender === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground border'
