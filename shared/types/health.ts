@@ -65,6 +65,7 @@ export interface ExerciseLogData {
   duration: number; // in minutes
   intensity: ExerciseIntensity;
   caloriesBurned?: number;
+  steps?: number; // number of steps taken
   notes?: string;
 }
 

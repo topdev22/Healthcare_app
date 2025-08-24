@@ -29,6 +29,9 @@ const config: CapacitorConfig = {
       resize: KeyboardResize.Body,
       style: KeyboardStyle.Dark,
       resizeOnFullScreen: true
+    },
+    Motion: {
+      interval: 100 // Update interval in milliseconds (10Hz for step detection)
     }
   }
 };
