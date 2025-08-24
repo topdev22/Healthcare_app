@@ -29,6 +29,8 @@ export interface IDashboardStats extends Document {
   // Exercise and activity
   exerciseMinutes: number;
   exerciseGoal: number;
+  dailySteps: number; // number of steps taken today
+  stepsGoal: number; // daily steps goal
   waterIntake: number; // in glasses/liters
   waterGoal: number;
   
@@ -156,6 +158,16 @@ const dashboardStatsSchema = new Schema<IDashboardStats>({
   exerciseGoal: {
     type: Number,
     default: 30,
+    min: 0
+  },
+  dailySteps: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  stepsGoal: {
+    type: Number,
+    default: 10000,
     min: 0
   },
   waterIntake: {

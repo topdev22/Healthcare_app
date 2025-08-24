@@ -191,6 +191,10 @@ async function calculateDashboardStats(userId: string, date: Date) {
     .filter(log => log.type === 'exercise')
     .reduce((sum, log) => sum + ((log.data as any)?.duration || 0), 0);
 
+  const dailySteps = todayLogs
+    .filter(log => log.type === 'exercise')
+    .reduce((sum, log) => sum + ((log.data as any)?.steps || 0), 0);
+
   const waterIntake = todayLogs
     .filter(log => log.type === 'water')
     .reduce((sum, log) => sum + ((log.data as any)?.amount || 0), 0);
@@ -265,6 +269,8 @@ async function calculateDashboardStats(userId: string, date: Date) {
     currentWeight,
     exerciseMinutes,
     exerciseGoal: 30,
+    dailySteps,
+    stepsGoal: 10000,
     waterIntake,
     waterGoal: 8,
     sleepHours,
