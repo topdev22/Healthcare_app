@@ -1,16 +1,45 @@
 import express from 'express';
+import multer from 'multer';
 import { authenticateToken } from '../middleware/auth';
 import HealthLog from '../models/HealthLog';
 import { checkAndUpdateAchievements } from './achievements';
+import GeminiService from '../services/geminiService';
 import { 
   validateHealthLog, 
   validateFoodData, 
   sanitizeHealthLogData, 
   sanitizeFoodData 
 } from '../utils/validation';
+import { 
+  HealthLogResponse, 
+  HealthLogsResponse, 
+  HealthStatsResponse,
+  CreateHealthLogRequest 
+} from '../../shared/types/health';
 
 
 const router = express.Router();
+
+// Configure multer for food image upload
+const storage = multer.memoryStorage(); // Store in memory for processing
+
+const fileFilter = (req: any, file: any, cb: any) => {
+  const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for food images
+  }
+});
 
 // Get health logs
 router.get('/logs', authenticateToken, async (req: any, res) => {
@@ -34,16 +63,17 @@ router.get('/logs', authenticateToken, async (req: any, res) => {
 
     const totalCount = await HealthLog.countDocuments(query);
 
-    res.json({
+    const response: HealthLogsResponse = {
       success: true,
-      data: logs,
+      data: logs as any[],
       pagination: {
         total: totalCount,
         limit,
         offset,
         hasMore: offset + limit < totalCount
       }
-    });
+    };
+    res.json(response);
   } catch (error) {
     console.error('Get health logs error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -96,10 +126,11 @@ router.post('/logs', authenticateToken, async (req: any, res) => {
       // Don't fail the health log creation if achievement check fails
     }
 
-    res.status(201).json({
+    const response: HealthLogResponse = {
       success: true,
-      data: healthLog
-    });
+      data: healthLog as any
+    };
+    res.status(201).json(response);
   } catch (error) {
     console.error('Create health log error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -130,10 +161,11 @@ router.put('/logs/:id', authenticateToken, async (req: any, res) => {
       return res.status(404).json({ message: 'Health log not found' });
     }
 
-    res.json({
+    const response: HealthLogResponse = {
       success: true,
-      data: updatedLog
-    });
+      data: updatedLog as any
+    };
+    res.json(response);
   } catch (error) {
     console.error('Update health log error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -166,38 +198,153 @@ router.delete('/logs/:id', authenticateToken, async (req: any, res) => {
 });
 
 // Analyze food image (placeholder)
-router.post('/analyze-food', authenticateToken, async (req: any, res) => {
+router.post('/analyze-food', authenticateToken, upload.single('image'), async (req: any, res) => {
   try {
-    // Placeholder for food image analysis
-    // In a real implementation, you would integrate with:
-    // - Google Vision API
-    // - AWS Rekognition
-    // - Custom ML model
-    // - Food recognition service like Edamam or Spoonacular
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'No image file provided' 
+      });
+    }
 
+    console.log('Received image file:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
+
+    // Convert image buffer to base64 for API calls
+    const imageBase64 = req.file.buffer.toString('base64');
+    const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
+
+    // Use GeminiService for food analysis
+    try {
+      if (GeminiService.isConfigured()) {
+        const geminiService = new GeminiService();
+        const analysisResult = await geminiService.analyzeFoodImage(imageData);
+        
+        // Ensure the response is properly formatted JSON
+        const jsonResponse = {
+          success: true,
+          message: 'Food analysis completed successfully',
+          data: {
+            foodItems: analysisResult.foodItems || [],
+            totalCalories: analysisResult.totalCalories || 0,
+            analysisTimestamp: new Date().toISOString(),
+            source: 'gemini-api'
+          }
+        };
+        
+        console.log('📊 Food analysis JSON response:', JSON.stringify(jsonResponse, null, 2));
+        res.json(jsonResponse);
+        
+      } else {
+        // Use fallback data if Gemini is not configured
+        const fallbackResult = GeminiService.getFallbackAnalysis(imageData);
+        
+        const jsonResponse = {
+          success: true,
+          message: 'Using fallback analysis (Gemini API not configured)',
+          data: {
+            ...fallbackResult,
+            analysisTimestamp: new Date().toISOString(),
+            source: 'fallback-data'
+          }
+        };
+        
+        console.log('📊 Fallback analysis JSON response:', JSON.stringify(jsonResponse, null, 2));
+        res.json(jsonResponse);
+      }
+    } catch (apiError) {
+      console.error('Food analysis error:', apiError);
+      
+      // Fallback to mock data if API fails
+      const fallbackResult = GeminiService.getFallbackAnalysis(imageData);
+      
+      const jsonResponse = {
+        success: true,
+        message: 'Using fallback analysis due to API error',
+        data: {
+          ...fallbackResult,
+          analysisTimestamp: new Date().toISOString(),
+          source: 'error-fallback',
+          error: apiError instanceof Error ? apiError.message : 'Unknown error'
+        }
+      };
+      
+      console.log('📊 Error fallback JSON response:', JSON.stringify(jsonResponse, null, 2));
+      res.json(jsonResponse);
+    }
+  } catch (error) {
+    console.error('Analyze food error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Internal server error' 
+    });
+  }
+});
+
+// Get Gemini service status
+router.get('/gemini-status', authenticateToken, async (req: any, res) => {
+  try {
+    const status = GeminiService.getStatus();
+    
     res.json({
       success: true,
-      message: 'Food analysis endpoint - AI integration needed',
       data: {
-        detectedFoods: [
-          {
-            name: 'Apple',
-            confidence: 0.95,
-            calories: 52,
-            nutrition: {
-              carbs: 14,
-              fiber: 2.4,
-              sugars: 10,
-              protein: 0.3,
-              fat: 0.2
-            }
-          }
-        ]
+        ...status,
+        message: status.configured 
+          ? 'Gemini API is properly configured' 
+          : 'Gemini API is not configured. Using fallback data.'
       }
     });
   } catch (error) {
-    console.error('Analyze food error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Gemini status check error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to check Gemini service status' 
+    });
+  }
+});
+
+// Debug endpoint to get raw JSON response (development only)
+router.post('/analyze-food-debug', authenticateToken, upload.single('image'), async (req: any, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'No image file provided' 
+      });
+    }
+
+    if (!GeminiService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Gemini API is not configured'
+      });
+    }
+
+    const imageBase64 = req.file.buffer.toString('base64');
+    const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
+
+    const geminiService = new GeminiService();
+    const rawResponse = await geminiService.getRawJsonResponse(imageData);
+    
+    res.json({
+      success: true,
+      message: 'Raw JSON response from Gemini API',
+      data: {
+        rawResponse,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Debug analysis error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get raw JSON response',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -233,10 +380,11 @@ router.post('/food', authenticateToken, async (req: any, res) => {
 
     await foodLog.save();
 
-    res.status(201).json({
+    const response: HealthLogResponse = {
       success: true,
-      data: foodLog
-    });
+      data: foodLog as any
+    };
+    res.status(201).json(response);
   } catch (error) {
     console.error('Save food data error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -263,9 +411,9 @@ router.get('/nutrition/:foodId', authenticateToken, async (req: any, res) => {
       success: true,
       data: {
         id: foodLog._id,
-        name: foodLog.data.name,
-        calories: foodLog.data.calories,
-        nutrition: foodLog.data.nutrition,
+        name: (foodLog.data as any).name,
+        calories: (foodLog.data as any).calories,
+        nutrition: (foodLog.data as any).nutrition,
         date: foodLog.date
       }
     });
@@ -312,11 +460,11 @@ router.get('/stats', authenticateToken, async (req: any, res) => {
     const weightLogs = healthLogs.filter(log => log.type === 'weight');
 
     // Calculate recent mood
-    const recentMood = moodLogs.length > 0 ? moodLogs[0].data?.mood || 'neutral' : 'neutral';
+    const recentMood = moodLogs.length > 0 ? (moodLogs[0].data as any)?.mood || 'neutral' : 'neutral';
 
     // Calculate average weight
     const averageWeight = weightLogs.length > 0 
-      ? weightLogs.reduce((sum, log) => sum + (log.data?.weight || 0), 0) / weightLogs.length
+      ? weightLogs.reduce((sum, log) => sum + ((log.data as any)?.weight || 0), 0) / weightLogs.length
       : undefined;
 
     // Calculate today's water intake
@@ -325,12 +473,12 @@ router.get('/stats', authenticateToken, async (req: any, res) => {
       new Date(log.date).toDateString() === today
     );
     const waterIntake = todayWaterLogs.reduce((sum, log) => 
-      sum + (log.data?.amount || 0), 0
+      sum + ((log.data as any)?.amount || 0), 0
     );
 
     // Get recent sleep hours
     const recentSleepLog = sleepLogs[0];
-    const sleepHours = recentSleepLog?.data?.hours;
+    const sleepHours = (recentSleepLog?.data as any)?.hours;
 
     // Calculate streak
     let streak = 0;
@@ -354,7 +502,7 @@ router.get('/stats', authenticateToken, async (req: any, res) => {
       }
     }
 
-    res.json({
+    const response: HealthStatsResponse = {
       success: true,
       data: {
         totalLogs,
@@ -366,9 +514,10 @@ router.get('/stats', authenticateToken, async (req: any, res) => {
         sleepHours,
         streak,
         period,
-        healthLogs: healthLogs.slice(0, 20) // Return recent 20 logs for frontend processing
+        healthLogs: healthLogs.slice(0, 20) as any[] // Return recent 20 logs for frontend processing
       }
-    });
+    };
+    res.json(response);
 
   } catch (error) {
     console.error('Get health stats error:', error);
@@ -399,10 +548,11 @@ router.post('/water', authenticateToken, async (req: any, res) => {
 
     await waterLog.save();
 
-    res.status(201).json({
+    const response: HealthLogResponse = {
       success: true,
-      data: waterLog
-    });
+      data: waterLog as any
+    };
+    res.status(201).json(response);
   } catch (error) {
     console.error('Track water error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -434,10 +584,11 @@ router.post('/exercise', authenticateToken, async (req: any, res) => {
 
     await exerciseLog.save();
 
-    res.status(201).json({
+    const response: HealthLogResponse = {
       success: true,
-      data: exerciseLog
-    });
+      data: exerciseLog as any
+    };
+    res.status(201).json(response);
   } catch (error) {
     console.error('Track exercise error:', error);
     res.status(500).json({ message: 'Internal server error' });

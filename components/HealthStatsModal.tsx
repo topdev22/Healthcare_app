@@ -116,11 +116,11 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
 
   const getMoodName = (mood: string) => {
     const names = {
-      happy: 'Happy',
-      excited: 'Excited',
-      neutral: 'Neutral',
-      anxious: 'Anxious',
-      sad: 'Sad'
+      happy: '嬉しい',
+      excited: '興奮',
+      neutral: '普通',
+      anxious: '不安',
+      sad: '悲しい'
     };
     return names[mood as keyof typeof names] || mood;
   };
@@ -150,10 +150,10 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-health-blue" />
-            Health Statistics
+            健康統計
           </DialogTitle>
           <DialogDescription>
-            View detailed analysis and trends of your health data
+            健康データの詳細分析とトレンドを確認
           </DialogDescription>
         </DialogHeader>
 
@@ -174,11 +174,11 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
           </div>
 
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="weight">Weight</TabsTrigger>
-              <TabsTrigger value="mood">Mood</TabsTrigger>
-              <TabsTrigger value="calories">Calories</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 h-auto md:h-12 sm:h-10">
+              <TabsTrigger value="overview">概要</TabsTrigger>
+              <TabsTrigger value="weight">体重</TabsTrigger>
+              <TabsTrigger value="mood">気分</TabsTrigger>
+              <TabsTrigger value="calories">カロリー</TabsTrigger>
             </TabsList>
 
             {/* 概要タブ */}
@@ -188,18 +188,18 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-primary" />
-                      Recording Status
+                      記録状況
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-primary">{statistics.daysWithData}</div>
-                        <div className="text-xs text-muted-foreground">Days Recorded</div>
+                        <div className="text-xs text-muted-foreground">記録日数</div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-semibold">{statistics.consistency.toFixed(1)}%</div>
-                        <div className="text-xs text-muted-foreground">Consistency</div>
+                        <div className="text-xs text-muted-foreground">継続率</div>
                       </div>
                     </div>
                   </CardContent>
@@ -209,7 +209,7 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Target className="w-4 h-4 text-health-green" />
-                      Main Mood
+                      主要気分
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -222,7 +222,7 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                       </div>
                       <div className="font-semibold">{getMoodName(statistics.mostCommonMood)}</div>
                       <div className="text-xs text-muted-foreground">
-                        Most common mood in {getPeriodName(selectedPeriod)}
+                        {getPeriodName(selectedPeriod)}で最も多い気分
                       </div>
                     </div>
                   </CardContent>
@@ -232,20 +232,20 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Activity className="w-4 h-4 text-health-blue" />
-                      Averages
+                      平均値
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       {statistics.weightStats && (
                         <div className="flex justify-between">
-                          <span className="text-xs text-muted-foreground">Weight</span>
+                          <span className="text-xs text-muted-foreground">体重</span>
                           <span className="text-sm font-medium">{statistics.weightStats.average.toFixed(1)}kg</span>
                         </div>
                       )}
                       {statistics.calorieStats && (
                         <div className="flex justify-between">
-                          <span className="text-xs text-muted-foreground">Calories</span>
+                          <span className="text-xs text-muted-foreground">カロリー</span>
                           <span className="text-sm font-medium">{Math.round(statistics.calorieStats.average)}kcal</span>
                         </div>
                       )}
@@ -257,14 +257,14 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
               {/* 簡易チャート */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Recent 7-Day Trends</CardTitle>
+                  <CardTitle className="text-lg">最近7日間のトレンド</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {/* 体重チャート */}
                     {statistics.weightStats && (
                       <div>
-                        <h4 className="text-sm font-medium mb-2">Weight Changes</h4>
+                        <h4 className="text-sm font-medium mb-2">体重変化</h4>
                         <div className="flex items-end gap-2 h-20">
                           {chartData.map((data, index) => (
                             <div key={index} className="flex-1 flex flex-col items-center">
@@ -295,13 +295,13 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Weight Statistics</CardTitle>
+                      <CardTitle className="text-lg">体重統計</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="text-center p-3 bg-muted rounded-lg">
                           <div className="text-lg font-bold">{statistics.weightStats.average.toFixed(1)}kg</div>
-                          <div className="text-xs text-muted-foreground">Average Weight</div>
+                          <div className="text-xs text-muted-foreground">平均体重</div>
                         </div>
                         <div className="text-center p-3 bg-muted rounded-lg">
                           <div className="text-lg font-bold flex items-center justify-center gap-1">
@@ -312,21 +312,21 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                             ) : null}
                             {Math.abs(statistics.weightStats.trend).toFixed(1)}kg
                           </div>
-                          <div className="text-xs text-muted-foreground">Change</div>
+                          <div className="text-xs text-muted-foreground">変化</div>
                         </div>
                       </div>
                       
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span className="text-sm">Maximum</span>
+                          <span className="text-sm">最大値</span>
                           <span className="font-medium">{statistics.weightStats.max}kg</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm">Minimum</span>
+                          <span className="text-sm">最小値</span>
                           <span className="font-medium">{statistics.weightStats.min}kg</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm">Range</span>
+                          <span className="text-sm">範囲</span>
                           <span className="font-medium">{(statistics.weightStats.max - statistics.weightStats.min).toFixed(1)}kg</span>
                         </div>
                       </div>
@@ -335,14 +335,14 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
 
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Goal Comparison</CardTitle>
+                      <CardTitle className="text-lg">目標比較</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-center space-y-4">
                         <div className="text-4xl">🎯</div>
                         <p className="text-sm text-muted-foreground">
-                          Set a target weight in your profile settings<br />
-                          to see progress tracking here
+                          プロフィール設定で目標体重を設定すると<br />
+                          ここで進捗を追跡できます
                         </p>
                       </div>
                     </CardContent>
@@ -353,8 +353,8 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                   <CardContent className="text-center py-8">
                     <div className="text-4xl mb-4">📊</div>
                     <p className="text-muted-foreground">
-                      No weight data has been recorded yet.<br />
-                      Try recording your weight in the health log!
+                      まだ体重データが記録されていません。<br />
+                      健康ログで体重を記録してみてください！
                     </p>
                   </CardContent>
                 </Card>
@@ -365,7 +365,7 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
             <TabsContent value="mood" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Mood Distribution</CardTitle>
+                  <CardTitle className="text-lg">気分分布</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -397,27 +397,27 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Calorie Statistics</CardTitle>
+                      <CardTitle className="text-lg">カロリー統計</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="text-center p-3 bg-muted rounded-lg">
                           <div className="text-lg font-bold">{Math.round(statistics.calorieStats.average)}</div>
-                          <div className="text-xs text-muted-foreground">Avg kcal/day</div>
+                          <div className="text-xs text-muted-foreground">平均kcal/日</div>
                         </div>
                         <div className="text-center p-3 bg-muted rounded-lg">
                           <div className="text-lg font-bold">{statistics.calorieStats.total.toLocaleString()}</div>
-                          <div className="text-xs text-muted-foreground">Total kcal</div>
+                          <div className="text-xs text-muted-foreground">総kcal</div>
                         </div>
                       </div>
                       
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span className="text-sm">Max Intake</span>
+                          <span className="text-sm">最大摂取量</span>
                           <span className="font-medium">{statistics.calorieStats.max}kcal</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm">Min Intake</span>
+                          <span className="text-sm">最小摂取量</span>
                           <span className="font-medium">{statistics.calorieStats.min}kcal</span>
                         </div>
                       </div>
@@ -426,14 +426,14 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
 
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Calorie Goals</CardTitle>
+                      <CardTitle className="text-lg">カロリー目標</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-center space-y-4">
                         <div className="text-4xl">🔥</div>
                         <p className="text-sm text-muted-foreground">
-                          Set a target calorie goal in your profile settings<br />
-                          to see progress tracking here
+                          プロフィール設定でカロリー目標を設定すると<br />
+                          ここで進捗を追跡できます
                         </p>
                       </div>
                     </CardContent>
@@ -444,8 +444,8 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
                   <CardContent className="text-center py-8">
                     <div className="text-4xl mb-4">🍽️</div>
                     <p className="text-muted-foreground">
-                      No calorie data has been recorded yet.<br />
-                      Try recording calories from your meal logs!
+                      まだカロリーデータが記録されていません。<br />
+                      食事ログからカロリーを記録してみてください！
                     </p>
                   </CardContent>
                 </Card>

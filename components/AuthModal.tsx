@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { initializeGoogleAuth } from "@/lib/auth";
-import { Loader2, Mail, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { Loader2, Mail, AlertCircle, WifiOff } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -230,7 +230,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           {/* Google Login Button */}
           <Button
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
+            disabled={true}
             className="w-full flex items-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             {isLoading ? (
@@ -270,7 +270,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </div>
 
           <Tabs defaultValue="login" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 h-14 md:h-12 sm:h-10">
+            <TabsList className="grid w-full grid-cols-2 h-auto md:h-12 sm:h-10">
               <TabsTrigger value="login" disabled={isLoading}>
                 ログイン
               </TabsTrigger>

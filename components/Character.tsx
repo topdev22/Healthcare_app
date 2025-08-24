@@ -147,7 +147,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
             key={i}
             className={cn(
               "absolute w-2 h-2 bg-character-primary/20 rounded-full",
-              "animate-pulse",
+              "animate-bounce",
               i % 2 === 0 ? "float" : ""
             )}
             style={{
