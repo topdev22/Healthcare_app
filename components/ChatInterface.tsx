@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChatBubble } from '@/components/ui/chat-bubble';
 
 interface Message {
   id: string;
@@ -63,9 +64,7 @@ export default function ChatInterface({
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+
 
   return (
     <Card className="h-[500px] flex flex-col">
@@ -87,9 +86,9 @@ export default function ChatInterface({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col p-4 space-y-4 h-[800px] overflow-y-auto">
+      <CardContent className="flex-1 flex flex-col p-2 space-y-4 h-[1100px] overflow-y-auto">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-4 px-2 py-4 h-[1000px]">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <p>健康バディとの会話を始めましょう！</p>
@@ -97,72 +96,32 @@ export default function ChatInterface({
             </div>
           ) : (
             messages.map((message) => (
-              <div
+              <ChatBubble
                 key={message.id}
-                className={cn(
-                  "flex",
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-lg p-3 text-sm",
-                    message.sender === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground border'
-                  )}
-                >
-                  <p>{message.content}</p>
-                  <p className={cn(
-                    "text-xs mt-1 opacity-70",
-                    message.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground/70'
-                  )}>
-                    {formatTime(message.timestamp)}
-                  </p>
-                  
-                  {message.healthDataExtracted && (
-                    <div className="text-xs mt-2 p-2 bg-green-100 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-                      <p className="text-green-700 dark:text-green-300 font-medium">
-                        📊 健康データを自動記録しました！
-                      </p>
-                      {message.extractedData && (
-                        <div className="mt-1 text-green-600 dark:text-green-400 text-xs">
-                          {Object.entries(message.extractedData).map(([key, value]: [string, any]) => (
-                            <span key={key} className="inline-block mr-2">
-                              {key}: {Array.isArray(value) ? value.join(', ') : value}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {message.sender === 'character' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => speakMessage(message.content)}
-                      className="mt-1 p-1 h-auto opacity-50 hover:opacity-100"
-                    >
-                      <Volume2 className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+                content={message.content}
+                sender={message.sender}
+                timestamp={message.timestamp}
+                healthDataExtracted={message.healthDataExtracted}
+                extractedData={message.extractedData}
+                onSpeak={message.sender === 'character' ? () => speakMessage(message.content) : undefined}
+                enableStreaming={message.sender === 'character'}
+              />
             ))
           )}
           
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-muted rounded-lg p-3 text-sm text-muted-foreground border">
+              <div className="relative max-w-[85%] lg:max-w-[75%] rounded-2xl px-4 py-3 bg-muted text-muted-foreground border border-border/50 shadow-sm rounded-bl-md">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
-                  <span>{characterName}が考えています...</span>
+                  <span className="text-sm">{characterName}が考えています...</span>
                 </div>
+                {/* Bubble tail */}
+                <div className="absolute left-0 bottom-0 w-3 h-3 border-8 border-transparent border-r-muted border-b-muted border-r-8 border-b-8 transform -translate-x-1 translate-y-1" />
               </div>
             </div>
           )}

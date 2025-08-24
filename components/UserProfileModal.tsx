@@ -164,7 +164,6 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
         updateData.healthGoals = formData.healthGoals.filter(goal => goal && goal.trim() !== '');
       }
 
-      // console.log('Processed update data:', updateData);
 
       // Ensure we have at least displayName to update
       if (Object.keys(updateData).length === 0) {

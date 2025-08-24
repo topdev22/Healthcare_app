@@ -1,154 +1,154 @@
-# ヘルスバディ フロントエンド
+# Health Buddy - Health Management Application
 
-GPT-4を活用した健康管理アプリのフロントエンド部分です。React + TypeScript + Viteで構築されています。
+A comprehensive health management application with AI-powered chat assistance, built with React, TypeScript, and OpenAI GPT-4 integration. The application provides personalized health tracking, nutrition analysis, and AI-driven wellness advice.
 
-## 🚀 機能
+## 🌟 Features
 
-- **認証システム**: Google OAuth, メール/パスワード認証
-- **健康データ記録**: 体重、気分、食事、運動記録
-- **AI チャット**: GPT-4による健康アドバイス
-- **食事画像解析**: 写真からのカロリー自動計算
-- **統計表示**: 健康データの詳細な分析とグラフ
-- **キャラクター育成**: 継続的な記録でキャラクターが成長
-- **モバイル対応**: レスポンシブデザイン
+- **Authentication System**: Google OAuth, email/password authentication
+- **Health Data Recording**: Weight, mood, diet, and exercise tracking
+- **AI Chat Assistant**: GPT-4 powered health advice and support
+- **Food Image Analysis**: Automatic calorie calculation from photos
+- **Statistics Dashboard**: Detailed health data analysis and charts
+- **Character Growth System**: Character development through consistent health logging
+- **Mobile Responsive**: Cross-platform mobile application
 
-## 📋 前提条件
+## 📋 Prerequisites
 
 - Node.js 18+ 
-- バックエンドAPI サーバー（別途セットアップが必要）
+- Backend API server (separate setup required)
 
-## 🛠️ セットアップ
+## 🛠️ Setup
 
-1. **依存関��のインストール**
+1. **Install Dependencies**
 ```bash
 npm install
 ```
 
-2. **環境変数の設定**
+2. **Environment Variables Setup**
 ```bash
 cp .env.example .env
 ```
 
-`.env`ファイルを編集して以下を設定：
+Edit the `.env` file and configure the following:
 ```env
 VITE_API_BASE_URL=http://localhost:3001/api
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
-3. **開発サーバーの起動**
+3. **Start Development Server**
 ```bash
 npm run dev
 ```
 
-アプリケーションは http://localhost:8080 で起動します。
+The application will start at http://localhost:8080.
 
-## 🏗️ ビルド
+## 🏗️ Build
 
-本番用ビルド:
+Production build:
 ```bash
 npm run build
 ```
 
-ビルドされたファイルは `dist` フォルダに出力されます。
+Built files will be output to the `dist` folder.
 
-## 📡 バックエンドAPI要件
+## 📡 Backend API Requirements
 
-フロントエンドは以下のAPIエンドポイントを期待します：
+The frontend expects the following API endpoints:
 
-### 認証 (`/auth`)
-- `POST /auth/google` - Google OAuth認証
-- `POST /auth/login` - メールログイン
-- `POST /auth/register` - ユーザー登録
-- `POST /auth/logout` - ログアウト
-- `GET /auth/me` - 現在のユーザー情報
+### Authentication (`/auth`)
+- `POST /auth/google` - Google OAuth authentication
+- `POST /auth/login` - Email login
+- `POST /auth/register` - User registration
+- `POST /auth/logout` - Logout
+- `GET /auth/me` - Current user information
 
-### ユーザー (`/user`)
-- `GET /user/profile` - プロフィール取得
-- `PUT /user/profile` - プロフィール更新
+### User (`/user`)
+- `GET /user/profile` - Get profile
+- `PUT /user/profile` - Update profile
 
-### 健康データ (`/health`)
-- `GET /health/logs` - 健康ログ一覧
-- `POST /health/logs` - 健康ログ作成
-- `POST /health/analyze-food` - 食事画像解析
-- `POST /health/food` - 食事データ保存
+### Health Data (`/health`)
+- `GET /health/logs` - Health logs list
+- `POST /health/logs` - Create health log
+- `POST /health/analyze-food` - Food image analysis
+- `POST /health/food` - Save food data
 
-### チャット (`/chat`)
-- `POST /chat/message` - GPTとのチャット
-- `GET /chat/history` - チャット履歴
+### Chat (`/chat`)
+- `POST /chat/message` - GPT chat
+- `GET /chat/history` - Chat history
 
-### 統計 (`/stats`)
-- `GET /stats/health` - 健康統計データ
+### Statistics (`/stats`)
+- `GET /stats/health` - Health statistics data
 
-## 🎨 技術スタック
+## 🎨 Technology Stack
 
-- **React 18** - UIライブラリ
-- **TypeScript** - 型安全性
-- **Vite** - 高速ビルドツール
-- **TailwindCSS** - スタイリング
-- **Radix UI** - アクセシブルなUI コンポーネント
-- **React Router** - ルーティング
-- **React Query** - サーバー状態管理
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Fast build tool
+- **TailwindCSS** - Styling
+- **Radix UI** - Accessible UI components
+- **React Router** - Routing
+- **React Query** - Server state management
 
-## 📁 プロジェクト構造
+## 📁 Project Structure
 
 ```
 client/
-├── components/          # 再利用可能なコンポーネント
-│   ├── ui/             # 基本UIコンポーネント（shadcn/ui）
-│   ├── Character.tsx   # キャラクターコンポーネント
+├── components/          # Reusable components
+│   ├── ui/             # Basic UI components (shadcn/ui)
+│   ├── Character.tsx   # Character component
 │   ├── ChatInterface.tsx
 │   └── ...
 ├── contexts/           # React Context
 │   └── AuthContext.tsx
-├── lib/               # ユーティリティ
-│   ├── api.ts         # API通信関数
+├── lib/               # Utilities
+│   ├── api.ts         # API communication functions
 │   └── utils.ts
-├── pages/             # ページコンポーネント
-│   ├── Index.tsx      # メインページ
+├── pages/             # Page components
+│   ├── Index.tsx      # Main page
 │   └── NotFound.tsx
-├── App.tsx            # アプリケーションルート
-└── global.css         # グローバルスタイル
+├── App.tsx            # Application root
+└── global.css         # Global styles
 ```
 
-## 🔧 設定
+## 🔧 Configuration
 
-### 環境変数
+### Environment Variables
 
-| 変���名 | 説明 | 必須 |
-|--------|------|------|
-| `VITE_API_BASE_URL` | バックエンドAPIのベースURL | はい |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth クライアントID | はい |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_API_BASE_URL` | Backend API base URL | Yes |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID | Yes |
 
-### プロキシ設定
+### Proxy Configuration
 
-開発環境では、Viteが自動的に `/api` へのリクエストをバックエンドサーバーにプロキシします。
+In development environment, Vite automatically proxies requests to `/api` to the backend server.
 
-## 🚀 デプロイ
+## 🚀 Deployment
 
 ### Netlify
-1. リポジトリを接続
-2. ビルドコマンド: `npm run build`
-3. 公開ディレクトリ: `dist`
-4. 環境変数を設定
+1. Connect repository
+2. Build command: `npm run build`
+3. Publish directory: `dist`
+4. Set environment variables
 
 ### Vercel
-1. プロジェクトをインポート
-2. フレームワークプリセット: Vite
-3. 環境変数を設定
+1. Import project
+2. Framework preset: Vite
+3. Set environment variables
 
-## 📱 モバイル対応
+## 📱 Mobile Support
 
-- レスポンシブデザイン
-- タッチフレンドリーなUI
-- モバイル最適化されたフォントサイズ
-- PWA対応（将来実装予定）
+- Responsive design
+- Touch-friendly UI
+- Mobile-optimized font sizes
+- PWA support (planned for future implementation)
 
-## 🧪 テスト
+## 🧪 Testing
 
 ```bash
 npm test
 ```
 
-## 📄 ライセンス
+## 📄 License
 
 MIT License

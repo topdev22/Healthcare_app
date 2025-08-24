@@ -185,15 +185,15 @@ async function calculateDashboardStats(userId: string, date: Date) {
   // Calculate today's metrics
   const dailyCalories = todayLogs
     .filter(log => log.type === 'food')
-    .reduce((sum, log) => sum + (log.data?.calories || 0), 0);
+    .reduce((sum, log) => sum + ((log.data as any)?.calories || 0), 0);
 
   const exerciseMinutes = todayLogs
     .filter(log => log.type === 'exercise')
-    .reduce((sum, log) => sum + (log.data?.minutes || 0), 0);
+    .reduce((sum, log) => sum + ((log.data as any)?.duration || 0), 0);
 
   const waterIntake = todayLogs
     .filter(log => log.type === 'water')
-    .reduce((sum, log) => sum + (log.data?.amount || 0), 0);
+    .reduce((sum, log) => sum + ((log.data as any)?.amount || 0), 0);
 
   // Get current weight
   const weightLogs = await HealthLog.find({
@@ -201,15 +201,15 @@ async function calculateDashboardStats(userId: string, date: Date) {
     type: 'weight'
   }).sort({ date: -1 }).limit(1).lean();
   
-  const currentWeight = weightLogs[0]?.data?.weight;
+  const currentWeight = (weightLogs[0]?.data as any)?.weight;
 
   // Get current mood
   const moodLogs = todayLogs.filter(log => log.type === 'mood');
-  const currentMood = moodLogs[0]?.data?.mood || 'neutral';
+  const currentMood = (moodLogs[0]?.data as any)?.mood || 'neutral';
 
   // Get sleep data
   const sleepLogs = todayLogs.filter(log => log.type === 'sleep');
-  const sleepHours = sleepLogs[0]?.data?.hours;
+  const sleepHours = (sleepLogs[0]?.data as any)?.hours;
 
   // Calculate health level
   const healthLevel = calculateHealthLevel({
@@ -246,7 +246,7 @@ async function calculateDashboardStats(userId: string, date: Date) {
 
   // Count food photos
   const foodPhotos = todayLogs.filter(log => 
-    log.type === 'food' && log.data?.hasPhoto
+    log.type === 'food' && (log.data as any)?.hasPhoto
   ).length;
 
   // Create or update dashboard stats

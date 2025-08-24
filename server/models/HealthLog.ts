@@ -1,11 +1,23 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { 
+  HealthLogType, 
+  HealthLogDataUnion,
+  WeightLogData,
+  MoodLogData,
+  SleepLogData,
+  WaterLogData,
+  FoodLogData,
+  ExerciseLogData,
+  MedicationLogData,
+  OtherLogData
+} from '../../shared/types/health';
 
 export interface IHealthLog extends Document {
   userId: mongoose.Types.ObjectId;
-  type: 'food' | 'exercise' | 'water' | 'weight' | 'medication' | 'mood' | 'sleep' | 'other';
+  type: HealthLogType;
   title: string;
   description?: string;
-  data: any; // Flexible data structure for different log types
+  data: HealthLogDataUnion;
   date: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -20,7 +32,7 @@ const healthLogSchema = new Schema<IHealthLog>({
   },
   type: {
     type: String,
-    enum: ['food', 'exercise', 'water', 'weight', 'medication', 'mood', 'sleep', 'other'],
+    enum: ['food', 'exercise', 'water', 'weight', 'medication', 'mood', 'sleep', 'other'] as HealthLogType[],
     required: true,
     index: true
   },
