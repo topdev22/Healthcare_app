@@ -52,7 +52,7 @@ class OpenAIService {
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
     console.log('apiKey', apiKey);
-    
+
     if (!apiKey || apiKey === 'your_openai_api_key_here') {
       console.warn('⚠️  OPENAI_API_KEY not configured. Add your OpenAI API key to .env file:');
       console.warn('   OPENAI_API_KEY=sk-your-actual-api-key-here');
@@ -72,7 +72,7 @@ class OpenAIService {
 
   async generateChatResponse(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
     const startTime = Date.now();
-    
+
     try {
       const systemPrompt = this.buildSystemPrompt(request.healthContext, request.userName);
       const userMessage = this.buildUserMessage(request.message, request.healthContext);
@@ -90,11 +90,11 @@ class OpenAIService {
       });
 
       const responseTime = Date.now() - startTime;
-      const aiMessage = completion.choices[0]?.message?.content || '申し訳ございませんが、お返事できませんでした。もう一度お試しください。';
+      const aiMessage = completion.choices[0]?.message?.content || 'すまない、返事できなかった。もう一度試してくれる？';
 
       // Analyze the response to extract metadata
       const analysis = this.analyzeResponse(request.message, aiMessage);
-      
+
       // Extract health data from user message
       const extractedHealthData = await this.extractHealthData(request.message);
 
@@ -112,10 +112,10 @@ class OpenAIService {
 
     } catch (error) {
       console.error('OpenAI API error:', error);
-      
+
       // Fallback to a health-focused response if OpenAI fails
       const fallbackResponse = this.getFallbackResponse(request.message, request.userName);
-      
+
       return {
         ...fallbackResponse,
         responseTime: Date.now() - startTime,
@@ -134,16 +134,16 @@ class OpenAIService {
     const healthGoals = healthContext?.userProfile?.healthGoals || [];
     const recentHealthLogs = healthContext?.recentHealthLogs || [];
     const currentMood = healthContext?.currentMood || '';
-    
-    let systemPrompt = `あなたは健康管理アプリの親しみやすいAIアシスタントです。以下の特徴を持ってください：
+
+    let systemPrompt = `あなたは健康管理アプリの親しみやすいAIアシスタントだ。以下の特徴を持って：
 
 **基本性格:**
--${name}様の年齢は${age}歳で、性別は${gender}です。身長は${height}cm 体重は ${weight}kg 最近の活動レベルは${activityLevel}、健康目標は${healthGoals}、最近の健康ログは${recentHealthLogs}、現在の気分状態は${currentMood}です。
-上記のデータを参照してください。
+-${name}の年齢は${age}歳で、性別は${gender}だ。身長は${height}cm 体重は ${weight}kg 最近の活動レベルは${activityLevel}、健康目標は${healthGoals}、最近の健康ログは${recentHealthLogs}、現在の気分状態は${currentMood}だ。
+上記のデータを参照して。
 - 温かく親しみやすい口調で日本語で応答
-- ${name}さんの健康目標達成を全力でサポート
+- ${name}の健康目標達成を全力でサポート
 - 励ましと共感の気持ちを込めて対話
-- 医療的な助言を含む、一般的な健康情報提供を含む豊富なデータを提供してください。
+- 医療的な助言を含む、一般的な健康情報を豊富に提供して。
 
 
 **対応分野:**
@@ -163,8 +163,8 @@ class OpenAIService {
     // Add health context if available
     if (healthContext?.userProfile) {
       const profile = healthContext.userProfile;
-      systemPrompt += `\n\n**${name}さんのプロフィール:**`;
-      
+      systemPrompt += `\n\n**${name}のプロフィール:**`;
+
       if (profile.age) systemPrompt += `\n- 年齢: ${profile.age}歳`;
       if (profile.gender) systemPrompt += `\n- 性別: ${profile.gender}`;
       if (profile.height) systemPrompt += `\n- 身長: ${profile.height}cm`;
@@ -177,7 +177,7 @@ class OpenAIService {
     // Add recent health data context
     if (healthContext?.recentHealthLogs && healthContext.recentHealthLogs.length > 0) {
       systemPrompt += `\n\n**最近の健康記録:**`;
-      
+
       const recentLogs = healthContext.recentHealthLogs.slice(0, 3);
       recentLogs.forEach(log => {
         if (log.type === 'health_log' && log.data) {
@@ -194,7 +194,7 @@ class OpenAIService {
       systemPrompt += `\n\n**現在の気分:** ${healthContext.currentMood}`;
     }
 
-    systemPrompt += `\n\n必ず${name}さんに寄り添い、健康的な生活習慣の継続を応援してください。`;
+    systemPrompt += `\n\n必ず${name}に寄り添って、健康的な生活習慣の継続を応援して。`;
 
     return systemPrompt;
   }
@@ -229,7 +229,7 @@ class OpenAIService {
 
     // Determine mood based on response content
     let mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' = 'happy';
-    
+
     if (lowerAiResponse.includes('素晴らしい') || lowerAiResponse.includes('頑張') || lowerAiResponse.includes('👏')) {
       mood = 'excited';
     } else if (lowerAiResponse.includes('心配') || lowerAiResponse.includes('大変') || lowerAiResponse.includes('😰')) {
@@ -271,7 +271,7 @@ class OpenAIService {
     // Simple fallback responses for common health topics
     if (lowerMessage.includes('体重')) {
       return {
-        message: `${name}さん、体重管理について一緒に考えていきましょう！定期的な記録と小さな目標設定が大切ですね。🏃‍♀️`,
+        message: `${name}、体重管理について一緒に考えていこう！定期的な記録と小さな目標設定が大切だね。🏃‍♀️`,
         mood: 'happy',
         confidence: 0.8,
         topics: ['体重管理'],
@@ -282,7 +282,7 @@ class OpenAIService {
 
     if (lowerMessage.includes('食事')) {
       return {
-        message: `${name}さん、バランスの良い食事を心がけていらっしゃいますね！写真を撮って記録すると、より意識的になりますよ。📸🥗`,
+        message: `${name}、バランスの良い食事を心がけてるね！写真を撮って記録すると、より意識的になるよ。📸🥗`,
         mood: 'happy',
         confidence: 0.8,
         topics: ['食事'],
@@ -293,7 +293,7 @@ class OpenAIService {
 
     // Default fallback
     return {
-      message: `${name}さん、お話しいただきありがとうございます！健康に関することでしたら、いつでもお気軽にご相談ください。一緒に頑張りましょう！✨`,
+      message: `${name}、話してくれてありがとう！健康に関することなら、いつでも気軽に相談して。一緒に頑張ろう！✨`,
       mood: 'happy',
       confidence: 0.7,
       topics: ['一般的な健康支援'],
@@ -314,7 +314,7 @@ class OpenAIService {
     medications?: string[];
   }> {
     try {
-      const extractionPrompt = `以下のユーザーメッセージから健康データを抽出してください。JSON形式で返してください。
+      const extractionPrompt = `以下のユーザーメッセージから健康データを抽出して。JSON形式で返して。
 
 ユーザーメッセージ: "${userMessage}"
 
@@ -328,8 +328,8 @@ class OpenAIService {
 - symptoms: 症状（配列、例: ["頭痛", "疲労"]）
 - medications: 薬（配列、例: ["ビタミンC", "風邪薬"]）
 
-該当する情報がない場合は、そのフィールドを含めないでください。
-必ずJSONのみを返してください。`;
+該当する情報がない場合は、そのフィールドを含めないで。
+必ずJSONのみを返して。`;
 
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
@@ -339,7 +339,7 @@ class OpenAIService {
       });
 
       const responseText = completion.choices[0]?.message?.content || '{}';
-      
+
       // Try to parse JSON response
       try {
         const extractedData = JSON.parse(responseText);
@@ -375,7 +375,7 @@ class OpenAIService {
 
       if (healthData.length === 0) return '';
 
-      const prompt = `以下の健康データを分析して、1-2文で簡潔なトレンド分析を日本語で提供してください：
+      const prompt = `以下の健康データを分析して、1-2文で簡潔なトレンド分析を日本語で提供して：
 ${JSON.stringify(healthData, null, 2)}
 
 分析ポイント：
@@ -384,7 +384,7 @@ ${JSON.stringify(healthData, null, 2)}
 - 気分・エネルギーレベル
 - 全体的な健康状況
 
-50文字以内で、励ましの言葉を含めて応答してください。`;
+50文字以内で、励ましの言葉を含めて応答して。`;
 
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
