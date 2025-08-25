@@ -31,13 +31,21 @@ export default function ChatInterface({
   const [inputMessage, setInputMessage] = useState('');
   const [isTTSEnabled, setIsTTSEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Use requestAnimationFrame to ensure DOM is updated before scrolling
+    const rafId = requestAnimationFrame(() => {
+      scrollToBottom();
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [messages]);
 
   const handleSendMessage = () => {
@@ -67,10 +75,10 @@ export default function ChatInterface({
 
 
   return (
-    <Card className="h-[500px] flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>Chat with {characterName}</span>
+    <div className="h-full flex flex-col bg-background/50 rounded-lg border border-border/50" style={{ contain: 'layout style' }}>
+      <div className="pb-3 px-4 pt-4 border-b border-border/50">
+        <div className="text-lg flex items-center justify-between">
+          <span className="font-semibold text-foreground">{characterName}とチャット</span>
           <Button
             variant="ghost"
             size="sm"
@@ -83,12 +91,16 @@ export default function ChatInterface({
               <VolumeX className="w-4 h-4 text-muted-foreground" />
             )}
           </Button>
-        </CardTitle>
-      </CardHeader>
+        </div>
+      </div>
       
-      <CardContent className="flex-1 flex flex-col p-2 space-y-4 h-[1100px] overflow-y-auto">
+      <div className="flex-1 flex flex-col p-2 space-y-4 min-h-[300px] lg:min-h-[400px] max-h-[400px] lg:max-h-[500px] overflow-hidden">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto space-y-4 px-2 py-4 h-[1000px]">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto space-y-4 px-2 py-4"
+          style={{ scrollBehavior: 'auto' }}
+        >
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <p>健康バディとの会話を始めましょう！</p>
@@ -148,7 +160,7 @@ export default function ChatInterface({
             <Send className="w-4 h-4" />
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

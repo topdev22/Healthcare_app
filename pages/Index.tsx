@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, MessageCircle, Sparkles } from 'lucide-react';
+import { BarChart3, Sparkles } from 'lucide-react';
 
 // Components
 import Character from '@/components/Character';
@@ -164,10 +164,22 @@ export default function Index() {
 
       {currentUser ? (
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 safe-area-bottom">
-          {/* Character Section */}
+          {/* Character and Chat Section */}
           <Card className="character-bg border-character-primary/20 card-hover overflow-hidden">
             <CardContent className="p-0">
-              <Character />
+              <div className="flex flex-col lg:flex-row lg:divide-x lg:divide-character-primary/20">
+                <div className="lg:flex-1 lg:pr-4 p-4">
+                  <Character />
+                </div>
+                <div className="lg:flex-1 lg:pl-4 p-4 pt-0 lg:pt-4 border-t border-character-primary/20 lg:border-t-0">
+                  <ChatInterface 
+                    onSendMessage={handleChatMessage}
+                    messages={messages}
+                    isLoading={isLoadingResponse}
+                    characterName="ヘルスバディ"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -176,16 +188,11 @@ export default function Index() {
 
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-3 glass h-auto p-1 sm:h-14 justify-center items-center">
+            <TabsList className="grid w-full grid-cols-2 glass h-auto p-1 sm:h-14 justify-center items-center">
               <TabsTrigger value="dashboard" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent">
                 <BarChart3 className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
                 <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">ダッシュボード</span>
                 <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">統計</span>
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent">
-                <MessageCircle className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
-                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">チャット</span>
-                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">会話</span>
               </TabsTrigger>
               <TabsTrigger value="progress" className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent">
                 <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
@@ -205,15 +212,6 @@ export default function Index() {
                 onTakePhoto={handleTakePhoto}
                 onProfileClick={() => setIsProfileModalOpen(true)}
                 onStatsClick={() => setIsHealthStatsModalOpen(true)}
-              />
-            </TabsContent>
-
-            <TabsContent value="chat">
-              <ChatInterface 
-                onSendMessage={handleChatMessage}
-                messages={messages}
-                isLoading={isLoadingResponse}
-                characterName="ヘルスバディ"
               />
             </TabsContent>
 
