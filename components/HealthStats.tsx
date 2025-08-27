@@ -245,9 +245,9 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
       </div>
 
       {/* Development Links */}
-      {typeof window !== 'undefined' && (
+      {/* {typeof window !== 'undefined' && (
         <div className="mt-4">
-          {/* PC Testing Link */}
+          
           {!window.navigator.userAgent.toLowerCase().match(/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i) && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
             </div>
           )}
           
-          {/* Mobile Debug Link */}
+          
           {window.navigator.userAgent.toLowerCase().match(/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i) && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -289,7 +289,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
             </div>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 }
