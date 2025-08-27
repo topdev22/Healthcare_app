@@ -14,6 +14,8 @@ interface RealTimeHealthStats {
   dailyCalories: number;
   waterIntake: number;
   waterGoal: number;
+  dailySteps: number;
+  stepsGoal: number;
   dailyHealthLogs: number;
   currentStreak: number;
   lastUpdated: string;
@@ -75,6 +77,8 @@ export function useRealTimeHealthData(currentUser: any) {
         dailyCalories: todayData.reduce((sum, log) => sum + (log.calories || 0), 0),
         waterIntake: 1200, // Sample water intake
         waterGoal: 2000, // Default water goal in ml
+        dailySteps: 8250, // Sample steps count
+        stepsGoal: 10000, // Default steps goal
         dailyHealthLogs: todayData.length,
         currentStreak: calculateStreak(sampleData),
         lastUpdated: new Date().toISOString()
@@ -103,6 +107,8 @@ export function useRealTimeHealthData(currentUser: any) {
         dailyCalories: 1850,
         waterIntake: 1200,
         waterGoal: 2000,
+        dailySteps: 8250,
+        stepsGoal: 10000,
         dailyHealthLogs: 1,
         currentStreak: 1,
         lastUpdated: new Date().toISOString()
@@ -220,6 +226,7 @@ export function useRealTimeHealthData(currentUser: any) {
         currentWeight: newLog.weight,
         currentMood: newLog.mood,
         dailyCalories: prev.dailyCalories + newCalories,
+        dailySteps: prev.dailySteps + Math.floor(Math.random() * 500) + 100, // Add random steps
         lastUpdated: new Date().toISOString()
       } : null);
     }

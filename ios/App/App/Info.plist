@@ -45,5 +45,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSMotionUsageDescription</key>
+	<string>This app uses motion sensors to count your steps and track your daily activity for health monitoring.</string>
 </dict>
 </plist>
