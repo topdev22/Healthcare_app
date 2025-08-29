@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,8 @@ export default function StepsDisplay({
   const isUsingRealData = enableRealTimeTracking && isSupported && stepData;
   const dailySteps = isUsingRealData ? stepData.steps : fallbackSteps;
   const stepsGoal = fallbackGoal;
-  const isActive = isUsingRealData ? stepData.isActive : false;
+  // const isActive = isUsingRealData ? stepData.isActive : false;
+  const [isActive, setIsActive] = useState(false);
   
   // Calculate progress percentage
   const progress = stepsGoal > 0 ? Math.min((dailySteps / stepsGoal) * 100, 100) : 0;
@@ -75,8 +76,10 @@ export default function StepsDisplay({
   const handleStartStop = async () => {
     if (isActive) {
       await stopCounting();
+      setIsActive(!isActive);
     } else {
       await startCounting();
+      setIsActive(!isActive);
     }
   };
 
