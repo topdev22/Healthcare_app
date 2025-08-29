@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Send, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatBubble } from '@/components/ui/chat-bubble';
+import { ttsService } from '@/lib/ttsService';
 
 interface Message {
   id: string;
@@ -29,7 +30,7 @@ export default function ChatInterface({
   characterName = "HealthBuddy"
 }: ChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState('');
-  const [isTTSEnabled, setIsTTSEnabled] = useState(true);
+  const [isTTSEnabled, setIsTTSEnabled] = useState(ttsService.isEnabled());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +49,18 @@ export default function ChatInterface({
     return () => cancelAnimationFrame(rafId);
   }, [messages]);
 
+  // Sync component state with TTS service state on mount
+  useEffect(() => {
+    setIsTTSEnabled(ttsService.isEnabled());
+  }, []);
+
+  // Cleanup: stop TTS when component unmounts
+  useEffect(() => {
+    return () => {
+      ttsService.stop();
+    };
+  }, []);
+
   const handleSendMessage = () => {
     if (inputMessage.trim() && !isLoading) {
       onSendMessage(inputMessage.trim());
@@ -62,13 +75,22 @@ export default function ChatInterface({
     }
   };
 
-  const speakMessage = (text: string) => {
-    if ('speechSynthesis' in window && isTTSEnabled) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1.1;
-      utterance.voice = speechSynthesis.getVoices().find(voice => voice.name.includes('female')) || null;
-      speechSynthesis.speak(utterance);
+  const speakMessage = async (text: string) => {
+    if (isTTSEnabled) {
+      try {
+        console.log('Starting TTS for:', text.substring(0, 50) + '...');
+        await ttsService.speak(text);
+        console.log('TTS completed successfully');
+      } catch (error) {
+        console.error('TTS error:', error);
+        // For interrupted errors, don't show as an error to user since it's expected behavior
+        if (error instanceof Error && error.message.includes('interrupted')) {
+          console.log('TTS was interrupted (this is normal when switching between messages)');
+        } else {
+          console.warn('TTS failed:', error);
+          // Optionally show user feedback about TTS failure here
+        }
+      }
     }
   };
 
@@ -82,7 +104,11 @@ export default function ChatInterface({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsTTSEnabled(!isTTSEnabled)}
+            onClick={() => {
+              const newState = !isTTSEnabled;
+              setIsTTSEnabled(newState);
+              ttsService.setEnabled(newState);
+            }}
             className="p-2"
           >
             {isTTSEnabled ? (
