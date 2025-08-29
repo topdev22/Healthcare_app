@@ -244,7 +244,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
         />
       </div>
 
-      {/* Development Links */}
+      {/* Development   Links */}
       {/* {typeof window !== 'undefined' && (
         <div className="mt-4">
           
