@@ -47,5 +47,11 @@
 	<true/>
 	<key>NSMotionUsageDescription</key>
 	<string>This app uses motion sensors to count your steps and track your daily activity for health monitoring.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app may use location data to enhance step counting accuracy and provide location-based health insights.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app can read health data to provide comprehensive health insights and step count validation.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>This app can write step count data to your Health app for centralized health tracking.</string>
 </dict>
 </plist>
