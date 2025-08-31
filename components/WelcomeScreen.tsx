@@ -16,7 +16,7 @@ export default function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
           <h2 className="text-3xl font-bold mb-3">ヘルスバディへようこそ</h2>
           <p className="text-muted-foreground text-lg">
             あなた専用の健康管理パートナーです。<br />
-            ログインして健康な生活を始めましょう！
+            ログインして健康的な生活を始めませんか？
           </p>
         </div>
         <Button 
@@ -24,7 +24,7 @@ export default function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
           size="lg" 
           className="w-full touch-target bg-gradient-to-r from-health-green to-health-blue hover:scale-105 transition-transform"
         >
-          今すぐ始める
+          今すぐ始めましょう
         </Button>
       </div>
     </div>

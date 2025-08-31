@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Activity, Footprints, Flame, Play, Pause, RotateCcw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useStepCounterWithGoals } from '@/hooks/useStepCounter';
+import { useStepCounterWithGoals, useStepCounter } from '@/hooks/useStepCounter';
 
 interface StepsDisplayProps {
   dailySteps?: number; // Fallback for compatibility
@@ -36,6 +36,13 @@ export default function StepsDisplay({
     enableNotifications: true,
     autoStart: enableRealTimeTracking
   });
+
+  // Additional hook for iOS permission handling
+  const {
+    needsPermission,
+    isIOSDevice,
+    requestPermissions
+  } = useStepCounter();
 
   // Determine which data to use
   const isUsingRealData = enableRealTimeTracking && isSupported && stepData;
@@ -142,7 +149,21 @@ export default function StepsDisplay({
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm text-yellow-800">{error}</span>
+              <div className="flex-1">
+                <span className="text-sm text-yellow-800">{error}</span>
+                {needsPermission && isIOSDevice && (
+                  <div className="mt-2">
+                    <Button 
+                      size="sm" 
+                      onClick={requestPermissions}
+                      disabled={isLoading}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                    >
+                      {isLoading ? "許可をリクエスト中..." : "許可をリクエスト"}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -69,9 +69,18 @@ class StepCounterService {
       return true;
     }
     
-    // Web mobile detection
+    // Enhanced web mobile detection for iOS Safari
     const userAgent = navigator.userAgent.toLowerCase();
-    return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    
+    // Additional iOS detection for devices that may not be caught by user agent
+    const isIOSDevice = /iphone|ipad|ipod/i.test(userAgent) || 
+                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    // Check for touch capability as additional mobile indicator
+    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    return isMobileUA || isIOSDevice || (hasTouchScreen && window.innerWidth <= 1024);
   }
 
   /**
@@ -79,6 +88,14 @@ class StepCounterService {
    */
   async initialize(): Promise<boolean> {
     try {
+      console.log('🔧 Initializing step counter...');
+      console.log('Platform info:', {
+        isNative: Capacitor.isNativePlatform(),
+        platform: Capacitor.getPlatform(),
+        userAgent: navigator.userAgent,
+        hasDeviceMotion: typeof DeviceMotionEvent !== 'undefined'
+      });
+
       // Check if running on PC for development/testing
       if (this.isPCEnvironment()) {
         console.log('🖥️ PC environment detected, using step counter simulator');

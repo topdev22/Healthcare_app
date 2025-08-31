@@ -53,6 +53,74 @@ class MobileStepCounterService {
   }
 
   /**
+   * Request motion permissions with user-friendly prompts
+   */
+  async requestPermissions(): Promise<boolean> {
+    try {
+      const isIOSDevice = !Capacitor.isNativePlatform() && 
+                         (/iphone|ipad|ipod/i.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+      
+      if (isIOSDevice && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+        console.log('📱 iOS device detected - requesting motion permissions...');
+        
+        // Show user instructions
+        this.showPermissionInstructions();
+        
+        const permission = await (DeviceMotionEvent as any).requestPermission();
+        
+        if (permission === 'granted') {
+          console.log('✅ Motion permissions granted');
+          this.hasPermission = true;
+          return true;
+        } else {
+          console.warn('❌ Motion permissions denied');
+          this.showPermissionDeniedMessage();
+          return false;
+        }
+      } else {
+        // Non-iOS or older iOS - assume permissions are available
+        this.hasPermission = true;
+        return true;
+      }
+    } catch (error) {
+      console.error('Error requesting permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Show permission instructions to user
+   */
+  private showPermissionInstructions(): void {
+    console.log(`
+📱 iPhone Step Counter Setup:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+To enable step counting on your iPhone:
+1. Tap "Allow" when prompted for motion access
+2. If denied, go to Settings > Safari > Motion & Orientation Access
+3. Enable "Motion & Orientation Access"
+4. Refresh this page
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  }
+
+  /**
+   * Show permission denied message with instructions
+   */
+  private showPermissionDeniedMessage(): void {
+    console.warn(`
+❌ Motion Access Required:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step counting requires motion sensor access.
+
+To enable:
+1. Go to Settings > Safari
+2. Enable "Motion & Orientation Access"
+3. Refresh this page and try again
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  }
+
+  /**
    * Initialize the mobile step counter with proper permissions
    */
   async initialize(): Promise<boolean> {
@@ -65,9 +133,13 @@ class MobileStepCounterService {
 
       // Check if running on native platform
       if (!Capacitor.isNativePlatform()) {
+        console.log('🌐 Web platform detected');
         return await this.initializeWebMotion();
       }
 
+      // Native platform initialization
+      console.log('📦 Native platform detected');
+      
       // Check for motion sensor availability
       const hasMotionSensors = await this.checkMotionSensorAvailability();
       if (!hasMotionSensors) {
@@ -105,34 +177,58 @@ class MobileStepCounterService {
    */
   private async initializeWebMotion(): Promise<boolean> {
     try {
+      console.log('🌐 Initializing web motion detection...');
+      
       // Check if DeviceMotionEvent is supported
       if (typeof DeviceMotionEvent === 'undefined') {
         console.warn('❌ DeviceMotionEvent not supported');
         return false;
       }
 
+      // Enhanced iOS detection and permission handling
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      console.log('iOS detected:', isIOS);
+      console.log('DeviceMotionEvent.requestPermission available:', 
+                 typeof (DeviceMotionEvent as any).requestPermission === 'function');
+
       // Request permission for iOS 13+ Safari
       if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
         try {
+          console.log('🔐 Requesting DeviceMotionEvent permission...');
+          
+          // Show user-friendly message before requesting permission
+          if (isIOS) {
+            console.log('📱 iOS device detected - motion permission required for step counting');
+          }
+          
           const permission = await (DeviceMotionEvent as any).requestPermission();
+          console.log('Permission result:', permission);
+          
           this.hasPermission = permission === 'granted';
           
           if (!this.hasPermission) {
             console.warn('❌ DeviceMotionEvent permission denied');
+            console.warn('Please enable motion & orientation access in Safari settings');
             return false;
           }
+          
+          console.log('✅ DeviceMotionEvent permission granted');
         } catch (error) {
           console.error('❌ Error requesting DeviceMotionEvent permission:', error);
           return false;
         }
       } else {
+        // For non-iOS or older iOS versions
         this.hasPermission = true;
+        console.log('🔓 No permission request needed');
       }
 
       this.deviceSupported = true;
       this.sensorType = 'accelerometer';
       
-      console.log('✅ Web motion API initialized');
+      console.log('✅ Web motion API initialized successfully');
       return true;
 
     } catch (error) {
@@ -186,30 +282,42 @@ class MobileStepCounterService {
     try {
       console.log('🎯 Calibrating for device:', deviceInfo.platform);
       
-      switch (deviceInfo.platform) {
-        case 'ios':
-          this.stepThreshold = 1.1;
-          this.peakThreshold = 10.2;
-          this.valleyThreshold = 9.8;
-          this.minStepInterval = 250;
-          break;
-          
-        case 'android':
-          this.stepThreshold = 1.3;
-          this.peakThreshold = 10.7;
-          this.valleyThreshold = 9.3;
-          this.minStepInterval = 300;
-          break;
-          
-        default:
-          // Default web settings
-          this.stepThreshold = 1.4;
-          this.peakThreshold = 11.0;
-          this.valleyThreshold = 9.0;
-          this.minStepInterval = 350;
+      // Enhanced iOS detection for web browsers
+      const isIOSWeb = !Capacitor.isNativePlatform() && 
+                      (/iphone|ipad|ipod/i.test(navigator.userAgent) || 
+                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+      
+      if (deviceInfo.platform === 'ios' || isIOSWeb) {
+        // iOS-specific calibration (more sensitive for iPhone accelerometer)
+        this.stepThreshold = 0.8;  // Lower threshold for iOS
+        this.peakThreshold = 9.8;  // Adjusted for iOS sensor sensitivity
+        this.valleyThreshold = 9.2;
+        this.minStepInterval = 200; // Faster detection for iOS
+        this.bufferSize = 15;      // Smaller buffer for more responsive detection
+        console.log('📱 Applied iOS-specific calibration');
+      } else if (deviceInfo.platform === 'android') {
+        this.stepThreshold = 1.3;
+        this.peakThreshold = 10.7;
+        this.valleyThreshold = 9.3;
+        this.minStepInterval = 300;
+        console.log('🤖 Applied Android-specific calibration');
+      } else {
+        // Default web settings for other platforms
+        this.stepThreshold = 1.4;
+        this.peakThreshold = 11.0;
+        this.valleyThreshold = 9.0;
+        this.minStepInterval = 350;
+        console.log('🌐 Applied web platform calibration');
       }
       
-      console.log('✅ Calibration complete for', deviceInfo.platform);
+      console.log('✅ Calibration complete:', {
+        platform: deviceInfo.platform,
+        isIOSWeb,
+        stepThreshold: this.stepThreshold,
+        peakThreshold: this.peakThreshold,
+        valleyThreshold: this.valleyThreshold,
+        minStepInterval: this.minStepInterval
+      });
     } catch (error) {
       console.error('Calibration failed:', error);
     }
@@ -352,9 +460,66 @@ class MobileStepCounterService {
   }
 
   /**
-   * Detect steps using peak-valley algorithm
+   * Detect steps using enhanced peak-valley algorithm optimized for iOS
    */
   private detectStep(magnitude: number, timestamp: number): void {
+    // Enhanced iOS-specific step detection
+    const isIOSDevice = !Capacitor.isNativePlatform() && 
+                       (/iphone|ipad|ipod/i.test(navigator.userAgent) || 
+                        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+    
+    if (isIOSDevice) {
+      // iOS-optimized detection with dynamic thresholding
+      this.detectStepIOS(magnitude, timestamp);
+    } else {
+      // Standard detection for other platforms
+      this.detectStepStandard(magnitude, timestamp);
+    }
+  }
+
+  /**
+   * iOS-optimized step detection
+   */
+  private detectStepIOS(magnitude: number, timestamp: number): void {
+    // Dynamic threshold adjustment for iOS
+    if (this.accelerometerBuffer.length >= 10) {
+      const recentMagnitudes = this.accelerometerBuffer
+        .slice(-10)
+        .map(reading => Math.sqrt(reading.x * reading.x + reading.y * reading.y + reading.z * reading.z));
+      
+      const avg = recentMagnitudes.reduce((sum, val) => sum + val, 0) / recentMagnitudes.length;
+      const variance = recentMagnitudes.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / recentMagnitudes.length;
+      const stdDev = Math.sqrt(variance);
+      
+      // Adjust thresholds based on recent activity
+      this.peakThreshold = Math.max(avg + stdDev * 0.3, 9.5);
+      this.valleyThreshold = Math.min(avg - stdDev * 0.3, 9.5);
+    }
+    
+    // Peak detection
+    if (!this.isWaitingForValley && magnitude > this.peakThreshold) {
+      this.lastPeak = magnitude;
+      this.isWaitingForValley = true;
+    }
+    
+    // Valley detection and step counting
+    if (this.isWaitingForValley && magnitude < this.valleyThreshold) {
+      const timeSinceLastStep = timestamp - this.lastStepTime;
+      const peakValleyDiff = this.lastPeak - magnitude;
+      
+      // More lenient validation for iOS
+      if (timeSinceLastStep > this.minStepInterval && 
+          peakValleyDiff > this.stepThreshold) {
+        
+        this.recordStep(timestamp);
+      }
+    }
+  }
+
+  /**
+   * Standard step detection for non-iOS platforms
+   */
+  private detectStepStandard(magnitude: number, timestamp: number): void {
     // Peak detection
     if (!this.isWaitingForValley && magnitude > this.peakThreshold) {
       this.lastPeak = magnitude;
