@@ -72,7 +72,7 @@ export default function Index() {
       
       addMessage({
         id: Date.now().toString(),
-        content: "健康データの記録、お疲れ様でした！🌟 ご自身の健康に気を配っていらっしゃる姿勢が素晴らしいです。あなたの継続的な努力が私の成長にも繋がっています！",
+        content: "健康データの記録をありがとうございます！🌟 ご自身の健康を大切にしていらっしゃる姿勢が本当に素晴らしいです。あなたの継続的な取り組みが、より良い健康習慣につながっています！",
         sender: 'character',
         timestamp: new Date()
       });
@@ -107,7 +107,7 @@ export default function Index() {
       
       addMessage({
         id: Date.now().toString(),
-        content: `お食事の記録ありがとうございます！📸 ${data.totalCalories}kcalの食事を確認しました。バランスの良い食事を心がけていらっしゃいますね！`,
+        content: `お食事の記録をありがとうございます！📸 ${data.totalCalories}kcalの食事を確認させていただきました。バランスの良い食事を心がけていらっしゃいますね！`,
         sender: 'character',
         timestamp: new Date()
       });
@@ -115,7 +115,7 @@ export default function Index() {
       console.error('食事データ保存エラー:', error);
       addMessage({
         id: Date.now().toString(),
-        content: "申し訳ございません。食事データの保存に失敗しました。ネットワーク接続を確認してから再度お試しください。",
+        content: "申し訳ございません。食事データの保存に問題が発生いたしました。ネットワーク接続をご確認いただき、再度お試しいただけますでしょうか。",
         sender: 'character',
         timestamp: new Date()
       });

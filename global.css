@@ -30,7 +30,7 @@
     --accent: 120 50% 85%;
     --accent-foreground: 150 20% 20%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 25 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 150 20% 85%;
@@ -77,7 +77,7 @@
     --accent: 120 40% 25%;
     --accent-foreground: 150 20% 90%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 25 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 150 15% 20%;
@@ -215,13 +215,15 @@
   .glass {
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.125);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
   }
 
   .dark .glass {
-    background: rgba(17, 25, 40, 0.75);
+    background: rgba(17, 25, 40, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.125);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   /* Floating action button */

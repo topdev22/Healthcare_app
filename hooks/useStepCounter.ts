@@ -7,10 +7,13 @@ export interface UseStepCounterReturn {
   isInitialized: boolean;
   isLoading: boolean;
   error: string | null;
+  needsPermission: boolean;
+  isIOSDevice: boolean;
   startCounting: () => Promise<boolean>;
   stopCounting: () => Promise<void>;
   resetSteps: () => Promise<void>;
   refresh: () => void;
+  requestPermissions: () => Promise<boolean>;
 }
 
 export function useStepCounter(): UseStepCounterReturn {
@@ -19,6 +22,15 @@ export function useStepCounter(): UseStepCounterReturn {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsPermission, setNeedsPermission] = useState<boolean>(false);
+  const [isIOSDevice, setIsIOSDevice] = useState<boolean>(false);
+
+  // Detect iOS device
+  useEffect(() => {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || 
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOSDevice(isIOS);
+  }, []);
 
   // Initialize step counter on mount
   useEffect(() => {
@@ -64,12 +76,22 @@ export function useStepCounter(): UseStepCounterReturn {
             stepCounter.removeListener(handleStepUpdate);
           };
         } else {
-          setError('このデバイスでは歩数カウントがサポートされていません');
+          if (isIOSDevice && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+            setError('歩数カウントには動作センサーへのアクセス許可が必要です。「許可をリクエスト」ボタンをタップしてください。');
+            setNeedsPermission(true);
+          } else {
+            setError('このデバイスでは歩数カウントがサポートされていません');
+          }
         }
       } catch (err) {
         console.error('Step counter initialization error:', err);
         if (mounted) {
-          setError('歩数カウンターの初期化に失敗しました');
+          if (isIOSDevice && err instanceof Error && err.message.includes('permission')) {
+            setError('動作センサーへのアクセス許可が拒否されました。設定 > Safari > モーションとオリエンテーションのアクセス を有効にしてください。');
+            setNeedsPermission(true);
+          } else {
+            setError('歩数カウンターの初期化に失敗しました');
+          }
           setIsSupported(false);
           setIsInitialized(false);
         }
@@ -149,6 +171,43 @@ export function useStepCounter(): UseStepCounterReturn {
     }
   }, [isInitialized]);
 
+  // Request permissions (for iOS)
+  const requestPermissions = useCallback(async (): Promise<boolean> => {
+    if (!isIOSDevice) {
+      return true; // Non-iOS devices don't need explicit permission
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Try to initialize again with permission request
+      const success = await stepCounter.initialize();
+      
+      if (success) {
+        setIsSupported(true);
+        setIsInitialized(true);
+        setNeedsPermission(false);
+        
+        // Get initial step data
+        const initialData = stepCounter.getStepData();
+        setStepData(initialData);
+        
+        return true;
+      } else {
+        setError('動作センサーへのアクセス許可が必要です。設定 > Safari > モーションとオリエンテーションのアクセス を有効にしてください。');
+        setNeedsPermission(true);
+        return false;
+      }
+    } catch (err) {
+      console.error('Permission request failed:', err);
+      setError('許可のリクエストに失敗しました。設定から手動で有効にしてください。');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isIOSDevice]);
+
   // Refresh step data
   const refresh = useCallback(() => {
     if (isInitialized) {
@@ -162,10 +221,13 @@ export function useStepCounter(): UseStepCounterReturn {
     isInitialized,
     isLoading,
     error,
+    needsPermission,
+    isIOSDevice,
     startCounting,
     stopCounting,
     resetSteps,
-    refresh
+    refresh,
+    requestPermissions
   };
 }
 
