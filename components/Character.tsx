@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
+import LottieCharacter from '@/components/LottieCharacter';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useCharacterData } from '@/hooks/useCharacterData';
 import { useAuth } from '@/contexts/AuthContext';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 interface CharacterProps {
   className?: string;
@@ -14,110 +14,20 @@ interface CharacterProps {
   isInteracting?: boolean;
 }
 
-// Character growth stages based on health logs and consistency
-type CharacterStage = 'egg' | 'child1' | 'child2' | 'child3' | 'adult1' | 'adult2' | 'blank';
-
-// Character files mapping
-const CHARACTER_FILES: Record<CharacterStage, string> = {
-  egg: '/charactor/tamago.json',
-  child1: '/charactor/kodomo1.json',
-  child2: '/charactor/kodomo2.json', 
-  child3: '/charactor/kodomo3.json',
-  adult1: '/charactor/otona1.json',
-  adult2: '/charactor/otona2.json', // blank expression for poor consistency
-  blank: '/charactor/otona2.json'
-};
-
 export default function Character({ className, mood: overrideMood, healthLevel: overrideHealthLevel, isInteracting: overrideInteracting }: CharacterProps) {
   const { currentUser } = useAuth();
   const { characterData, healthStats, userProfile, loading, error } = useCharacterData(currentUser);
-
-  // Determine character growth stage based on health data and consistency
-  const getCharacterStage = useMemo((): CharacterStage => {
-    if (!healthStats) return 'egg';
-
-    const { totalLogs, weeklyLogs } = healthStats;
-    const streak = characterData.streak;
-    const { healthLevel: currentHealthLevel } = characterData;
-
-    // Check for poor consistency or no activity (blank expression)
-    if (streak === 0 && totalLogs < 3) {
-      return 'blank';
-    }
-
-    // Growth progression based on total logs and consistency
-    // Egg stage: 0-5 logs
-    if (totalLogs <= 5) {
-      return 'egg';
-    }
-
-    // Child stages: 6-30 logs with progression based on consistency and health
-    if (totalLogs <= 15) {
-      return 'child1';
-    } else if (totalLogs <= 25) {
-      return 'child2';
-    } else if (totalLogs <= 35) {
-      return 'child3';
-    }
-
-    // Adult stages: 35+ logs
-    // Adult1 for good consistency and health
-    if (streak >= 7 && currentHealthLevel >= 70) {
-      return 'adult1';
-    }
-    
-    // Adult2 for poor consistency or low health (blank expression)
-    if (streak < 3 || currentHealthLevel < 50) {
-      return 'adult2'; // This will use otona2.json with blank expression
-    }
-
-    // Default adult stage
-    return 'adult1';
-  }, [healthStats, characterData]);
-
-  // Get the appropriate Lottie file path
-  const getLottieFile = useMemo(() => {
-    return CHARACTER_FILES[getCharacterStage];
-  }, [getCharacterStage]);
-
-  // Get character stage description for display
-  const getStageDescription = (stage: CharacterStage): string => {
-    switch (stage) {
-      case 'egg':
-        return 'たまご';
-      case 'child1':
-        return 'こども（初期）';
-      case 'child2':
-        return 'こども（成長中）';
-      case 'child3':
-        return 'こども（成熟）';
-      case 'adult1':
-        return 'おとな（健康）';
-      case 'adult2':
-      case 'blank':
-        return 'おとな（無表情）';
-      default:
-        return 'たまご';
-    }
-  };
 
   // Use override props or real data
   const rawMood = overrideMood || characterData.mood || 'happy';
   const healthLevel = overrideHealthLevel !== undefined ? overrideHealthLevel : characterData.healthLevel;
   const isInteracting = overrideInteracting !== undefined ? overrideInteracting : characterData.isInteracting || false;
-  const currentStage = getCharacterStage;
-  const getCharacterColor = () => {
-    if (healthLevel >= 80) return 'text-health-green';
-    if (healthLevel >= 60) return 'text-wellness-amber';
-    if (healthLevel >= 40) return 'text-orange-500';
-    return 'text-red-500';
-  };
 
   const getHealthStatus = () => {
-    if (healthLevel >= 80) return { text: "とても元気です！", emoji: "✨", color: "bg-health-green" };
-    if (healthLevel >= 60) return { text: "調子は良好です！", emoji: "😊", color: "bg-wellness-amber" };
-    if (healthLevel >= 40) return { text: "もう少し気をつけましょう", emoji: "😐", color: "bg-orange-500" };
-    return { text: "もっとケアが必要です", emoji: "😞", color: "bg-red-500" };
+    if (healthLevel >= 80) return { text: "とても素晴らしい状態です！", emoji: "✨", color: "bg-health-green" };
+    if (healthLevel >= 60) return { text: "良いペースで頑張っていらっしゃいますね！", emoji: "😊", color: "bg-wellness-amber" };
+    if (healthLevel >= 40) return { text: "一緒に健康を目指しましょう", emoji: "😊", color: "bg-orange-500" };
+    return { text: "新しいスタートを応援します", emoji: "🌱", color: "bg-blue-500" };
   };
 
   const getCharacterLevel = () => {
@@ -144,24 +54,24 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
     
     if (healthLevel >= 80) {
       if (streakDays >= 7) {
-        return `${userName}、${streakDays}日連続で記録を続けています！素晴らしい習慣ですね！💪✨`;
+        return `${userName}、${streakDays}日連続で記録を続けていらっしゃいます！本当に素晴らしい習慣ですね！💪✨`;
       }
-      return `${userName}、とても良い健康状態を保っていますね！この調子で続けましょう！💪`;
+      return `${userName}、とても良い健康状態を保っていらっしゃいますね！この調子で無理なく続けていきましょう！💪`;
     } else if (healthLevel >= 60) {
       if (totalLogs >= 10) {
-        return `${userName}、健康記録が${totalLogs}件になりました！良いペースですね！🌟`;
+        return `${userName}、健康記録が${totalLogs}件になりました！素晴らしいペースで取り組んでいらっしゃいますね！🌟`;
       }
-      return `${userName}、良いペースで健康管理ができています。もう少し頑張りましょう！🌟`;
+      return `${userName}、良いペースで健康管理に取り組んでいらっしゃいますね。一緒に頑張りましょう！🌟`;
     } else if (healthLevel >= 40) {
       if (streakDays > 0) {
-        return `${userName}、${streakDays}日続けて頑張っていますね！継続が力になります！📈`;
+        return `${userName}、${streakDays}日続けて取り組んでいらっしゃいますね！継続は必ず力になります！📈`;
       }
-      return `${userName}、健康への意識を持って取り組んでいますね。継続が大切です！📈`;
+      return `${userName}、健康への意識を持って取り組んでいらっしゃることが素晴らしいです。一歩ずつ進んでいきましょう！📈`;
     } else {
       if (totalLogs > 0) {
-        return `${userName}、記録を始めてくれてありがとう！小さな一歩が大きな変化の始まりです！🌱`;
+        return `${userName}、記録を始めてくださってありがとうございます！小さな一歩が大きな変化の始まりです！🌱`;
       }
-      return `${userName}、新しいスタートです！今日から健康記録を始めてみませんか？🌱`;
+      return `${userName}、新しいスタートを切りましょう！今日から一緒に健康記録を始めませんか？🌱`;
     }
   };
 
@@ -226,60 +136,33 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
       </div>
 
       <div className="relative flex flex-col items-center p-8 space-y-6">
-        {/* Character Avatar with Lottie Animation */}
+        {/* Lottie Character with Growth Stages */}
         <div className="relative">
-          {/* Main character container */}
-          <div className={cn(
-            "relative w-48 h-48 rounded-full flex items-center justify-center transition-all duration-700 ease-out",
-            "bg-gradient-to-br from-character-primary/20 via-character-primary/5 to-character-secondary/10",
-            "border-4 border-character-primary/30 shadow-2xl overflow-hidden",
-            isInteracting && "scale-110 shadow-character-primary/50"
-          )}>
-            {/* Inner glow */}
-            <div className={cn(
-              "absolute inset-2 rounded-full",
-              "bg-gradient-to-br from-white/10 to-transparent",
-              "transition-opacity duration-500",
-              isInteracting ? "opacity-100" : "opacity-30"
-            )} />
-            
-            {/* Lottie Character Animation */}
-            <div className="relative w-40 h-40 z-10">
-              <DotLottieReact
-                src={getLottieFile}
-                loop
-                autoplay
-                className={cn(
-                  "w-full h-full transition-all duration-500",
-                  isInteracting && "scale-105"
-                )}
-              />
-            </div>
+          <LottieCharacter
+            size={144}
+            healthLevel={healthLevel}
+            totalLogs={healthStats?.totalLogs || 0}
+            streak={streakDays}
+            recentMood={rawMood as any}
+            isInteracting={isInteracting}
+            className="transition-all duration-700 ease-out"
+          />
 
-            {/* Interaction effects */}
-            {isInteracting && (
-              <>
-                <div className="absolute inset-0 rounded-full bg-character-primary/15 animate-ping" />
-                <div className="absolute inset-4 rounded-full bg-character-secondary/15 animate-pulse" />
-              </>
-            )}
-          </div>
-
-          {/* Character Stage badge */}
+          {/* Level badge */}
           <Badge 
             className={cn(
-              "absolute -top-2 -right-2 text-white font-bold text-xs",
+              "absolute -top-2 -right-2 text-white font-bold",
               "bg-gradient-to-r from-character-primary to-character-secondary",
               "shadow-lg border-2 border-white/50",
               "transition-transform duration-300",
               isInteracting && "scale-110"
             )}
           >
-            {getStageDescription(currentStage)}
+            レベル {characterLevel}
           </Badge>
 
           {/* Health status indicator */}
-          <div className={cn(
+          {/* <div className={cn(
             "absolute -bottom-2 left-1/2 transform -translate-x-1/2",
             "px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg",
             healthStatus.color,
@@ -287,7 +170,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
             isInteracting && "scale-105"
           )}>
             {healthStatus.emoji}
-          </div>
+          </div> */}
         </div>
 
         {/* Health Information */}
@@ -340,37 +223,9 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
             </div>
             <div className="text-center p-3 bg-wellness-amber/10 rounded-lg border border-wellness-amber/20">
               <div className="text-lg font-bold text-wellness-amber">
-                {healthStats?.totalLogs || 0}
+                {experiencePoints > 1000 ? `${(experiencePoints / 1000).toFixed(1)}k` : experiencePoints}
               </div>
-              <div className="text-xs text-muted-foreground">記録数</div>
-            </div>
-          </div>
-
-          {/* Character Growth Information */}
-          <div className="w-full max-w-sm mt-4 p-4 bg-gradient-to-r from-character-primary/5 to-character-secondary/5 rounded-lg border border-character-primary/20">
-            <div className="text-center space-y-2">
-              <h4 className="text-sm font-semibold text-character-primary">
-                キャラクター成長段階
-              </h4>
-              <div className="text-xs text-muted-foreground">
-                {currentStage === 'blank' || currentStage === 'adult2' ? (
-                  <span className="text-orange-600">
-                    継続的な記録で表情が戻ります
-                  </span>
-                ) : currentStage === 'egg' ? (
-                  <span className="text-blue-600">
-                    健康記録を続けて成長させましょう
-                  </span>
-                ) : currentStage.startsWith('child') ? (
-                  <span className="text-green-600">
-                    順調に成長しています！
-                  </span>
-                ) : (
-                  <span className="text-purple-600">
-                    立派に成長しました！
-                  </span>
-                )}
-              </div>
+              <div className="text-xs text-muted-foreground">経験値</div>
             </div>
           </div>
         </div>
