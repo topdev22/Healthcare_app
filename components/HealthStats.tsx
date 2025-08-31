@@ -64,7 +64,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
       case 'excited': return 'bg-wellness-amber text-white';
       case 'neutral': return 'bg-gray-500 text-white';
       case 'anxious': return 'bg-orange-500 text-white';
-      case 'sad': return 'bg-red-500 text-white';
+      case 'sad': return 'bg-blue-400 text-white';
       default: return 'bg-gray-500 text-white';
     }
   };
@@ -119,8 +119,8 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
       </div> */}
       
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-md">
+          <p className="text-sm text-orange-700">{error}</p>
         </div>
       )}
       
@@ -243,53 +243,6 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
           enableRealTimeTracking={true}
         />
       </div>
-
-      {/* Development   Links */}
-      {/* {typeof window !== 'undefined' && (
-        <div className="mt-4">
-          
-          {!window.navigator.userAgent.toLowerCase().match(/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i) && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-blue-800 font-medium">PC開発環境</span>
-              </div>
-              <p className="text-xs text-blue-700 mt-1">
-                歩数カウンターのテスト機能が利用できます。
-                <a 
-                  href="/pc-testing" 
-                  className="underline ml-1 hover:text-blue-900"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  テスト画面を開く
-                </a>
-              </p>
-            </div>
-          )}
-          
-          
-          {window.navigator.userAgent.toLowerCase().match(/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i) && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-green-800 font-medium">モバイルデバッグ</span>
-              </div>
-              <p className="text-xs text-green-700 mt-1">
-                歩数カウンターが正常に動作しない場合はデバッグ画面をご確認ください。
-                <a 
-                  href="/mobile-debug" 
-                  className="underline ml-1 hover:text-green-900"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  デバッグ画面を開く
-                </a>
-              </p>
-            </div>
-          )}
-        </div>
-      )} */}
     </div>
   );
 }

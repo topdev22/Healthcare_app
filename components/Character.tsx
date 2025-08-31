@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import CharacterFace from '@/components/CharacterFaces';
+import LottieCharacter from '@/components/LottieCharacter';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useCharacterData } from '@/hooks/useCharacterData';
@@ -18,41 +18,16 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
   const { currentUser } = useAuth();
   const { characterData, healthStats, userProfile, loading, error } = useCharacterData(currentUser);
 
-  // Map mood from extended set to character face mood
-  const mapMoodToFace = (mood: string): 'happy' | 'neutral' | 'sad' | 'sleeping' => {
-    switch (mood) {
-      case 'excited':
-        return 'happy';
-      case 'anxious':
-        return 'sad';
-      case 'sleeping':
-        return 'sleeping';
-      case 'happy':
-      case 'neutral':
-      case 'sad':
-        return mood as 'happy' | 'neutral' | 'sad';
-      default:
-        return 'neutral';
-    }
-  };
-
   // Use override props or real data
   const rawMood = overrideMood || characterData.mood || 'happy';
-  const mood = mapMoodToFace(rawMood);
   const healthLevel = overrideHealthLevel !== undefined ? overrideHealthLevel : characterData.healthLevel;
   const isInteracting = overrideInteracting !== undefined ? overrideInteracting : characterData.isInteracting || false;
-  const getCharacterColor = () => {
-    if (healthLevel >= 80) return 'text-health-green';
-    if (healthLevel >= 60) return 'text-wellness-amber';
-    if (healthLevel >= 40) return 'text-orange-500';
-    return 'text-red-500';
-  };
 
   const getHealthStatus = () => {
-    if (healthLevel >= 80) return { text: "とても元気です！", emoji: "✨", color: "bg-health-green" };
-    if (healthLevel >= 60) return { text: "調子は良好です！", emoji: "😊", color: "bg-wellness-amber" };
-    if (healthLevel >= 40) return { text: "もう少し気をつけましょう", emoji: "😐", color: "bg-orange-500" };
-    return { text: "もっとケアが必要です", emoji: "😞", color: "bg-red-500" };
+    if (healthLevel >= 80) return { text: "とても素晴らしい状態です！", emoji: "✨", color: "bg-health-green" };
+    if (healthLevel >= 60) return { text: "良いペースで頑張っていらっしゃいますね！", emoji: "😊", color: "bg-wellness-amber" };
+    if (healthLevel >= 40) return { text: "一緒に健康を目指しましょう", emoji: "😊", color: "bg-orange-500" };
+    return { text: "新しいスタートを応援します", emoji: "🌱", color: "bg-blue-500" };
   };
 
   const getCharacterLevel = () => {
@@ -79,24 +54,24 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
     
     if (healthLevel >= 80) {
       if (streakDays >= 7) {
-        return `${userName}、${streakDays}日連続で記録を続けています！素晴らしい習慣ですね！💪✨`;
+        return `${userName}、${streakDays}日連続で記録を続けていらっしゃいます！本当に素晴らしい習慣ですね！💪✨`;
       }
-      return `${userName}、とても良い健康状態を保っていますね！この調子で続けましょう！💪`;
+      return `${userName}、とても良い健康状態を保っていらっしゃいますね！この調子で無理なく続けていきましょう！💪`;
     } else if (healthLevel >= 60) {
       if (totalLogs >= 10) {
-        return `${userName}、健康記録が${totalLogs}件になりました！良いペースですね！🌟`;
+        return `${userName}、健康記録が${totalLogs}件になりました！素晴らしいペースで取り組んでいらっしゃいますね！🌟`;
       }
-      return `${userName}、良いペースで健康管理ができています。もう少し頑張りましょう！🌟`;
+      return `${userName}、良いペースで健康管理に取り組んでいらっしゃいますね。一緒に頑張りましょう！🌟`;
     } else if (healthLevel >= 40) {
       if (streakDays > 0) {
-        return `${userName}、${streakDays}日続けて頑張っていますね！継続が力になります！📈`;
+        return `${userName}、${streakDays}日続けて取り組んでいらっしゃいますね！継続は必ず力になります！📈`;
       }
-      return `${userName}、健康への意識を持って取り組んでいますね。継続が大切です！📈`;
+      return `${userName}、健康への意識を持って取り組んでいらっしゃることが素晴らしいです。一歩ずつ進んでいきましょう！📈`;
     } else {
       if (totalLogs > 0) {
-        return `${userName}、記録を始めてくれてありがとう！小さな一歩が大きな変化の始まりです！🌱`;
+        return `${userName}、記録を始めてくださってありがとうございます！小さな一歩が大きな変化の始まりです！🌱`;
       }
-      return `${userName}、新しいスタートです！今日から健康記録を始めてみませんか？🌱`;
+      return `${userName}、新しいスタートを切りましょう！今日から一緒に健康記録を始めませんか？🌱`;
     }
   };
 
@@ -161,38 +136,17 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
       </div>
 
       <div className="relative flex flex-col items-center p-8 space-y-6">
-        {/* Character Avatar with enhanced design */}
+        {/* Lottie Character with Growth Stages */}
         <div className="relative">
-          {/* Main character container */}
-          <div className={cn(
-            "relative w-36 h-36 rounded-full flex items-center justify-center transition-all duration-700 ease-out",
-            "bg-gradient-to-br from-character-primary/30 via-character-primary/10 to-character-secondary/20",
-            "border-4 border-character-primary/40 shadow-2xl",
-            isInteracting && "scale-110 shadow-character-primary/40"
-          )}>
-            {/* Inner glow */}
-            <div className={cn(
-              "absolute inset-2 rounded-full",
-              "bg-gradient-to-br from-white/20 to-transparent",
-              "transition-opacity duration-500",
-              isInteracting ? "opacity-100" : "opacity-50"
-            )} />
-            
-            {/* Character face */}
-            <CharacterFace
-              mood={mood}
-              size={100}
-              className={cn("transition-all duration-500 z-10", getCharacterColor())}
-            />
-
-            {/* Interaction effects */}
-            {isInteracting && (
-              <>
-                <div className="absolute inset-0 rounded-full bg-character-primary/20 animate-ping" />
-                <div className="absolute inset-4 rounded-full bg-character-secondary/20 animate-pulse" />
-              </>
-            )}
-          </div>
+          <LottieCharacter
+            size={144}
+            healthLevel={healthLevel}
+            totalLogs={healthStats?.totalLogs || 0}
+            streak={streakDays}
+            recentMood={rawMood as any}
+            isInteracting={isInteracting}
+            className="transition-all duration-700 ease-out"
+          />
 
           {/* Level badge */}
           <Badge 
@@ -208,7 +162,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
           </Badge>
 
           {/* Health status indicator */}
-          <div className={cn(
+          {/* <div className={cn(
             "absolute -bottom-2 left-1/2 transform -translate-x-1/2",
             "px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg",
             healthStatus.color,
@@ -216,7 +170,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
             isInteracting && "scale-105"
           )}>
             {healthStatus.emoji}
-          </div>
+          </div> */}
         </div>
 
         {/* Health Information */}
