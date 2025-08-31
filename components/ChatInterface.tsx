@@ -129,8 +129,8 @@ export default function ChatInterface({
         >
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
-              <p>健康バディとの会話を始めましょう！</p>
-              <p className="text-sm mt-2">健康目標や今日の体調について話してみてください。</p>
+              <p>健康バディとの会話を始めませんか？</p>
+              <p className="text-sm mt-2">健康目標や今日の体調について、お気軽にお話しください。</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -173,7 +173,7 @@ export default function ChatInterface({
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="メッセージを入力してください..."
+            placeholder="メッセージをご入力ください..."
             disabled={isLoading}
             className="flex-1"
           />
