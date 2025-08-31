@@ -64,7 +64,7 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
       case 'excited': return 'bg-wellness-amber text-white';
       case 'neutral': return 'bg-gray-500 text-white';
       case 'anxious': return 'bg-orange-500 text-white';
-      case 'sad': return 'bg-red-500 text-white';
+      case 'sad': return 'bg-blue-400 text-white';
       default: return 'bg-gray-500 text-white';
     }
   };
@@ -119,8 +119,8 @@ export default function HealthStats({ recentData: overrideRecentData, onLogHealt
       </div> */}
       
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-md">
+          <p className="text-sm text-orange-700">{error}</p>
         </div>
       )}
       
