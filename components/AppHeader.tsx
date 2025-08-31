@@ -38,7 +38,7 @@ export default function AppHeader({
             <img src="/images/favicon.jpg" alt="Health Buddy Logo" className="w-12 h-12 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg" />
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-foreground">ヘルスバディ</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">あなた専用の健康管理パートナー</p>
+              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">あなたの健康管理パートナー</p>
             </div>
           </div>
           
