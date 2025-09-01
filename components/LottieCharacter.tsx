@@ -164,7 +164,7 @@ export default function LottieCharacter({
         />
         
         {/* Growth stage indicator */}
-        <div className={cn(
+        {/* <div className={cn(
           "absolute -top-2 -right-2 px-2 py-1 rounded-full text-xs font-bold text-white",
           "bg-gradient-to-r from-character-primary to-character-secondary",
           "shadow-lg border-2 border-white/50",
@@ -172,7 +172,7 @@ export default function LottieCharacter({
           isInteracting && "scale-110"
         )}>
           {characterInfo.stage}
-        </div>
+        </div> */}
       </div>
 
       {/* Character Info */}
