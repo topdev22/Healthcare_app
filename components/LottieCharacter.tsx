@@ -162,17 +162,6 @@ export default function LottieCharacter({
           autoplay
           className="w-full h-full"
         />
-        
-        {/* Growth stage indicator */}
-        {/* <div className={cn(
-          "absolute -top-2 -right-2 px-2 py-1 rounded-full text-xs font-bold text-white",
-          "bg-gradient-to-r from-character-primary to-character-secondary",
-          "shadow-lg border-2 border-white/50",
-          "transition-transform duration-300",
-          isInteracting && "scale-110"
-        )}>
-          {characterInfo.stage}
-        </div> */}
       </div>
 
       {/* Character Info */}
