@@ -88,7 +88,6 @@ export default function ChatInterface({
           console.log('TTS was interrupted (this is normal when switching between messages)');
         } else {
           console.warn('TTS failed:', error);
-          // Optionally show user feedback about TTS failure here
         }
       }
     }
