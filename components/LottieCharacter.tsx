@@ -176,4 +176,6 @@ export default function LottieCharacter({
     </div>
   );
 }
+
+// Export character stage calculation for external use
 export { getCharacterStage };
