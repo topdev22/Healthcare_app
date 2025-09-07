@@ -6,11 +6,11 @@ import path from "path";
 export default defineConfig({
   server: {
     host: "::",
-    port: 8080,
+    port: 3000,
     allowedHosts: ["hapiken.jp", "www.hapiken.jp"],
     proxy: {
       "/api": {
-        target: process.env.VITE_API_BASE_URL || "http://localhost:3001",
+        target: process.env.VITE_API_BASE_URL,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ""),
