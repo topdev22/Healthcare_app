@@ -272,7 +272,7 @@ async function calculateDashboardStats(userId: string, date: Date) {
     dailySteps,
     stepsGoal: 10000,
     waterIntake,
-    waterGoal: 8,
+    waterGoal: 2000, // Convert to ml: 8 glasses * 250ml = 2000ml
     sleepHours,
     sleepGoal: 8,
     currentMood: currentMood as any,
