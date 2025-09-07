@@ -8,6 +8,7 @@ interface AppHeaderProps {
   currentUser: any;
   userProfile: any;
   currentTime: Date;
+  healthLevel?: number;
   onProfileClick: () => void;
   onAuthClick: () => void;
   onLogout: () => void;
@@ -17,6 +18,7 @@ export default function AppHeader({
   currentUser,
   userProfile,
   currentTime,
+  healthLevel,
   onProfileClick,
   onAuthClick,
   onLogout
@@ -59,7 +61,9 @@ export default function AppHeader({
                 {/* Health Status Indicator */}
                 <div className="hidden lg:flex items-center gap-2 px-3 py-2 glass rounded-full border border-white/20">
                   <Heart className="w-4 h-4 text-health-green" />
-                  <span className="text-sm font-medium text-health-green">85%</span>
+                  <span className="text-sm font-medium text-health-green">
+                    {healthLevel ? `${healthLevel}%` : '--'}
+                  </span>
                 </div>
 
                 <div className="text-right hidden md:block">

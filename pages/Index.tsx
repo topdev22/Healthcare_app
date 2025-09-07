@@ -23,6 +23,7 @@ import WelcomeScreen from "@/components/WelcomeScreen";
 // Hooks
 import { useAuth } from "@/contexts/AuthContext";
 import { useHealthData } from "@/hooks/useHealthData";
+import { useRealTimeHealthData } from "@/hooks/useRealTimeHealthData";
 import { useChat } from "@/hooks/useChat";
 
 // API
@@ -33,6 +34,7 @@ import StepsDisplay from "@/components/StepsDisplay";
 export default function Index() {
   const { currentUser, userProfile, logout, loading } = useAuth();
   const { healthData, loadHealthData } = useHealthData(currentUser);
+  const { realTimeStats } = useRealTimeHealthData(currentUser);
   const {
     messages,
     isLoadingResponse,
@@ -175,6 +177,7 @@ export default function Index() {
         currentUser={currentUser}
         userProfile={userProfile}
         currentTime={currentTime}
+        healthLevel={realTimeStats?.healthLevel}
         onProfileClick={() => setIsProfileModalOpen(true)}
         onAuthClick={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
@@ -195,8 +198,12 @@ export default function Index() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-health-green">85%</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">前日より+5%</div>
+                <div className="text-2xl sm:text-3xl font-bold text-health-green">
+                  {realTimeStats?.healthLevel ? `${realTimeStats.healthLevel}%` : '--'}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  {realTimeStats?.currentStreak ? `${realTimeStats.currentStreak}日連続` : 'データ読み込み中...'}
+                </div>
               </div>
             </div>
           </div>
