@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Footprints, MessageCircle, Sparkles } from "lucide-react";
+import { BarChart3, Blend, Footprints, MessageCircle, Sparkles } from "lucide-react";
 
 // Components
 import Character from "@/components/Character";
@@ -185,62 +185,60 @@ export default function Index() {
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
-            className="space-y-4 sm:space-y-6"
+            className="space-y-4 sm:space-y-6 bg-transparent"
           >
-            <TabsList className="grid w-full grid-cols-4 glass h-auto p-1 sm:h-14 justify-center items-center">
+            <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-sm h-auto p-2 sm:h-16 justify-center items-center rounded-2xl border border-white/20 shadow-lg">
               <TabsTrigger
                 value="dashboard"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-white/10 transition-all duration-200 ease-in-out rounded-xl font-medium"
               >
-                <BarChart3 className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
-                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 transition-colors" />
+                <span className="hidden sm:inline transition-colors">
                   ダッシュボード
                 </span>
-                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">
+                <span className="sm:hidden text-center transition-colors">
                   統計
                 </span>
               </TabsTrigger>
               
               <TabsTrigger
                 value="chat"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-white/10 transition-all duration-200 ease-in-out rounded-xl font-medium"
               >
-                <MessageCircle className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
-                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">
-                  ダッシュボード
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 transition-colors" />
+                <span className="hidden sm:inline transition-colors">
+                  チャット
                 </span>
-                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">
-                  統計
+                <span className="sm:hidden text-center transition-colors">
+                  会話
                 </span>
               </TabsTrigger>
 
               <TabsTrigger
                 value="step"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-white/10 transition-all duration-200 ease-in-out rounded-xl font-medium"
               >
-                <Footprints className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
-                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">
-                  成長記録
+                <Blend className="w-4 h-4 sm:w-5 sm:h-5 transition-colors" />
+                <span className="hidden sm:inline transition-colors">
+                  その他
                 </span>
-                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">
-                  成長
+                <span className="sm:hidden text-center transition-colors">
+                  その他
                 </span>
               </TabsTrigger>
 
               <TabsTrigger
                 value="progress"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 data-[state=active]:bg-primary/20 data-[state=active]:border-primary/20 border border-transparent"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 touch-target text-xs sm:text-sm w-full h-12 sm:h-auto py-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-white/10 transition-all duration-200 ease-in-out rounded-xl font-medium"
               >
-                <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground data-[state=active]:text-primary transition-colors" />
-                <span className="hidden sm:inline text-muted-foreground data-[state=active]:text-primary transition-colors">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 transition-colors" />
+                <span className="hidden sm:inline transition-colors">
                   成長記録
                 </span>
-                <span className="sm:hidden text-center text-muted-foreground data-[state=active]:text-primary transition-colors">
+                <span className="sm:hidden text-center transition-colors">
                   成長
                 </span>
               </TabsTrigger>
-
-              
             </TabsList>
 
             <TabsContent value="chat" className="space-y-4 sm:space-y-6">
