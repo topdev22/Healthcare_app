@@ -2,7 +2,9 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import LottieCharacter from '@/components/LottieCharacter';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Heart, Sparkles, TrendingUp, MessageCircle } from 'lucide-react';
 import { useCharacterData } from '@/hooks/useCharacterData';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -112,130 +114,172 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-character-primary/5 via-transparent to-character-secondary/5" />
+      {/* Enhanced Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-character-primary/8 via-character-secondary/5 to-health-green/5 rounded-2xl" />
       
-      {/* Floating particles */}
+      {/* Animated Health Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 6 }, (_, i) => (
+        {Array.from({ length: 8 }, (_, i) => (
           <div
             key={i}
             className={cn(
-              "absolute w-2 h-2 bg-character-primary/20 rounded-full",
-              "animate-bounce",
-              i % 2 === 0 ? "float" : ""
+              "absolute rounded-full",
+              i % 3 === 0 ? "w-3 h-3 bg-health-green/20" :
+              i % 3 === 1 ? "w-2 h-2 bg-character-primary/20" :
+              "w-2.5 h-2.5 bg-wellness-amber/20",
+              "float"
             )}
             style={{
-              left: `${20 + (i * 15)}%`,
-              top: `${10 + (i * 12)}%`,
-              animationDelay: `${i * 0.5}s`,
-              animationDuration: `${3 + (i * 0.5)}s`
+              left: `${15 + (i * 10)}%`,
+              top: `${5 + (i * 8)}%`,
+              animationDelay: `${i * 0.7}s`,
+              animationDuration: `${4 + (i * 0.3)}s`
             }}
           />
         ))}
       </div>
 
-      <div className="relative flex flex-col items-center p-8 space-y-6">
-        {/* Lottie Character with Growth Stages */}
+      <div className="relative flex flex-col items-center p-6 sm:p-8 space-y-6">
+        {/* Character Display with Enhanced Effects */}
         <div className="relative">
+          {/* Glow effect */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-character-primary/20 to-character-secondary/20 blur-xl"></div>
+          
           <LottieCharacter
-            size={144}
+            size={160}
             healthLevel={healthLevel}
             totalLogs={healthStats?.totalLogs || 0}
             streak={streakDays}
             recentMood={rawMood as any}
             isInteracting={isInteracting}
-            className="transition-all duration-700 ease-out"
+            className="transition-all duration-700 ease-out relative z-10"
           />
 
-          {/* Level badge */}
-          <Badge 
+          {/* Enhanced Level Badge */}
+          <Badge
             className={cn(
-              "absolute -top-2 -right-2 text-white font-bold",
+              "absolute -top-3 -right-3 text-white font-bold text-sm px-3 py-1",
               "bg-gradient-to-r from-character-primary to-character-secondary",
-              "shadow-lg border-2 border-white/50",
-              "transition-transform duration-300",
-              isInteracting && "scale-110"
+              "shadow-xl border-2 border-white/70 backdrop-blur-sm",
+              "transition-all duration-300",
+              isInteracting && "scale-110 shadow-2xl"
             )}
           >
-            レベル {characterLevel}
+            Lv.{characterLevel}
           </Badge>
 
-          {/* Health status indicator */}
-          {/* <div className={cn(
-            "absolute -bottom-2 left-1/2 transform -translate-x-1/2",
-            "px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg",
-            healthStatus.color,
+          {/* Health Status Ring */}
+          <div className={cn(
+            "absolute -bottom-3 left-1/2 transform -translate-x-1/2",
+            "px-4 py-2 rounded-full text-xs font-medium text-white shadow-xl backdrop-blur-sm",
+            "bg-gradient-to-r",
+            healthLevel >= 80 ? "from-health-green to-health-green/80" :
+            healthLevel >= 60 ? "from-wellness-amber to-wellness-amber/80" :
+            healthLevel >= 40 ? "from-orange-500 to-orange-400" :
+            "from-blue-500 to-blue-400",
             "transition-all duration-300",
             isInteracting && "scale-105"
           )}>
-            {healthStatus.emoji}
-          </div> */}
+            {healthStatus.emoji} {healthLevel}%
+          </div>
         </div>
 
-        {/* Health Information */}
-        <div className="w-full max-w-sm space-y-4">
-          {/* Health Level Display */}
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">
+        {/* Enhanced Health Information */}
+        <div className="w-full max-w-sm space-y-5">
+          {/* Health Status Message */}
+          <div className="text-center glass rounded-xl p-4 border border-white/30 shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               {healthStatus.text}
             </h3>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>健康レベル</span>
-              <span className="font-medium">{healthLevel}%</span>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Heart className="w-4 h-4 text-health-green" />
+              <span>健康レベル {healthLevel}%</span>
             </div>
           </div>
 
-          {/* Health Progress Bar */}
-          <div className="space-y-2">
-            <Progress 
-              value={healthLevel} 
-              className="h-3 bg-muted/50"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0%</span>
-              <span>50%</span>
-              <span>100%</span>
-            </div>
-          </div>
-
-          {/* Level Progress */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">次のレベルまで</span>
-              <span className="font-medium text-character-primary">{levelProgress}%</span>
-            </div>
-            <Progress 
-              value={levelProgress} 
-              className="h-2 bg-character-primary/10"
-            />
-          </div>
-
-          {/* Character Stats */}
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <div className="text-center p-3 bg-health-green/10 rounded-lg border border-health-green/20">
-              <div className="text-lg font-bold text-health-green">{streakDays}</div>
-              <div className="text-xs text-muted-foreground">連続日数</div>
-            </div>
-            <div className="text-center p-3 bg-character-primary/10 rounded-lg border border-character-primary/20">
-              <div className="text-lg font-bold text-character-primary">{characterLevel}</div>
-              <div className="text-xs text-muted-foreground">レベル</div>
-            </div>
-            <div className="text-center p-3 bg-wellness-amber/10 rounded-lg border border-wellness-amber/20">
-              <div className="text-lg font-bold text-wellness-amber">
-                {experiencePoints > 1000 ? `${(experiencePoints / 1000).toFixed(1)}k` : experiencePoints}
+          {/* Enhanced Progress Bars */}
+          <div className="space-y-4">
+            {/* Health Level Progress */}
+            <div className="glass rounded-lg p-4 border border-white/20">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="font-medium">健康レベル</span>
+                <span className="font-bold text-health-green">{healthLevel}%</span>
               </div>
-              <div className="text-xs text-muted-foreground">経験値</div>
+              <div className="relative">
+                <Progress
+                  value={healthLevel}
+                  className="h-3 bg-muted/30"
+                />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-health-green/20 to-health-blue/20 pointer-events-none"></div>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>開始</span>
+                <span>目標</span>
+                <span>達成</span>
+              </div>
             </div>
+
+            {/* Character Level Progress */}
+            <div className="glass rounded-lg p-4 border border-white/20">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="font-medium">次のレベルまで</span>
+                <span className="font-bold text-character-primary">{levelProgress}%</span>
+              </div>
+              <Progress
+                value={levelProgress}
+                className="h-2 bg-character-primary/10"
+              />
+            </div>
+          </div>
+
+          {/* Enhanced Character Stats Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="glass border border-health-green/30 shadow-lg">
+              <CardContent className="p-3 text-center">
+                <div className="w-8 h-8 rounded-full bg-health-green/20 flex items-center justify-center mx-auto mb-2">
+                  <Heart className="w-4 h-4 text-health-green" />
+                </div>
+                <div className="text-lg font-bold text-health-green">{streakDays}</div>
+                <div className="text-xs text-muted-foreground font-medium">連続日数</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="glass border border-character-primary/30 shadow-lg">
+              <CardContent className="p-3 text-center">
+                <div className="w-8 h-8 rounded-full bg-character-primary/20 flex items-center justify-center mx-auto mb-2">
+                  <Sparkles className="w-4 h-4 text-character-primary" />
+                </div>
+                <div className="text-lg font-bold text-character-primary">{characterLevel}</div>
+                <div className="text-xs text-muted-foreground font-medium">レベル</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="glass border border-wellness-amber/30 shadow-lg">
+              <CardContent className="p-3 text-center">
+                <div className="w-8 h-8 rounded-full bg-wellness-amber/20 flex items-center justify-center mx-auto mb-2">
+                  <TrendingUp className="w-4 h-4 text-wellness-amber" />
+                </div>
+                <div className="text-lg font-bold text-wellness-amber">
+                  {experiencePoints > 1000 ? `${(experiencePoints / 1000).toFixed(1)}k` : experiencePoints}
+                </div>
+                <div className="text-xs text-muted-foreground font-medium">経験値</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Motivational message */}
-        <div className="text-center p-4 bg-muted/30 rounded-lg border border-muted/50 max-w-sm">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {getMotivationalMessage()}
-          </p>
-        </div>
+        {/* Enhanced Motivational Message */}
+        <Card className="glass border border-white/30 shadow-lg w-full max-w-sm">
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <MessageCircle className="w-5 h-5 text-character-primary" />
+              <span className="font-medium text-character-primary">ヘルスバディからのメッセージ</span>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {getMotivationalMessage()}
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

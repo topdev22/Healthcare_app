@@ -44,35 +44,59 @@ export default function QuickStatsCards({
   }
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <Card className="card-hover">
-        <CardContent className="p-3 sm:p-4 text-center">
-          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-health-green mx-auto mb-1 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-health-green">{healthLevel}%</p>
-          <p className="text-xs text-muted-foreground">健康レベル</p>
+      <Card className="glass border border-white/30 shadow-lg card-hover overflow-hidden relative">
+        <CardContent className="p-3 sm:p-4 text-center relative">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-health-green/10 rounded-full -translate-y-8 translate-x-8"></div>
+          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-health-green mx-auto mb-2 relative z-10" />
+          <div className="relative z-10">
+            <p className="text-xl sm:text-3xl font-bold text-health-green mb-1">{healthLevel}%</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">健康レベル</p>
+            {healthLevel >= 80 && (
+              <div className="text-xs text-health-green mt-1 font-medium">優秀！</div>
+            )}
+          </div>
         </CardContent>
       </Card>
       
-      <Card className="card-hover">
-        <CardContent className="p-3 sm:p-4 text-center">
-          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 mx-auto mb-1 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold">{streakDays}</p>
-          <p className="text-xs text-muted-foreground">連続記録日数</p>
+      <Card className="glass border border-white/30 shadow-lg card-hover overflow-hidden relative">
+        <CardContent className="p-3 sm:p-4 text-center relative">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-red-500/10 rounded-full -translate-y-8 translate-x-8"></div>
+          <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 mx-auto mb-2 relative z-10" />
+          <div className="relative z-10">
+            <p className="text-xl sm:text-3xl font-bold text-red-500 mb-1">{streakDays}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">連続記録日数</p>
+            {streakDays >= 7 && (
+              <div className="text-xs text-red-500 mt-1 font-medium">素晴らしい継続力！</div>
+            )}
+          </div>
         </CardContent>
       </Card>
       
-      <Card className="card-hover">
-        <CardContent className="p-3 sm:p-4 text-center">
-          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-health-blue mx-auto mb-1 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold">{(todayCalories / 1000).toFixed(1)}k</p>
-          <p className="text-xs text-muted-foreground">今日のカロリー</p>
+      <Card className="glass border border-white/30 shadow-lg card-hover overflow-hidden relative">
+        <CardContent className="p-3 sm:p-4 text-center relative">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-health-blue/10 rounded-full -translate-y-8 translate-x-8"></div>
+          <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-health-blue mx-auto mb-2 relative z-10" />
+          <div className="relative z-10">
+            <p className="text-xl sm:text-3xl font-bold text-health-blue mb-1">{(todayCalories / 1000).toFixed(1)}k</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">今日のカロリー</p>
+            <div className="text-xs text-health-blue mt-1 font-medium">
+              目標: 2.0k
+            </div>
+          </div>
         </CardContent>
       </Card>
       
-      <Card className="card-hover">
-        <CardContent className="p-3 sm:p-4 text-center">
-          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-character-primary mx-auto mb-1 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold">レベル{characterLevel}</p>
-          <p className="text-xs text-muted-foreground">バディ成長</p>
+      <Card className="glass border border-white/30 shadow-lg card-hover overflow-hidden relative">
+        <CardContent className="p-3 sm:p-4 text-center relative">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-character-primary/10 rounded-full -translate-y-8 translate-x-8"></div>
+          <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-character-primary mx-auto mb-2 relative z-10" />
+          <div className="relative z-10">
+            <p className="text-xl sm:text-3xl font-bold text-character-primary mb-1">Lv.{characterLevel}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">バディ成長</p>
+            <div className="text-xs text-character-primary mt-1 font-medium">
+              次のレベルまで 75%
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
