@@ -65,7 +65,9 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('combined'));
 }
 
-
+// Serve static files from public directory
+app.use('/profile', express.static('server/public/profile'));
+app.use('/public', express.static('server/public'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

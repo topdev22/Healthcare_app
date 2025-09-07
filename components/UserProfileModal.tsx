@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { userAPI } from '@/lib/api';
-import { Save, User, Camera, Upload } from 'lucide-react';
+import { Save, User, Camera, Upload, Activity, Target, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 
@@ -223,49 +225,62 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5 text-primary" />
-            ユーザープロフィール設定
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass border border-white/30 shadow-2xl">
+        <DialogHeader className="text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-character-primary to-character-secondary flex items-center justify-center shadow-xl">
+              <User className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-character-primary to-character-secondary bg-clip-text text-transparent">
+            プロフィール設定
           </DialogTitle>
-          <DialogDescription>
-            あなたの情報を設定して、より個人化された健康アドバイスを受けましょう
+          <DialogDescription className="text-center">
+            あなたの情報を設定して、より個人化された<br />
+            健康アドバイスを受けましょう
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* プロフィール画像 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">プロフィール画像</h3>
-            <div className="flex items-center gap-4">
-              <Avatar className="w-20 h-20 ring-2 ring-primary/20">
-                <AvatarImage src={userProfile?.photoURL} />
-                <AvatarFallback className="bg-gradient-to-br from-character-primary to-character-secondary text-white text-lg">
-                  {userProfile?.displayName?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="space-y-2">
-                <Label htmlFor="image-upload" className="text-sm font-medium">
-                  画像をアップロード (JPEG, PNG, 5MB以下)
-                </Label>
-                <div className="flex items-center gap-2">
+          {/* Enhanced Profile Image Section */}
+          <Card className="glass border border-white/30 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-health-green" />
+                プロフィール画像
+              </h3>
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative">
+                  <Avatar className="w-24 h-24 ring-4 ring-health-green/30 shadow-xl">
+                    <AvatarImage src={userProfile?.photoURL} />
+                    <AvatarFallback className="bg-gradient-to-br from-health-green to-health-blue text-white text-2xl font-bold">
+                      {userProfile?.displayName?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-health-green to-health-blue rounded-full flex items-center justify-center shadow-lg">
+                    <Camera className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                
+                <div className="space-y-3 flex-1">
+                  <Label htmlFor="image-upload" className="text-sm font-medium text-muted-foreground">
+                    画像をアップロード (JPEG, PNG, 5MB以下)
+                  </Label>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => document.getElementById('image-upload')?.click()}
                     disabled={imageUploading}
-                    className="flex items-center gap-2"
+                    className="w-full sm:w-auto glass border-white/30 hover:bg-white/20"
                   >
                     {imageUploading ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-health-green border-t-transparent rounded-full animate-spin mr-2" />
                         アップロード中...
                       </>
                     ) : (
                       <>
-                        <Upload className="w-4 h-4" />
+                        <Upload className="w-4 h-4 mr-2" />
                         画像を選択
                       </>
                     )}
@@ -280,115 +295,189 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   />
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* 基本情報 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">基本情報</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayName">お名前</Label>
-                <Input
-                  id="displayName"
-                  value={formData.displayName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                  placeholder="お名前を入力してください"
-                />
-              </div>
+          {/* Enhanced Basic Information */}
+          <Card className="glass border border-white/30 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <User className="w-5 h-5 text-health-blue" />
+                基本情報
+              </h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="age">年齢</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  value={formData.age}
-                  onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
-                  placeholder="年齢"
-                  min="1"
-                  max="120"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>性別</Label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="性別を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">男性</SelectItem>
-                    <SelectItem value="female">女性</SelectItem>
-                    <SelectItem value="other">その他</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="height">身長 (cm)</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  value={formData.height}
-                  onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
-                  placeholder="身長"
-                  min="100"
-                  max="250"
-                  step="0.1"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 活動レベル */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">活動レベル</h3>
-            <Select value={formData.activityLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, activityLevel: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="活動レベルを選択" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sedentary">座りがち（運動なし）</SelectItem>
-                <SelectItem value="light">軽い活動（週1-3回の軽い運動）</SelectItem>
-                <SelectItem value="moderate">適度な活動（週3-5回の運動）</SelectItem>
-                <SelectItem value="active">活発（週6-7回の運動）</SelectItem>
-                <SelectItem value="very_active">非常に活発（1日2回の運動）</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 健康目標 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">健康目標</h3>
-            <p className="text-sm text-muted-foreground">該当するものをすべて選択してください</p>
-            
-            <div className="grid grid-cols-2 gap-3">
-              {healthGoalOptions.map((goal) => (
-                <div key={goal} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={goal}
-                    checked={formData.healthGoals.includes(goal)}
-                    onCheckedChange={(checked) => handleHealthGoalChange(goal, !!checked)}
-                  />
-                  <Label htmlFor={goal} className="text-sm cursor-pointer">
-                    {goal}
-                  </Label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName" className="font-medium">お名前</Label>
+                    <Input
+                      id="displayName"
+                      value={formData.displayName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                      placeholder="お名前を入力してください"
+                      className="glass border-white/30 bg-white/50 focus:bg-white/70"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="age" className="font-medium">年齢</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      value={formData.age}
+                      onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
+                      placeholder="年齢"
+                      min="1"
+                      max="120"
+                      className="glass border-white/30 bg-white/50 focus:bg-white/70"
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-medium">性別</Label>
+                    <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                      <SelectTrigger className="glass border-white/30 bg-white/50">
+                        <SelectValue placeholder="性別を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">男性</SelectItem>
+                        <SelectItem value="female">女性</SelectItem>
+                        <SelectItem value="other">その他</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="height" className="font-medium">身長 (cm)</Label>
+                    <Input
+                      id="height"
+                      type="number"
+                      value={formData.height}
+                      onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
+                      placeholder="身長"
+                      min="100"
+                      max="250"
+                      step="0.1"
+                      className="glass border-white/30 bg-white/50 focus:bg-white/70"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enhanced Activity Level */}
+          <Card className="glass border border-white/30 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-wellness-amber" />
+                活動レベル
+              </h3>
+              <Select value={formData.activityLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, activityLevel: value }))}>
+                <SelectTrigger className="glass border-white/30 bg-white/50">
+                  <SelectValue placeholder="日常の活動レベルを選択してください" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sedentary">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      座りがち（運動なし）
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="light">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                      軽い活動（週1-3回の軽い運動）
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="moderate">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                      適度な活動（週3-5回の運動）
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="active">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      活発（週6-7回の運動）
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="very_active">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                      非常に活発（1日2回の運動）
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Enhanced Health Goals */}
+          <Card className="glass border border-white/30 shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-health-green" />
+                健康目標
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                あなたの健康目標を選択してください（複数選択可能）
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {healthGoalOptions.map((goal) => (
+                  <div key={goal} className="glass border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300">
+                    <div className="flex items-center space-x-3 p-3">
+                      <Checkbox
+                        id={goal}
+                        checked={formData.healthGoals.includes(goal)}
+                        onCheckedChange={(checked) => handleHealthGoalChange(goal, !!checked)}
+                      />
+                      <Label htmlFor={goal} className="text-sm cursor-pointer font-medium flex-1">
+                        {goal}
+                      </Label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Goals Summary */}
+              {formData.healthGoals.length > 0 && (
+                <div className="mt-4 p-3 glass border border-health-green/30 rounded-lg">
+                  <p className="text-sm font-medium text-health-green mb-2">選択された目標:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.healthGoals.map((goal, index) => (
+                      <Badge key={index} className="bg-health-green/20 text-health-green border-health-green/30">
+                        {goal}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="flex gap-3 pt-6 border-t">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+        <div className="flex gap-3 pt-6 border-t border-white/20">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="flex-1 glass border-white/30 hover:bg-white/20"
+          >
             キャンセル
           </Button>
-          <Button onClick={handleSave} disabled={loading} className="flex-1 flex items-center gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="flex-1 flex items-center gap-2 bg-gradient-to-r from-health-green to-health-blue hover:from-health-green/90 hover:to-health-blue/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
             {loading ? (
-              <>設定保存中...</>
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                設定保存中...
+              </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
