@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { healthAPI, socketManager, socketEvents } from '@/lib/api';
+import { healthAPI, dashboardAPI, socketManager, socketEvents } from '@/lib/api';
 
 interface HealthData {
   weight?: number;
@@ -18,6 +18,7 @@ interface RealTimeHealthStats {
   stepsGoal: number;
   dailyHealthLogs: number;
   currentStreak: number;
+  healthLevel: number;
   lastUpdated: string;
 }
 
@@ -36,81 +37,72 @@ export function useRealTimeHealthData(currentUser: any) {
       setLoading(true);
       setError(null);
 
-      const response = await healthAPI.getHealthLogs(50, 0);
-      const data = response.data || [];
-      
-      // If no data from API, use sample data for demonstration
-      const sampleData: HealthData[] = data.length > 0 ? data : [
-        {
-          weight: 70.2,
-          mood: 'happy',
-          calories: 1850,
-          date: new Date().toISOString()
-        },
-        {
-          weight: 70.5,
-          mood: 'neutral',
-          calories: 1720,
-          date: new Date(Date.now() - 24*60*60*1000).toISOString()
-        },
-        {
-          weight: 70.8,
-          mood: 'excited',
-          calories: 1950,
-          date: new Date(Date.now() - 2*24*60*60*1000).toISOString()
-        }
-      ];
-      
-      setHealthData(sampleData);
+      // Get comprehensive dashboard statistics (includes all health metrics)
+      const [dashboardResponse, healthLogsResponse] = await Promise.all([
+        dashboardAPI.getDashboardStats(),
+        healthAPI.getHealthLogs(50, 0)
+      ]);
 
-      // Calculate real-time stats from the data
-      const today = new Date().toDateString();
-      const todayData = sampleData.filter(log => 
-        new Date(log.date).toDateString() === today
-      );
-
-      const latestData = sampleData[0]; // Most recent entry
+      const dashboardData = dashboardResponse.data;
+      const healthLogs = healthLogsResponse.data || [];
       
+      // Transform health logs for compatibility with existing components
+      const transformedHealthData: HealthData[] = healthLogs.map((log: any) => ({
+        weight: log.type === 'weight' ? log.data?.weight : undefined,
+        mood: log.type === 'mood' ? log.data?.mood || 'neutral' : 'neutral',
+        calories: log.type === 'food' ? log.data?.calories : undefined,
+        date: log.date
+      })).filter((log: HealthData) => log.weight || log.calories || log.mood !== 'neutral');
+
+      setHealthData(transformedHealthData);
+
+      // Use real dashboard data for statistics
       const stats: RealTimeHealthStats = {
-        currentWeight: latestData?.weight,
-        currentMood: latestData?.mood || 'neutral',
-        dailyCalories: todayData.reduce((sum, log) => sum + (log.calories || 0), 0),
-        waterIntake: 1200, // Sample water intake
-        waterGoal: 2000, // Default water goal in ml
-        dailySteps: 8250, // Sample steps count
-        stepsGoal: 10000, // Default steps goal
-        dailyHealthLogs: todayData.length,
-        currentStreak: calculateStreak(sampleData),
+        currentWeight: dashboardData.currentWeight,
+        currentMood: dashboardData.currentMood || 'neutral',
+        dailyCalories: dashboardData.dailyCalories || 0,
+        waterIntake: dashboardData.waterIntake || 0, // Real water intake from database
+        waterGoal: dashboardData.waterGoal || 2000, // Real or default water goal
+        dailySteps: dashboardData.dailySteps || 0, // Real steps from database
+        stepsGoal: dashboardData.stepsGoal || 10000, // Real or default steps goal
+        dailyHealthLogs: dashboardData.dailyHealthLogs || 0,
+        currentStreak: dashboardData.currentStreak || 0,
+        healthLevel: dashboardData.healthLevel || 50, // Real health level calculation
         lastUpdated: new Date().toISOString()
       };
 
       setRealTimeStats(stats);
       setLastUpdate(new Date());
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load real-time health data:', err);
-      setError('リアルタイムデータの読み込みに失敗しました');
       
-      // Use sample data on error
-      const fallbackData: HealthData[] = [
-        {
-          weight: 70.2,
-          mood: 'happy',
-          calories: 1850,
-          date: new Date().toISOString()
-        }
-      ];
+      // Determine error type and set appropriate message
+      let errorMessage = 'リアルタイムデータの読み込みに失敗しました';
+      if (err.message?.includes('Network')) {
+        errorMessage = 'ネットワーク接続を確認してください';
+      } else if (err.message?.includes('401')) {
+        errorMessage = '認証エラーが発生しました。再ログインしてください';
+      } else if (err.message?.includes('server')) {
+        errorMessage = 'サーバーエラーが発生しました。しばらくしてから再試行してください';
+      }
+      
+      setError(errorMessage);
+      
+      // Use minimal fallback data with clear indication of no data
+      const fallbackData: HealthData[] = [];
       
       setHealthData(fallbackData);
       setRealTimeStats({
-        currentWeight: 70.2,
-        currentMood: 'happy',
-        dailyCalories: 1850,
-        waterIntake: 1200,
-        waterGoal: 2000,
-        dailySteps: 8250,
-        stepsGoal: 10000,
-        dailyHealthLogs: 1,
-        currentStreak: 1,
+        currentWeight: undefined,
+        currentMood: 'neutral',
+        dailyCalories: 0,
+        waterIntake: 0, // Start with 0 when no data available
+        waterGoal: 2000, // Keep default goal for UI display
+        dailySteps: 0, // Start with 0 when no data available
+        stepsGoal: 10000, // Keep default goal for UI display
+        dailyHealthLogs: 0,
+        currentStreak: 0,
+        healthLevel: 0, // 0 indicates no data/connectivity issues
         lastUpdated: new Date().toISOString()
       });
     } finally {
@@ -221,12 +213,17 @@ export function useRealTimeHealthData(currentUser: any) {
     
     // Update real-time stats
     if (realTimeStats) {
+      const newSteps = Math.floor(Math.random() * 500) + 100;
+      const newWaterIntake = Math.min(realTimeStats.waterIntake + 250, realTimeStats.waterGoal); // Add 250ml
+      
       setRealTimeStats(prev => prev ? {
         ...prev,
         currentWeight: newLog.weight,
         currentMood: newLog.mood,
         dailyCalories: prev.dailyCalories + newCalories,
-        dailySteps: prev.dailySteps + Math.floor(Math.random() * 500) + 100, // Add random steps
+        waterIntake: newWaterIntake,
+        dailySteps: prev.dailySteps + newSteps,
+        healthLevel: Math.min(prev.healthLevel + Math.floor(Math.random() * 5), 100), // Slight health level increase
         lastUpdated: new Date().toISOString()
       } : null);
     }

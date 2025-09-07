@@ -19,13 +19,14 @@ export default function QuickStatsCards({
   characterLevel: overrideCharacterLevel
 }: QuickStatsCardsProps) {
   const { currentUser } = useAuth();
-  const { quickStats, loading } = useDashboard(currentUser);
+  const { quickStats, progressData, loading } = useDashboard(currentUser);
 
   // Use override props or real data
   const healthLevel = overrideHealthLevel !== undefined ? overrideHealthLevel : (quickStats?.healthLevel || 50);
   const streakDays = overrideStreakDays !== undefined ? overrideStreakDays : (quickStats?.streakDays || 0);
   const todayCalories = overrideTodayCalories !== undefined ? overrideTodayCalories : (quickStats?.todayCalories || 0);
   const characterLevel = overrideCharacterLevel !== undefined ? overrideCharacterLevel : (quickStats?.characterLevel || 1);
+  const nextLevelProgress = progressData?.nextLevelProgress || 0;
 
   if (loading && !quickStats) {
     return (
@@ -94,7 +95,7 @@ export default function QuickStatsCards({
             <p className="text-xl sm:text-3xl font-bold text-character-primary mb-1">Lv.{characterLevel}</p>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">バディ成長</p>
             <div className="text-xs text-character-primary mt-1 font-medium">
-              次のレベルまで 75%
+              次のレベルまで {nextLevelProgress}%
             </div>
           </div>
         </CardContent>
