@@ -36,7 +36,7 @@ export default function ChatInterface({
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight + messagesContainerRef.current.clientHeight;
     }
   };
 
@@ -119,7 +119,7 @@ export default function ChatInterface({
         </div>
       </div>
       
-      <div className="flex-1 flex flex-col p-2 space-y-4 min-h-[300px] lg:min-h-[400px] max-h-[400px] lg:max-h-[500px] overflow-hidden">
+      <div className="flex-1 flex flex-col p-2 space-y-4 min-h-[600px] lg:min-h-[400px] max-h-[400px] lg:max-h-[500px] overflow-hidden">
         {/* Messages Area */}
         <div 
           ref={messagesContainerRef}
