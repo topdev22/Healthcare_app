@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { dashboardAPI, healthAPI, socketManager } from '@/lib/api';
+import { retryApiCall, handleAndroidApiError, logAndroidError, isAndroidApp } from '@/lib/androidUtils';
 
 interface DashboardStats {
   healthLevel: number;
@@ -61,14 +62,20 @@ export function useDashboard(currentUser: any) {
       setLoading(true);
       setError(null);
 
-      const response = await dashboardAPI.getDashboardStats();
+      const response = await retryApiCall(async () => {
+        return dashboardAPI.getDashboardStats();
+      }, isAndroidApp() ? 3 : 2);
+      
       console.log('Dashboard stats:', response.data);
       if (response.success) {
         setDashboardStats(response.data);
       }
-    } catch (err) {
-      console.error('Failed to load dashboard stats:', err);
-      setError('ダッシュボードデータの読み込みに失敗しました');
+    } catch (err: any) {
+      logAndroidError('useDashboard.loadDashboardStats', err);
+      const errorMessage = isAndroidApp() ?
+        handleAndroidApiError(err) :
+        'ダッシュボードデータの読み込みに失敗しました';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -78,11 +85,15 @@ export function useDashboard(currentUser: any) {
     if (!currentUser) return;
 
     try {
-      const response = await dashboardAPI.getQuickStats();
+      const response = await retryApiCall(async () => {
+        return dashboardAPI.getQuickStats();
+      }, isAndroidApp() ? 3 : 2);
+      
       if (response.success) {
         setQuickStats(response.data);
       }
-    } catch (err) {
+    } catch (err: any) {
+      logAndroidError('useDashboard.loadQuickStats', err);
       console.error('Failed to load quick stats:', err);
       // Fallback to default values
       setQuickStats({
@@ -98,11 +109,15 @@ export function useDashboard(currentUser: any) {
     if (!currentUser) return;
 
     try {
-      const response = await dashboardAPI.getProgress();
+      const response = await retryApiCall(async () => {
+        return dashboardAPI.getProgress();
+      }, isAndroidApp() ? 3 : 2);
+      
       if (response.success) {
         setProgressData(response.data);
       }
-    } catch (err) {
+    } catch (err: any) {
+      logAndroidError('useDashboard.loadProgressData', err);
       console.error('Failed to load progress data:', err);
       setProgressData({
         characterLevel: 1,

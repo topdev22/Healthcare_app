@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { healthAPI, dashboardAPI, socketManager, socketEvents } from '@/lib/api';
+import { retryApiCall, handleAndroidApiError, logAndroidError, isAndroidApp } from '@/lib/androidUtils';
 
 interface HealthData {
   weight?: number;
@@ -37,11 +38,13 @@ export function useRealTimeHealthData(currentUser: any) {
       setLoading(true);
       setError(null);
 
-      // Get comprehensive dashboard statistics (includes all health metrics)
-      const [dashboardResponse, healthLogsResponse] = await Promise.all([
-        dashboardAPI.getDashboardStats(),
-        healthAPI.getHealthLogs(50, 0)
-      ]);
+      // Use retry mechanism for Android stability
+      const [dashboardResponse, healthLogsResponse] = await retryApiCall(async () => {
+        return Promise.all([
+          dashboardAPI.getDashboardStats(),
+          healthAPI.getHealthLogs(50, 0)
+        ]);
+      }, isAndroidApp() ? 3 : 2); // More retries for Android
 
       const dashboardData = dashboardResponse.data;
       const healthLogs = healthLogsResponse.data || [];
@@ -74,17 +77,13 @@ export function useRealTimeHealthData(currentUser: any) {
       setRealTimeStats(stats);
       setLastUpdate(new Date());
     } catch (err: any) {
-      console.error('Failed to load real-time health data:', err);
+      // Log error for Android debugging
+      logAndroidError('useRealTimeHealthData.loadHealthData', err);
       
-      // Determine error type and set appropriate message
-      let errorMessage = 'リアルタイムデータの読み込みに失敗しました';
-      if (err.message?.includes('Network')) {
-        errorMessage = 'ネットワーク接続を確認してください';
-      } else if (err.message?.includes('401')) {
-        errorMessage = '認証エラーが発生しました。再ログインしてください';
-      } else if (err.message?.includes('server')) {
-        errorMessage = 'サーバーエラーが発生しました。しばらくしてから再試行してください';
-      }
+      // Use Android-optimized error handling
+      const errorMessage = isAndroidApp() ?
+        handleAndroidApiError(err) :
+        (err.message || 'リアルタイムデータの読み込みに失敗しました');
       
       setError(errorMessage);
       

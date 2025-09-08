@@ -9,7 +9,16 @@ const config: CapacitorConfig = {
   server: {
     url: "https://hapiken.jp",
     androidScheme: 'https',
-    cleartext: false
+    cleartext: true,
+    allowNavigation: [
+      "https://hapiken.jp/*",
+      "https://*.hapiken.jp/*"
+    ]
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true
   },
   plugins: {
     SplashScreen: {
