@@ -186,7 +186,7 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
           </Card>
 
           <Tabs defaultValue="overview" className="space-y-5">
-            <TabsList className="grid w-full grid-cols-4 glass border border-white/30 h-12">
+            <TabsList className="grid w-full grid-cols-4 glass border border-white/30 h-auto">
               <TabsTrigger
                 value="overview"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-health-blue data-[state=active]:to-health-green data-[state=active]:text-white"
