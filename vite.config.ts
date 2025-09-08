@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig({
   server: {
     host: "::",
-    port: 3000,
+    port: 8080,
     allowedHosts: ["hapiken.jp", "www.hapiken.jp"],
     proxy: {
       "/api": {
