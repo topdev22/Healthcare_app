@@ -285,7 +285,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </div>
 
           <Tabs defaultValue="login" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 glass border border-white/30 h-12">
+            <TabsList className="grid w-full grid-cols-2 glass border border-white/30 h-auto">
               <TabsTrigger
                 value="login"
                 disabled={isLoading}
