@@ -46,6 +46,11 @@ app.use(helmet({
   },
 }));
 
+// Serve React app static files in production
+// if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('dist'));
+// }
+
 // CORS configuration
 app.use(cors({
   origin: "*",
