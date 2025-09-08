@@ -149,25 +149,29 @@ export function useRealTimeHealthData(currentUser: any) {
     // Listen for health data updates
     healthAPI.onHealthDataUpdate((data: any) => {
       console.log('🔔 Real-time health data update received:', data);
-      loadHealthData(); // Reload data when updates are received
+      loadHealthData(); // Reload both health logs and dashboard stats
     });
 
     // Listen for new health logs
     healthAPI.onNewHealthLog((logData: any) => {
       console.log('🔔 New health log received:', logData);
+      // Add to local state immediately for instant UI update
       setHealthData(prev => [logData, ...prev]);
-      loadHealthData(); // Reload stats
+      // Trigger full refresh to update calculated stats
+      loadHealthData();
     });
 
     // Listen for health log updates
     healthAPI.onHealthLogUpdated((logData: any) => {
       console.log('🔔 Health log updated:', logData);
-      setHealthData(prev => 
-        prev.map(log => 
+      // Update local state immediately
+      setHealthData(prev =>
+        prev.map(log =>
           log.date === logData.date ? logData : log
         )
       );
-      loadHealthData(); // Reload stats
+      // Trigger full refresh to recalculate stats
+      loadHealthData();
     });
 
     // Set up polling as fallback (every 30 seconds)

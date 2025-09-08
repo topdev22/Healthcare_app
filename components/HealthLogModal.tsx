@@ -39,15 +39,17 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
     tdee: undefined,
     mood: 'neutral' as MoodType,
     energy: 5,
-    sleep: 8,
-    water: 8,
+    sleep: undefined, // Start empty for fresh daily entry
+    water: undefined, // Start empty for fresh daily entry
     foodItems: []
   });
 
   const [foodInput, setFoodInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingTodayData, setLoadingTodayData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [todayDataLoaded, setTodayDataLoaded] = useState(false);
 
   const moodOptions: Array<{ value: MoodType; label: string; emoji: string }> = [
     { value: 'excited', label: getMoodLabel('excited'), emoji: getMoodEmoji('excited') },
@@ -61,15 +63,71 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
 
   const resetForm = () => {
     setLogData({
+      weight: undefined,
+      height: undefined,
+      bmi: undefined,
+      bmr: undefined,
+      calories: undefined,
+      tdee: undefined,
       mood: 'neutral' as MoodType,
       energy: 5,
-      sleep: 8,
-      water: 8,
+      sleep: undefined, // Start empty for fresh daily entry
+      water: undefined, // Start empty for fresh daily entry
       foodItems: []
     });
     setFoodInput('');
     setError(null);
     setSuccessMessage(null);
+    setTodayDataLoaded(false);
+  };
+
+  // Load today's existing data when modal opens
+  const loadTodayData = async () => {
+    if (!isOpen || todayDataLoaded) return;
+
+    try {
+      setLoadingTodayData(true);
+      
+      // Get today's health logs
+      const today = new Date().toDateString();
+      const response = await healthAPI.getHealthLogs(50, 0);
+      const todayLogs = response.data?.filter((log: any) =>
+        new Date(log.date).toDateString() === today
+      ) || [];
+
+      // Pre-populate form with today's existing data
+      const todayWeight = todayLogs.find((log: any) => log.type === 'weight')?.data?.weight;
+      const todayMood = todayLogs.find((log: any) => log.type === 'mood')?.data?.mood || 'neutral';
+      const todayEnergy = todayLogs.find((log: any) => log.type === 'mood')?.data?.energy || 5;
+      const todaySleep = todayLogs.find((log: any) => log.type === 'sleep')?.data?.hours;
+      const todayWaterLogs = todayLogs.filter((log: any) => log.type === 'water');
+      const todayWaterGlasses = todayWaterLogs.reduce((sum: number, log: any) =>
+        sum + (log.data?.glasses || Math.round((log.data?.amount || 0) / 250)), 0
+      );
+
+      const todayFoodItems = todayLogs
+        .filter((log: any) => log.type === 'food')
+        .map((log: any) => log.data?.name || log.description)
+        .filter(Boolean);
+
+      setLogData(prev => ({
+        ...prev,
+        weight: todayWeight,
+        mood: todayMood as MoodType,
+        energy: todayEnergy,
+        sleep: todaySleep,
+        water: todayWaterGlasses > 0 ? todayWaterGlasses : undefined,
+        foodItems: todayFoodItems
+      }));
+
+      setTodayDataLoaded(true);
+      
+    } catch (err) {
+      console.error('Failed to load today\'s data:', err);
+      // Continue with empty form if loading fails
+    } finally {
+      setLoadingTodayData(false);
+    }
   };
 
   const handleSave = async () => {
@@ -133,6 +191,16 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
       foodItems: prev.foodItems?.filter((_, i) => i !== index) || []
     }));
   };
+
+  // Load today's data when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      loadTodayData();
+    } else {
+      // Reset when modal closes
+      resetForm();
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -226,8 +294,10 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
                     type="number"
                     min="0"
                     max="24"
-                    value={logData.sleep}
-                    onChange={(e) => setLogData(prev => ({ ...prev, sleep: parseInt(e.target.value) || 0 }))}
+                    step="0.5"
+                    placeholder="8.0"
+                    value={logData.sleep || ''}
+                    onChange={(e) => setLogData(prev => ({ ...prev, sleep: parseFloat(e.target.value) || undefined }))}
                     className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </CardContent>
@@ -244,8 +314,9 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
                     type="number"
                     min="0"
                     max="20"
-                    value={logData.water}
-                    onChange={(e) => setLogData(prev => ({ ...prev, water: parseInt(e.target.value) || 0 }))}
+                    placeholder="8"
+                    value={logData.water || ''}
+                    onChange={(e) => setLogData(prev => ({ ...prev, water: parseInt(e.target.value) || undefined }))}
                     className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </CardContent>

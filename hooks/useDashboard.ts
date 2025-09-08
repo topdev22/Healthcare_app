@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { dashboardAPI } from '@/lib/api';
+import { dashboardAPI, healthAPI, socketManager } from '@/lib/api';
 
 interface DashboardStats {
   healthLevel: number;
@@ -130,8 +130,32 @@ export function useDashboard(currentUser: any) {
     }
   }, [currentUser]);
 
-  // Listen for health data updates
+  // Set up real-time updates for dashboard
   useEffect(() => {
+    if (!currentUser) return;
+
+    // Connect to WebSocket for real-time updates
+    const socket = socketManager.connect();
+    
+    // Listen for health data updates and refresh dashboard stats
+    healthAPI.onHealthDataUpdate((data: any) => {
+      console.log('🔔 Dashboard: Health data update received:', data);
+      refreshAllData(); // Refresh all dashboard stats when health data updates
+    });
+
+    // Listen for new health logs and refresh dashboard stats
+    healthAPI.onNewHealthLog((logData: any) => {
+      console.log('🔔 Dashboard: New health log received:', logData);
+      refreshAllData(); // Recalculate dashboard stats with new data
+    });
+
+    // Listen for health log updates and refresh dashboard stats
+    healthAPI.onHealthLogUpdated((logData: any) => {
+      console.log('🔔 Dashboard: Health log updated:', logData);
+      refreshAllData(); // Recalculate dashboard stats with updated data
+    });
+
+    // Listen for local storage updates (fallback)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'health_data_updated') {
         refreshAllData();
@@ -139,8 +163,15 @@ export function useDashboard(currentUser: any) {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      socket.off('health_data_updated');
+      socket.off('new_health_log');
+      socket.off('health_log_updated');
+    };
+  }, [currentUser, refreshAllData]);
 
   return {
     dashboardStats,
