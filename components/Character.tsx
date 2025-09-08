@@ -34,7 +34,8 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
   };
 
   const getCharacterLevel = () => {
-    return calculateCharacterLevel(healthLevel);
+    return characterData.level
+    // return calculateCharacterLevel(healthLevel);
   };
 
   const getLevelProgress = () => {
