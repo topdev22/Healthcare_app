@@ -339,7 +339,7 @@ export default function Index() {
           </Tabs>
         </div>
       ) : (
-        <WelcomeScreen onGetStarted={() => setIsAuthModalOpen(true)} />
+        <WelcomeScreen onGetStarted={() => setIsAuthModalOpen(false)} />
       )}
 
       {/* Floating Action Button */}
