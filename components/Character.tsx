@@ -33,7 +33,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
   };
 
   const getCharacterLevel = () => {
-    return characterData.level || Math.floor(healthLevel / 25) + 1;
+    return characterData.level + 1 || Math.floor(healthLevel / 25) + 1;
   };
 
   const getLevelProgress = () => {
@@ -169,7 +169,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
           </Badge>
 
           {/* Health Status Ring */}
-          <div className={cn(
+          {/* <div className={cn(
             "absolute -bottom-3 left-1/2 transform -translate-x-1/2",
             "px-4 py-2 rounded-full text-xs font-medium text-white shadow-xl backdrop-blur-sm",
             "bg-gradient-to-r",
@@ -181,7 +181,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
             isInteracting && "scale-105"
           )}>
             {healthStatus.emoji} {healthLevel}%
-          </div>
+          </div> */}
         </div>
 
         {/* Enhanced Health Information */}

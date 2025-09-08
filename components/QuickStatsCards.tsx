@@ -25,7 +25,13 @@ export default function QuickStatsCards({
   const healthLevel = overrideHealthLevel !== undefined ? overrideHealthLevel : (quickStats?.healthLevel || 50);
   const streakDays = overrideStreakDays !== undefined ? overrideStreakDays : (quickStats?.streakDays || 0);
   const todayCalories = overrideTodayCalories !== undefined ? overrideTodayCalories : (quickStats?.todayCalories || 0);
-  const characterLevel = overrideCharacterLevel !== undefined ? overrideCharacterLevel : (quickStats?.characterLevel || 1);
+  
+  // Use the same character level calculation as Character.tsx for consistency
+  const getCharacterLevel = () => {
+    if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
+    return quickStats?.characterLevel || Math.floor(healthLevel / 25) + 1;
+  };
+  const characterLevel = getCharacterLevel();
   const nextLevelProgress = progressData?.nextLevelProgress || 0;
 
   if (loading && !quickStats) {
