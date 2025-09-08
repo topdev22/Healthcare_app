@@ -7,7 +7,9 @@ const config: CapacitorConfig = {
   appName: 'HealthBuddy',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    url: "https://hapiken.jp",
+    androidScheme: 'https',
+    cleartext: false
   },
   plugins: {
     SplashScreen: {
