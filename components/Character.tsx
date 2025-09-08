@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Heart, Sparkles, TrendingUp, MessageCircle } from 'lucide-react';
 import { useCharacterData } from '@/hooks/useCharacterData';
 import { useAuth } from '@/contexts/AuthContext';
+import { calculateCharacterLevel, calculateLevelProgress } from '@/lib/healthHelpers';
 
 interface CharacterProps {
   className?: string;
@@ -33,11 +34,11 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
   };
 
   const getCharacterLevel = () => {
-    return Math.floor(healthLevel / 25) - 1;
+    return calculateCharacterLevel(healthLevel);
   };
 
   const getLevelProgress = () => {
-    return characterData.experience || (healthLevel % 25) * 4;
+    return characterData.experience || calculateLevelProgress(healthLevel);
   };
 
   const getStreakDays = () => {

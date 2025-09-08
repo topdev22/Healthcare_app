@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, Heart, Clock, Sparkles } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { calculateCharacterLevel } from '@/lib/healthHelpers';
 
 interface QuickStatsCardsProps {
   // Optional props to override data (for testing or specific scenarios)
@@ -28,8 +29,8 @@ export default function QuickStatsCards({
   
   // Use the same character level calculation as Character.tsx for consistency
   const getCharacterLevel = () => {
-    // if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
-    return Math.floor(healthLevel / 25) + 1;
+    if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
+    return calculateCharacterLevel(healthLevel);
   };
   const characterLevel = getCharacterLevel();
   const nextLevelProgress = progressData?.nextLevelProgress || 0;

@@ -217,3 +217,28 @@ export function getMoodLabel(mood: MoodType): string {
   
   return moodLabels[mood] || '普通';
 }
+
+/**
+ * Calculate character level based on health level
+ * Standardized formula to ensure consistency across components
+ */
+export function calculateCharacterLevel(healthLevel: number): number {
+  // Ensure healthLevel is within valid range
+  const validHealthLevel = Math.max(0, Math.min(100, healthLevel));
+  
+  // Level progression:
+  // Level 1: 0-24 health
+  // Level 2: 25-49 health
+  // Level 3: 50-74 health
+  // Level 4: 75-99 health
+  // Level 5: 100 health
+  return Math.floor(validHealthLevel / 25) + 1;
+}
+
+/**
+ * Calculate experience progress within current level
+ */
+export function calculateLevelProgress(healthLevel: number): number {
+  const validHealthLevel = Math.max(0, Math.min(100, healthLevel));
+  return (validHealthLevel % 25) * 4; // Convert to 0-100 scale for progress bar
+}
