@@ -29,7 +29,7 @@ export default function QuickStatsCards({
   // Use the same character level calculation as Character.tsx for consistency
   const getCharacterLevel = () => {
     // if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
-    return healthLevel / 25 + 1;
+    return Math.floor(healthLevel / 25) + 1;
   };
   const characterLevel = getCharacterLevel();
   const nextLevelProgress = progressData?.nextLevelProgress || 0;
@@ -101,7 +101,7 @@ export default function QuickStatsCards({
             <p className="text-xl sm:text-3xl font-bold text-character-primary mb-1">Lv.{characterLevel}</p>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">バディ成長</p>
             <div className="text-xs text-character-primary mt-1 font-medium">
-              次のレベルまで {nextLevelProgress}%
+              次のレベルまで {nextLevelProgress % 100}%
             </div>
           </div>
         </CardContent>
