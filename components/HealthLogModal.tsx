@@ -239,7 +239,7 @@ export default function HealthLogModal({ isOpen, onClose, onSave }: HealthLogMod
         )}
 
         <Tabs defaultValue="basic" className="space-y-5">
-          <TabsList className="grid w-full grid-cols-3 glass border border-white/30 h-12">
+          <TabsList className="grid w-full grid-cols-3 glass border border-white/30 h-auto">
             <TabsTrigger
               value="basic"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-health-green data-[state=active]:to-health-blue data-[state=active]:text-white"
