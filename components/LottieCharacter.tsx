@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { cn } from '@/lib/utils';
 
+
 interface LottieCharacterProps {
   className?: string;
   size?: number;
