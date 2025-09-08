@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Volume2, VolumeX } from 'lucide-react';
+import { Send, Volume2, VolumeX, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatBubble } from '@/components/ui/chat-bubble';
 import { ttsService } from '@/lib/ttsService';
@@ -36,7 +36,7 @@ export default function ChatInterface({
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight + messagesContainerRef.current.clientHeight;
     }
   };
 
@@ -96,10 +96,19 @@ export default function ChatInterface({
 
 
   return (
-    <div className="h-full flex flex-col bg-background/50 rounded-lg border border-border/50" style={{ contain: 'layout style' }}>
-      <div className="pb-3 px-4 pt-4 border-b border-border/50">
-        <div className="text-lg flex items-center justify-between">
-          <span className="font-semibold text-foreground">{characterName}とチャット</span>
+    <div className="h-full flex flex-col glass rounded-xl border border-white/30 shadow-xl overflow-hidden" style={{ contain: 'layout style' }}>
+      {/* Chat Header */}
+      <div className="px-4 sm:px-6 py-4 border-b border-white/20 bg-gradient-to-r from-character-primary/5 to-character-secondary/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-character-primary to-character-secondary flex items-center justify-center shadow-lg">
+              <MessageCircle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-lg">{characterName}とチャット</h3>
+              <p className="text-xs text-muted-foreground">健康に関するご質問をどうぞ</p>
+            </div>
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -108,7 +117,7 @@ export default function ChatInterface({
               setIsTTSEnabled(newState);
               ttsService.setEnabled(newState);
             }}
-            className="p-2"
+            className="glass border border-white/20 hover:bg-white/20"
           >
             {isTTSEnabled ? (
               <Volume2 className="w-4 h-4 text-health-green" />
@@ -119,17 +128,36 @@ export default function ChatInterface({
         </div>
       </div>
       
-      <div className="flex-1 flex flex-col p-2 space-y-4 min-h-[300px] lg:min-h-[400px] max-h-[400px] lg:max-h-[500px] overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-[500px] lg:min-h-[400px] max-h-[500px] lg:max-h-[600px] overflow-hidden">
         {/* Messages Area */}
-        <div 
+        <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto space-y-4 px-2 py-4"
+          className="flex-1 overflow-y-auto space-y-4 px-4 sm:px-6 py-4"
           style={{ scrollBehavior: 'auto' }}
         >
           {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <p>健康バディとの会話を始めませんか？</p>
-              <p className="text-sm mt-2">健康目標や今日の体調について、お気軽にお話しください。</p>
+            <div className="text-center py-12 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-character-primary/20 to-character-secondary/20 flex items-center justify-center mx-auto">
+                <MessageCircle className="w-8 h-8 text-character-primary" />
+              </div>
+              <div>
+                <p className="text-lg font-medium text-foreground mb-2">健康バディとお話ししませんか？</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  健康目標や今日の体調について、<br />
+                  お気軽にお話しください。
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 mt-6">
+                <Button variant="outline" size="sm" onClick={() => setInputMessage("今日の体調はどうですか？")}>
+                  体調について
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setInputMessage("健康的な食事のアドバイスをください")}>
+                  食事相談
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setInputMessage("運動習慣を始めたいです")}>
+                  運動相談
+                </Button>
+              </div>
             </div>
           ) : (
             messages.map((message) => (
@@ -148,17 +176,22 @@ export default function ChatInterface({
           
           {isLoading && (
             <div className="flex justify-start">
-              <div className="relative max-w-[85%] lg:max-w-[75%] rounded-2xl px-4 py-3 bg-muted text-muted-foreground border border-border/50 shadow-sm rounded-bl-md">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="relative max-w-[85%] lg:max-w-[75%] rounded-2xl px-4 py-3 glass border border-white/30 shadow-lg rounded-bl-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-character-primary to-character-secondary flex items-center justify-center shadow-sm">
+                    <MessageCircle className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm">{characterName}が考えています...</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-character-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-character-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-character-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="text-sm font-medium">{characterName}が考えています...</span>
+                  </div>
                 </div>
                 {/* Bubble tail */}
-                <div className="absolute left-0 bottom-0 w-3 h-3 border-8 border-transparent border-r-muted border-b-muted border-r-8 border-b-8 transform -translate-x-1 translate-y-1" />
+                <div className="absolute left-0 bottom-0 w-3 h-3 border-8 border-transparent border-r-white/20 border-b-white/20 border-r-8 border-b-8 transform -translate-x-1 translate-y-1" />
               </div>
             </div>
           )}
@@ -166,24 +199,66 @@ export default function ChatInterface({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="flex gap-2 pt-3 border-t">
-          <Input
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="メッセージをご入力ください..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isLoading}
-            size="sm"
-            className="px-4"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+        {/* Enhanced Input Area */}
+        <div className="px-4 sm:px-6 py-4 border-t border-white/20 bg-gradient-to-r from-white/5 to-white/10">
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="健康について何でもお聞きください..."
+                disabled={isLoading}
+                className="pr-12 glass border-white/30 bg-white/50 focus:bg-white/70 transition-all duration-300"
+              />
+              {inputMessage && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setInputMessage('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 p-0 hover:bg-white/20"
+                >
+                  ×
+                </Button>
+              )}
+            </div>
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isLoading}
+              className="bg-gradient-to-r from-health-green to-health-blue hover:from-health-green/90 hover:to-health-blue/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              size="lg"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Quick Actions */}
+          <div className="flex gap-2 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInputMessage("今日の健康状態を教えて")}
+              className="glass border-white/30 hover:bg-white/20 text-xs"
+            >
+              今日の体調
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInputMessage("食事のアドバイスをください")}
+              className="glass border-white/30 hover:bg-white/20 text-xs"
+            >
+              食事相談
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInputMessage("運動の提案をお願いします")}
+              className="glass border-white/30 hover:bg-white/20 text-xs"
+            >
+              運動提案
+            </Button>
+          </div>
         </div>
       </div>
     </div>
