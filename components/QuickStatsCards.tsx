@@ -29,7 +29,7 @@ export default function QuickStatsCards({
   
   // Use the same character level calculation as Character.tsx for consistency
   const getCharacterLevel = () => {
-    if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
+    // if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
     return calculateCharacterLevel(healthLevel);
   };
   const characterLevel = getCharacterLevel();
