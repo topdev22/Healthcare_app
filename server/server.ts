@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
-import healthRoutes from './routes/health';
+import healthRoutes, { setSocketIO as setHealthSocketIO } from './routes/health';
 import chatRoutes from './routes/chat';
 import dashboardRoutes from './routes/dashboard';
 import achievementRoutes from './routes/achievements';
@@ -77,6 +77,9 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Inject Socket.IO instance into routes that need real-time capabilities
+setHealthSocketIO(io);
 
 // API routes
 app.use('/api/auth', authRoutes);
