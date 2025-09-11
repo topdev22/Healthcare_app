@@ -73,22 +73,20 @@ export default function AppHeader({
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="touch-target glass hover:bg-white/20 border border-white/20"
+                    className="touch-target glass hover:bg-white/20 border border-white/20 rounded-full"
                   >
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  </Button>
+                  </button>
                   
                   <button
                     onClick={onProfileClick}
                     className="touch-target rounded-full hover:ring-2 hover:ring-health-green/40 transition-all duration-300 hover:scale-105"
                     title="プロフィール編集"
                   >
-                    <Avatar className="w-8 h-8 sm:w-9 sm:h-9 ring-2 ring-gradient-to-br ring-health-green/30 shadow-lg">
+                    <Avatar className="w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-gradient-to-br ring-health-green/30 shadow-lg">
                       <AvatarImage src={userProfile?.photoURL} />
                       <AvatarFallback className="bg-gradient-to-br from-health-green to-health-blue text-white text-sm font-medium">
                         {userProfile?.displayName?.charAt(0) || 'U'}
@@ -97,10 +95,10 @@ export default function AppHeader({
                   </button>
                   
                   <Button
-                    variant="ghost"
+                    variant="transparent"
                     size="sm"
                     onClick={onLogout}
-                    className="text-destructive hover:text-destructive touch-target glass hover:bg-destructive/10 border border-destructive/20"
+                    className="text-destructive hover:text-destructive touch-target hover:bg-destructive/10 border border-destructive/20"
                   >
                     <LogOut className="w-4 h-4" />
                   </Button>
