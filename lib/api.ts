@@ -1,17 +1,37 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { io, Socket } from 'socket.io-client';
+import { isAndroidApp, isCapacitorApp, handleAndroidApiError, retryApiCall, logAndroidError } from './androidUtils';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const getAPIBaseURL = () => {
+  // In Android/Capacitor context, use the full URL directly
+  if (isCapacitorApp()) {
+    return 'https://hapiken.jp/api';
+  }
+  return import.meta.env.VITE_API_BASE_URL || 'https://hapiken.jp/api';
+};
+
+const getSocketURL = () => {
+  // In Android/Capacitor context, use the full URL directly
+  if (isCapacitorApp()) {
+    return 'https://hapiken.jp';
+  }
+  return import.meta.env.VITE_SOCKET_URL || 'https://hapiken.jp';
+};
+
+const API_BASE_URL = getAPIBaseURL();
+const SOCKET_URL = getSocketURL();
 
 // Create Axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000,
+  timeout: 30000, // Reduced timeout for better mobile experience
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  // Additional configuration for Android/mobile
+  validateStatus: (status) => status < 500, // Don't throw for 4xx errors
 });
 
 // Request interceptor to add auth token
@@ -34,6 +54,9 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Log error for Android debugging
+    logAndroidError('API Response Interceptor', error);
+
     if (error.response) {
       // Server responded with error status
       const message = error.response.data?.message || error.response.statusText || 'Server error';
@@ -41,12 +64,16 @@ apiClient.interceptors.response.use(
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
-        window.location.href = '/login';
+        // Don't redirect in Android app, just clear auth
+        if (!isCapacitorApp()) {
+          window.location.href = '/login';
+        }
       }
       throw new Error(message);
     } else if (error.request) {
-      // Network error
-      throw new Error('Network error occurred. Please check your internet connection.');
+      // Network error - better handling for Android
+      const message = handleAndroidApiError(error);
+      throw new Error(message);
     } else {
       // Other error
       throw new Error(error.message || 'An error occurred while processing the request.');
@@ -63,14 +90,23 @@ class SocketManager {
     if (!this.socket || !this.isConnected) {
       const token = localStorage.getItem('auth_token');
       
+      // Android-specific configuration
+      const isAndroidEnv = isAndroidApp();
+      
       this.socket = io(SOCKET_URL, {
         auth: {
           token: token
         },
-        transports: ['websocket', 'polling'],
+        // Prefer polling for Android WebView reliability
+        transports: isAndroidEnv ? ['polling', 'websocket'] : ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
+        reconnectionAttempts: isAndroidEnv ? 10 : 5, // More attempts for mobile
+        reconnectionDelay: isAndroidEnv ? 2000 : 1000, // Longer delay for mobile
+        timeout: 20000, // 20 second timeout
+        forceNew: false,
+        // Additional options for Android
+        upgrade: !isAndroidEnv, // Disable transport upgrade on Android
+        rememberUpgrade: false,
       });
 
       this.socket.on('connect', () => {

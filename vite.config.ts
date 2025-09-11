@@ -10,10 +10,15 @@ export default defineConfig({
     allowedHosts: ["hapiken.jp", "www.hapiken.jp"],
     proxy: {
       "/api": {
-        target: process.env.VITE_API_BASE_URL,
+        target: process.env.VITE_API_BASE_URL || "https://hapiken.jp/api",
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        secure: true,
+        rewrite: (path) => path,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err);
+          });
+        }
       },
     },
   },
