@@ -203,32 +203,15 @@ export default function Index() {
 
       {currentUser ? (
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4 safe-area-bottom">
-          {/* Health Overview Banner */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 shadow-xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
-                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">今日の健康スコア</h2>
-                  <p className="text-sm text-muted-foreground">継続は力なり、今日も頑張りましょう！</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-health-green">
-                  {realTimeStats?.healthLevel ? `${realTimeStats.healthLevel}%` : '--'}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  {realTimeStats?.currentStreak ? `${realTimeStats.currentStreak}日連続` : 'データ読み込み中...'}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats Cards - Moved to top for better visibility */}
-          <QuickStatsCards />
-
+          
+{/* Character Section - Simplified */}
+              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="text-center">
+                    <Character />
+                  </div>
+                </CardContent>
+              </Card>
           {/* Main Tabs */}
           <Tabs
             value={activeTab}
@@ -308,15 +291,33 @@ export default function Index() {
                   </div>
                 </CardContent>
               </Card>
+              {/* Health Overview Banner */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
+                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">今日の健康スコア</h2>
+                  <p className="text-sm text-muted-foreground">継続は力なり、今日も頑張りましょう！</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-health-green">
+                  {realTimeStats?.healthLevel ? `${realTimeStats.healthLevel}%` : '--'}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  {realTimeStats?.currentStreak ? `${realTimeStats.currentStreak}日連続` : 'データ読み込み中...'}
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* Character Section - Simplified */}
-              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="text-center">
-                    <Character />
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Quick Stats Cards - Moved to top for better visibility */}
+          <QuickStatsCards />
+
+              
 
               {/* Quick Actions - Secondary */}
               <QuickActions
