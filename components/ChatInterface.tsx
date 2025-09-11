@@ -78,9 +78,7 @@ export default function ChatInterface({
   const speakMessage = async (text: string) => {
     if (isTTSEnabled) {
       try {
-        console.log('Starting TTS for:', text.substring(0, 50) + '...');
         await ttsService.speak(text);
-        console.log('TTS completed successfully');
       } catch (error) {
         console.error('TTS error:', error);
         // For interrupted errors, don't show as an error to user since it's expected behavior
