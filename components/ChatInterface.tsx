@@ -232,14 +232,14 @@ export default function ChatInterface({
           
           {/* Quick Actions */}
           <div className="flex gap-2 mt-3">
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("今日の健康状態を教えて")}
               className="glass border-white/30 hover:bg-white/20 text-xs"
             >
               今日の体調
-            </Button>
+            </Button> */}
             <Button
               variant="outline"
               size="sm"
