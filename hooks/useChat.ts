@@ -61,7 +61,7 @@ export function useChat(userProfile: any) {
       await triggerHaptics(ImpactStyle.Light);
 
       // Always trigger character data refresh for chat activity (experience gain)
-      console.log('💬 Chat interaction completed, refreshing character data for experience...');
+      // console.log('💬 Chat interaction completed, refreshing character data for experience...');
       try {
         const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
         triggerCharacterRefresh();

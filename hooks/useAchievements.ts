@@ -103,7 +103,7 @@ export function useAchievements(currentUser: any) {
       if (response.success && response.newlyCompleted.length > 0) {
         // Show achievement completion notifications
         response.newlyCompleted.forEach((achievement: any) => {
-          console.log(`🎉 Achievement unlocked: ${achievement.title}`);
+          // console.log(`🎉 Achievement unlocked: ${achievement.title}`);
           // You can add toast notifications here when the toast system is working
         });
         
@@ -178,7 +178,7 @@ export function useAchievements(currentUser: any) {
         setTimeout(async () => {
           const newlyCompleted = await checkProgress();
           if (newlyCompleted.length > 0) {
-            console.log('🎉 New achievements completed:', newlyCompleted);
+            // console.log('🎉 New achievements completed:', newlyCompleted);
             // Trigger character refresh for new achievements
             try {
               const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');

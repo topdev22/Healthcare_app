@@ -62,12 +62,12 @@ export function useDashboard(currentUser: any) {
       setError(null);
 
       const response = await dashboardAPI.getDashboardStats();
-      console.log('Dashboard stats:', response.data);
+      // console.log('Dashboard stats:', response.data);
       if (response.success) {
         setDashboardStats(response.data);
       }
     } catch (err) {
-      console.error('Failed to load dashboard stats:', err);
+      // console.error('Failed to load dashboard stats:', err);
       setError('ダッシュボードデータの読み込みに失敗しました');
     } finally {
       setLoading(false);
@@ -83,7 +83,7 @@ export function useDashboard(currentUser: any) {
         setQuickStats(response.data);
       }
     } catch (err) {
-      console.error('Failed to load quick stats:', err);
+      // console.error('Failed to load quick stats:', err);
       // Fallback to default values
       setQuickStats({
         healthLevel: 50,
@@ -103,7 +103,7 @@ export function useDashboard(currentUser: any) {
         setProgressData(response.data);
       }
     } catch (err) {
-      console.error('Failed to load progress data:', err);
+      // console.error('Failed to load progress data:', err);
       setProgressData({
         characterLevel: 1,
         experiencePoints: 0,
@@ -139,19 +139,19 @@ export function useDashboard(currentUser: any) {
     
     // Listen for health data updates and refresh dashboard stats
     healthAPI.onHealthDataUpdate((data: any) => {
-      console.log('🔔 Dashboard: Health data update received:', data);
+      // console.log('🔔 Dashboard: Health data update received:', data);
       refreshAllData(); // Refresh all dashboard stats when health data updates
     });
 
     // Listen for new health logs and refresh dashboard stats
     healthAPI.onNewHealthLog((logData: any) => {
-      console.log('🔔 Dashboard: New health log received:', logData);
+      // console.log('🔔 Dashboard: New health log received:', logData);
       refreshAllData(); // Recalculate dashboard stats with new data
     });
 
     // Listen for health log updates and refresh dashboard stats
     healthAPI.onHealthLogUpdated((logData: any) => {
-      console.log('🔔 Dashboard: Health log updated:', logData);
+      // console.log('🔔 Dashboard: Health log updated:', logData);
       refreshAllData(); // Recalculate dashboard stats with updated data
     });
 

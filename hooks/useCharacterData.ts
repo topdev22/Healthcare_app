@@ -226,21 +226,21 @@ export function useCharacterData(currentUser: any) {
     
     // Listen for health data updates and refresh character data
     healthAPI.onHealthDataUpdate((data: any) => {
-      console.log('🔔 Character: Health data update received:', data);
+      // console.log('🔔 Character: Health data update received:', data);
       loadCharacterData();
       triggerInteraction(); // Show character interaction when data updates
     });
 
     // Listen for new health logs and refresh character data
     healthAPI.onNewHealthLog((logData: any) => {
-      console.log('🔔 Character: New health log received:', logData);
+      // console.log('🔔 Character: New health log received:', logData);
       loadCharacterData();
       triggerInteraction(); // Character reacts to new logs
     });
 
     // Listen for health log updates and refresh character data
     healthAPI.onHealthLogUpdated((logData: any) => {
-      console.log('🔔 Character: Health log updated:', logData);
+      // console.log('🔔 Character: Health log updated:', logData);
       loadCharacterData();
       triggerInteraction(); // Character reacts to updates
     });
