@@ -112,7 +112,7 @@ export const handleLogin: RequestHandler = async (req, res) => {
   try {
     const { email, password }: LoginRequest = req.body;
 
-    console.log('Login request received:', req.body);
+    console.log('Login request received========================================================:', req.body);
 
     // Validation
     if (!email || !password) {

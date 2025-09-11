@@ -17,10 +17,32 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+    origin: (origin, callback) => {
+      // Allow Socket.IO connections from Android WebView
+      const allowedOrigins = [
+        'https://hapiken.jp',
+        'http://localhost:8080',
+        'capacitor://localhost',
+        'http://localhost'
+      ];
+      
+      if (!origin || allowedOrigins.includes(origin) || origin.startsWith('capacitor://')) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow all for now
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+  },
+  // Additional configuration for mobile stability
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  upgradeTimeout: 30000,
+  allowUpgrades: true,
+  // Allow both polling and websocket for Android compatibility
+  transports: ['polling', 'websocket']
 });
 const PORT = process.env.PORT || 8000;
 
@@ -51,12 +73,36 @@ app.use(helmet({
   app.use(express.static('dist'));
 // }
 
-// CORS configuration
+// CORS configuration with Android WebView support
 app.use(cors({
-  origin: "*",
+  origin: (origin, callback) => {
+    // Allow requests from Android WebView (no origin) and specific domains
+    const allowedOrigins = [
+      'https://hapiken.jp',
+      'http://localhost:8080',
+      'capacitor://localhost',
+      'http://localhost'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('capacitor://')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now - tighten in production
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Cache-Control',
+    'Pragma'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  maxAge: 86400 // 24 hours preflight cache
 }));
 
 // Body parsing middleware with increased limits for file uploads

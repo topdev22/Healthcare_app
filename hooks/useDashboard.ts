@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { dashboardAPI, healthAPI, socketManager } from '@/lib/api';
+import { retryApiCall, handleAndroidApiError, logAndroidError, isAndroidApp } from '@/lib/androidUtils';
 
 interface DashboardStats {
   healthLevel: number;
@@ -60,7 +61,6 @@ export function useDashboard(currentUser: any) {
     try {
       setLoading(true);
       setError(null);
-
       const response = await dashboardAPI.getDashboardStats();
       // console.log('Dashboard stats:', response.data);
       if (response.success) {
@@ -78,7 +78,10 @@ export function useDashboard(currentUser: any) {
     if (!currentUser) return;
 
     try {
-      const response = await dashboardAPI.getQuickStats();
+      const response = await retryApiCall(async () => {
+        return dashboardAPI.getQuickStats();
+      }, isAndroidApp() ? 3 : 2);
+      
       if (response.success) {
         setQuickStats(response.data);
       }
@@ -98,7 +101,10 @@ export function useDashboard(currentUser: any) {
     if (!currentUser) return;
 
     try {
-      const response = await dashboardAPI.getProgress();
+      const response = await retryApiCall(async () => {
+        return dashboardAPI.getProgress();
+      }, isAndroidApp() ? 3 : 2);
+      
       if (response.success) {
         setProgressData(response.data);
       }
