@@ -20,7 +20,7 @@ export default function FloatingActionButton({ onClick }: FloatingActionButtonPr
         <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white transition-transform group-hover:rotate-90 duration-300 relative z-10" />
         
         {/* Health indicator */}
-        <Heart className="w-4 h-4 absolute -top-1 -right-1 text-white/90 group-hover:text-white transition-all duration-300 relative z-10 group-hover:scale-125" />
+        <Heart className="w-4 h-4 absolute -top-1 -right-1 text-white/90 group-hover:text-white transition-all duration-300 z-10 group-hover:scale-125" />
         
         {/* Pulse rings */}
         <div className="absolute inset-0 rounded-full border-2 border-white/30 group-hover:border-white/50 transition-all duration-300"></div>

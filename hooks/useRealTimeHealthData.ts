@@ -147,13 +147,13 @@ export function useRealTimeHealthData(currentUser: any) {
     
     // Listen for health data updates
     healthAPI.onHealthDataUpdate((data: any) => {
-      console.log('🔔 Real-time health data update received:', data);
+      // console.log('🔔 Real-time health data update received:', data);
       loadHealthData(); // Reload both health logs and dashboard stats
     });
 
     // Listen for new health logs
     healthAPI.onNewHealthLog((logData: any) => {
-      console.log('🔔 New health log received:', logData);
+      // console.log('🔔 New health log received:', logData);
       // Add to local state immediately for instant UI update
       setHealthData(prev => [logData, ...prev]);
       // Trigger full refresh to update calculated stats
@@ -162,7 +162,7 @@ export function useRealTimeHealthData(currentUser: any) {
 
     // Listen for health log updates
     healthAPI.onHealthLogUpdated((logData: any) => {
-      console.log('🔔 Health log updated:', logData);
+      // console.log('🔔 Health log updated:', logData);
       // Update local state immediately
       setHealthData(prev =>
         prev.map(log =>
@@ -179,7 +179,7 @@ export function useRealTimeHealthData(currentUser: any) {
         // If WebSocket is connected, we don't need polling
         return;
       }
-      console.log('📡 Polling for health data updates...');
+      // console.log('📡 Polling for health data updates...');
       loadHealthData();
     }, 30000);
 

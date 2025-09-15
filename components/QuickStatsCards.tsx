@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, Heart, Clock, Sparkles } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { calculateCharacterLevel } from '@/lib/healthHelpers';
+import { useCharacterData } from '@/hooks/useCharacterData';
 
 interface QuickStatsCardsProps {
   // Optional props to override data (for testing or specific scenarios)
@@ -20,6 +22,7 @@ export default function QuickStatsCards({
 }: QuickStatsCardsProps) {
   const { currentUser } = useAuth();
   const { quickStats, progressData, loading } = useDashboard(currentUser);
+  const {characterData} = useCharacterData(currentUser)
 
   // Use override props or real data
   const healthLevel = overrideHealthLevel !== undefined ? overrideHealthLevel : (quickStats?.healthLevel || 50);
@@ -29,7 +32,8 @@ export default function QuickStatsCards({
   // Use the same character level calculation as Character.tsx for consistency
   const getCharacterLevel = () => {
     // if (overrideCharacterLevel !== undefined) return overrideCharacterLevel;
-    return Math.floor(healthLevel / 25);
+    // return calculateCharacterLevel(healthLevel);
+    return characterData.level
   };
   const characterLevel = getCharacterLevel();
   const nextLevelProgress = progressData?.nextLevelProgress || 0;
@@ -101,7 +105,7 @@ export default function QuickStatsCards({
             <p className="text-xl sm:text-3xl font-bold text-character-primary mb-1">Lv.{characterLevel}</p>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">バディ成長</p>
             <div className="text-xs text-character-primary mt-1 font-medium">
-              次のレベルまで {nextLevelProgress}%
+              次のレベルまで {nextLevelProgress % 100}%
             </div>
           </div>
         </CardContent>

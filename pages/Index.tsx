@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Blend, Footprints, MessageCircle, Sparkles, Heart, Plus, Camera } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Components
 import Character from "@/components/Character";
@@ -32,6 +33,7 @@ import { ImpactStyle } from "@capacitor/haptics";
 import StepsDisplay from "@/components/StepsDisplay";
 
 export default function Index() {
+  const navigate = useNavigate();
   const { currentUser, userProfile, logout, loading } = useAuth();
   const { healthData, loadHealthData } = useHealthData(currentUser);
   const { realTimeStats } = useRealTimeHealthData(currentUser);
@@ -162,10 +164,26 @@ export default function Index() {
     return (
       <div className="min-h-screen flex items-center justify-center health-bg">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg text-muted-foreground">
-            ヘルスバディを起動中...
-          </p>
+          <div className="relative mb-8">
+            {/* Outer spinning ring */}
+            <div className="w-20 h-20 border-4 border-health-green/30 border-t-health-green rounded-full animate-spin mx-auto"></div>
+            {/* Inner spinning ring - counter rotation */}
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-16 border-4 border-health-blue/30 border-b-health-blue rounded-full animate-spin animate-reverse mx-auto"></div>
+            {/* Center heart icon */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-br from-health-green to-health-blue rounded-full flex items-center justify-center shadow-lg">
+              <Heart className="w-4 h-4 text-white animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xl font-semibold bg-gradient-to-r from-health-green to-health-blue bg-clip-text text-transparent">
+              ヘルスバディを起動中...
+            </p>
+            <div className="flex items-center justify-center gap-1">
+              <div className="w-2 h-2 bg-health-green rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-health-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-wellness-amber rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -185,32 +203,15 @@ export default function Index() {
 
       {currentUser ? (
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4 safe-area-bottom">
-          {/* Health Overview Banner */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 shadow-xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
-                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">今日の健康スコア</h2>
-                  <p className="text-sm text-muted-foreground">継続は力なり、今日も頑張りましょう！</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-health-green">
-                  {realTimeStats?.healthLevel ? `${realTimeStats.healthLevel}%` : '--'}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  {realTimeStats?.currentStreak ? `${realTimeStats.currentStreak}日連続` : 'データ読み込み中...'}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats Cards - Moved to top for better visibility */}
-          <QuickStatsCards />
-
+          
+{/* Character Section - Simplified */}
+              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="text-center">
+                    <Character />
+                  </div>
+                </CardContent>
+              </Card>
           {/* Main Tabs */}
           <Tabs
             value={activeTab}
@@ -290,15 +291,33 @@ export default function Index() {
                   </div>
                 </CardContent>
               </Card>
+              {/* Health Overview Banner */}
+          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
+                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">今日の健康スコア</h2>
+                  <p className="text-sm text-muted-foreground">継続は力なり、今日も頑張りましょう！</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-health-green">
+                  {realTimeStats?.healthLevel ? `${realTimeStats.healthLevel}%` : '--'}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  {realTimeStats?.currentStreak ? `${realTimeStats.currentStreak}日連続` : 'データ読み込み中...'}
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* Character Section - Simplified */}
-              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="text-center">
-                    <Character />
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Quick Stats Cards - Moved to top for better visibility */}
+          <QuickStatsCards />
+
+              
 
               {/* Quick Actions - Secondary */}
               <QuickActions
@@ -344,6 +363,26 @@ export default function Index() {
 
       {/* Floating Action Button */}
       {currentUser && <FloatingActionButton onClick={handleLogHealth} />}
+      
+      {/* Character Exchange Button */}
+      {/* {currentUser && (
+        <div className="fixed bottom-4 left-8 z-50">
+          <span
+            onClick={() => navigate("/select")}
+            className="inline-block cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 p-2 hover:bg-white/20"
+            role="button"
+            tabIndex={0}
+            aria-label="キャラクター変更"
+            onKeyDown={(e) => e.key === 'Enter' && navigate("/select")}
+          >
+            <img
+              src="/images/exchange.png"
+              className="w-12 h-12 hover:animate-spin"
+              alt="キャラクター変更"
+            />
+          </span>
+        </div>
+      )} */}
 
       {/* Modals */}
       <HealthLogModal
