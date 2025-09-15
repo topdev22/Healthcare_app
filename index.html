@@ -6,11 +6,26 @@
     <title>Health Buddy - Your Personal Health Management Partner</title>
     <link rel="icon" href="/images/favicon.jpg" />
     <meta name="description" content="A comprehensive health management application with AI-powered chat assistance, built with React, TypeScript, and OpenAI GPT-4 integration. Track your health data, get personalized advice, and build healthy habits through interactive conversations." />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
   </head>
 
   <body>
     <div id="root"></div>
 
     <script type="module" src="/App.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('Service Worker registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('Service Worker registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

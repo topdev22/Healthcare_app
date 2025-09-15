@@ -97,7 +97,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
     try {
       const response = await userAPI.uploadProfileImage(file);
       if (response.success && response.data.user) {
-        console.log('Profile image uploaded successfully:', response.data.photoURL);
+        // console.log('Profile image uploaded successfully:', response.data.photoURL);
         
         // Update the profile state directly with the new user data from the server
         // This will automatically update all UI components that display user profile
