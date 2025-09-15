@@ -146,9 +146,9 @@ export default function ChatInterface({
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2 mt-6">
-                <Button variant="outline" size="sm" onClick={() => setInputMessage("今日の体調はどうですか？")}>
+                {/* <Button variant="outline" size="sm" onClick={() => setInputMessage("今日の体調はどうですか？")}>
                   体調について
-                </Button>
+                </Button> */}
                 <Button variant="outline" size="sm" onClick={() => setInputMessage("健康的な食事のアドバイスをください")}>
                   食事相談
                 </Button>
