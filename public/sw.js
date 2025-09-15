@@ -3,13 +3,12 @@
 // Network-first for dynamic API calls (/api/*)
 // Minimal setup without advanced features
 
-const CACHE_NAME = 'health-buddy-v1';
+const CACHE_NAME = 'health-buddy-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/global.css',
-  '/App.tsx'  // Note: In dev, this is served; in prod, hashed - SW will cache on first fetch
-  // Add more static assets as needed; dynamic JS/CSS cached on fetch below
+  '/global.css'
+  // Note: Dynamic JS/CSS files are cached on first fetch
 ];
 
 // Install event: Pre-cache app shell
@@ -45,41 +44,19 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Cache-first for static assets (app shell)
-  if (urlsToCache.some(cachedUrl => event.request.url.includes(cachedUrl) || url.origin === self.location.origin)) {
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          // Return cached version or fetch and cache
-          if (response) {
-            return response;
-          }
-          return fetch(event.request)
-            .then((response) => {
-              if (!response || response.status !== 200 || response.type !== 'basic') {
-                return response;
-              }
-              // Clone and cache
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                });
-              return response;
-            });
-        })
-    );
-  } else if (url.pathname.startsWith('/api/')) {
-    // Network-first for API calls, fallback to cache if offline
+  // Handle API calls with network-first strategy
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           // Cache successful API responses for offline fallback
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+          }
           return response;
         })
         .catch(() => {
@@ -87,6 +64,38 @@ self.addEventListener('fetch', (event) => {
           return caches.match(event.request);
         })
     );
+    return;
   }
-  // For other requests, default to network
+
+  // Handle static assets with cache-first strategy
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+          
+          return fetch(event.request)
+            .then((response) => {
+              // Only cache successful responses
+              if (response && response.status === 200 && response.type === 'basic') {
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    cache.put(event.request, responseToCache);
+                  });
+              }
+              return response;
+            })
+            .catch(() => {
+              // For SPA routes, serve index.html as fallback
+              if (event.request.mode === 'navigate') {
+                return caches.match('/index.html');
+              }
+              return new Response('Offline', { status: 503 });
+            });
+        })
+    );
+  }
 });
