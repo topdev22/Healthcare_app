@@ -23,7 +23,8 @@ const io = new Server(server, {
         'https://hapiken.jp',
         'http://localhost:8080',
         'capacitor://localhost',
-        'http://localhost'
+        'http://localhost',
+        'https://care-delta-woad.vercel.app'
       ];
       
       if (!origin || allowedOrigins.includes(origin) || origin.startsWith('capacitor://')) {
@@ -70,40 +71,9 @@ app.use(helmet({
 
 // Serve React app static files in production
 // if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('dist'));
+  app.use(express.static('public'));
 // }
 
-// CORS configuration with Android WebView support
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests from Android WebView (no origin) and specific domains
-    const allowedOrigins = [
-      'https://hapiken.jp',
-      'http://localhost:8080',
-      'capacitor://localhost',
-      'http://localhost'
-    ];
-    
-    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('capacitor://')) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Allow all for now - tighten in production
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Cache-Control',
-    'Pragma'
-  ],
-  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
-  maxAge: 86400 // 24 hours preflight cache
-}));
 
 // Body parsing middleware with increased limits for file uploads
 app.use(express.json({ limit: '50mb' }));
