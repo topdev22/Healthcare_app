@@ -12,8 +12,6 @@ interface ChatBubbleProps {
   onSpeak?: () => void;
   className?: string;
   enableStreaming?: boolean;
-  avatar?: React.ReactNode;
-  avatarUrl?: string;
   avatarAlt?: string;
 }
 
@@ -26,9 +24,7 @@ export function ChatBubble({
   onSpeak,
   className,
   enableStreaming = true,
-  avatar,
-  avatarUrl,
-  avatarAlt
+  avatarAlt,
 }: ChatBubbleProps) {
   const [displayedContent, setDisplayedContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -70,43 +66,35 @@ export function ChatBubble({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Default avatar fallback
-  const defaultAvatar = (
-    <div className={cn(
-      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-      isUser
-        ? "bg-primary text-primary-foreground"
-        : "bg-muted text-muted-foreground"
-    )}>
-      {isUser ? 'U' : 'C'}
-    </div>
-  );
-
   // Avatar component
   const AvatarComponent = () => {
-    if (avatar) {
-      return avatar;
-    }
+    // Safe localStorage access to prevent SSR issues
+    const getUserData = () => {
+      if (typeof window !== 'undefined') {
+        try {
+          return JSON.parse(localStorage.getItem("auth_user") || '{}');
+        } catch (error) {
+          console.error('Error parsing user data from localStorage:', error);
+          return {};
+        }
+      }
+      return {};
+    };
 
-    const user = JSON.parse(localStorage.getItem("auth_user") || '{}');
-
-    if (user.photoURL) {
-      return (
-        <img
-          src={isUser ? user.photoURL : '/images/favicon.jpg'}
-          alt={avatarAlt || `${sender} avatar`}
-          className="w-8 h-8 rounded-full object-cover"
-        />
-      );
-    }
-
-    return defaultAvatar;
+    const user = getUserData();
+    return (
+      <img
+        src={isUser ? ("https://hapiken.jp/" + user.photoURL || "https://hapiken.jp" + '/profile/defaultUser.png') : '/images/favicon.jpg'}
+        alt={avatarAlt || `${sender} avatar`}
+        className="w-8 h-8 rounded-full object-cover"
+      />
+    );
   };
 
   return (
     <div
       className={cn(
-        "flex w-full gap-0 items-end",
+        "flex w-full gap-0 items-end min-h-[150px]",
         isUser ? "justify-end" : "justify-start",
         className
       )}

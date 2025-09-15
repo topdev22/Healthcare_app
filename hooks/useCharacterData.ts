@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { healthAPI, userAPI, chatAPI } from '@/lib/api';
+import { healthAPI, userAPI, chatAPI, socketManager } from '@/lib/api';
 
 interface CharacterData {
   mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'sleeping';
@@ -217,8 +217,35 @@ export function useCharacterData(currentUser: any) {
     loadCharacterData();
   }, [currentUser]);
 
-  // Refresh data when health logs are updated (listen to storage events)
+  // Set up real-time updates for character data
   useEffect(() => {
+    if (!currentUser) return;
+
+    // Connect to WebSocket for real-time updates
+    const socket = socketManager.connect();
+    
+    // Listen for health data updates and refresh character data
+    healthAPI.onHealthDataUpdate((data: any) => {
+      // console.log('🔔 Character: Health data update received:', data);
+      loadCharacterData();
+      triggerInteraction(); // Show character interaction when data updates
+    });
+
+    // Listen for new health logs and refresh character data
+    healthAPI.onNewHealthLog((logData: any) => {
+      // console.log('🔔 Character: New health log received:', logData);
+      loadCharacterData();
+      triggerInteraction(); // Character reacts to new logs
+    });
+
+    // Listen for health log updates and refresh character data
+    healthAPI.onHealthLogUpdated((logData: any) => {
+      // console.log('🔔 Character: Health log updated:', logData);
+      loadCharacterData();
+      triggerInteraction(); // Character reacts to updates
+    });
+
+    // Listen to storage events as fallback
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'health_data_updated') {
         loadCharacterData();
@@ -227,8 +254,15 @@ export function useCharacterData(currentUser: any) {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      socket.off('health_data_updated');
+      socket.off('new_health_log');
+      socket.off('health_log_updated');
+    };
+  }, [currentUser]);
 
   return {
     characterData,

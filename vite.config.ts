@@ -7,11 +7,18 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: ["hapiken.jp", "www.hapiken.jp"],
     proxy: {
       "/api": {
-        target: process.env.VITE_API_BASE_URL || "http://localhost:3001",
+        target: process.env.VITE_API_BASE_URL || "https://hapiken.jp/api",
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        rewrite: (path) => path,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err);
+          });
+        }
       },
     },
   },

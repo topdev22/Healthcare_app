@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
-import healthRoutes from './routes/health';
+import healthRoutes, { setSocketIO as setHealthSocketIO } from './routes/health';
 import chatRoutes from './routes/chat';
 import dashboardRoutes from './routes/dashboard';
 import achievementRoutes from './routes/achievements';
@@ -17,10 +17,33 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+    origin: (origin, callback) => {
+      // Allow Socket.IO connections from Android WebView
+      const allowedOrigins = [
+        'https://hapiken.jp',
+        'http://localhost:8080',
+        'capacitor://localhost',
+        'http://localhost',
+        'https://care-delta-woad.vercel.app'
+      ];
+      
+      if (!origin || allowedOrigins.includes(origin) || origin.startsWith('capacitor://')) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow all for now
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+  },
+  // Additional configuration for mobile stability
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  upgradeTimeout: 30000,
+  allowUpgrades: true,
+  // Allow both polling and websocket for Android compatibility
+  transports: ['polling', 'websocket']
 });
 const PORT = process.env.PORT || 8000;
 
@@ -46,13 +69,11 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration
-app.use(cors({
-  origin: "*",
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Serve React app static files in production
+// if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('public'));
+// }
+
 
 // Body parsing middleware with increased limits for file uploads
 app.use(express.json({ limit: '50mb' }));
@@ -65,7 +86,9 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('combined'));
 }
 
-
+// Serve static files from public directory
+app.use('/profile', express.static('server/public/profile'));
+app.use('/public', express.static('server/public'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -75,6 +98,9 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Inject Socket.IO instance into routes that need real-time capabilities
+setHealthSocketIO(io);
 
 // API routes
 app.use('/api/auth', authRoutes);

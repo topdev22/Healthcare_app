@@ -35,6 +35,9 @@ importers:
       '@capacitor/motion':
         specifier: ^7.0.1
         version: 7.0.1(@capacitor/core@7.4.2)
+      '@capacitor/network':
+        specifier: ^7.0.2
+        version: 7.0.2(@capacitor/core@7.4.2)
       '@capacitor/preferences':
         specifier: ^7.0.2
         version: 7.0.2(@capacitor/core@7.4.2)
@@ -384,6 +387,11 @@ packages:
 
   '@capacitor/motion@7.0.1':
     resolution: {integrity: sha512-jExCBAcB7NsCCnD07sfNhVgp2xgwN2dmyehpjsPswWGCJaTToN9lzwYyJz9As9q59sikq9n36DpNnyjP3smGAQ==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
+
+  '@capacitor/network@7.0.2':
+    resolution: {integrity: sha512-KKkiUvGfMVKIcYaG+KlGAxrQtoRnwJtT+9yhTkCFzZWeYrY91sBZKOVOfnNHO8RiOxqbKn5VSUlyFLQQiyyfyg==}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
@@ -3906,6 +3914,10 @@ snapshots:
       '@capacitor/core': 7.4.2
 
   '@capacitor/motion@7.0.1(@capacitor/core@7.4.2)':
+    dependencies:
+      '@capacitor/core': 7.4.2
+
+  '@capacitor/network@7.0.2(@capacitor/core@7.4.2)':
     dependencies:
       '@capacitor/core': 7.4.2
 

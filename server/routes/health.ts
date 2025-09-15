@@ -4,21 +4,26 @@ import { authenticateToken } from '../middleware/auth';
 import HealthLog from '../models/HealthLog';
 import { checkAndUpdateAchievements } from './achievements';
 import GeminiService from '../services/geminiService';
-import { 
-  validateHealthLog, 
-  validateFoodData, 
-  sanitizeHealthLogData, 
-  sanitizeFoodData 
+import {
+  validateHealthLog,
+  validateFoodData,
+  sanitizeHealthLogData,
+  sanitizeFoodData
 } from '../utils/validation';
-import { 
-  HealthLogResponse, 
-  HealthLogsResponse, 
+import {
+  HealthLogResponse,
+  HealthLogsResponse,
   HealthStatsResponse,
-  CreateHealthLogRequest 
+  CreateHealthLogRequest
 } from '../../shared/types/health';
 
-
 const router = express.Router();
+
+// Socket.IO instance will be injected
+let io: any = null;
+export const setSocketIO = (socketIO: any) => {
+  io = socketIO;
+};
 
 // Configure multer for food image upload
 const storage = multer.memoryStorage(); // Store in memory for processing
@@ -107,6 +112,16 @@ router.post('/logs', authenticateToken, async (req: any, res) => {
 
     await healthLog.save();
 
+    // Emit real-time update for new health log
+    if (io) {
+      io.to('health_updates').emit('new_health_log', {
+        userId,
+        log: healthLog,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`📡 Emitted new_health_log event for user ${userId}`);
+    }
+
     // Check for achievement progress
     try {
       const newlyCompleted = await checkAndUpdateAchievements(userId);
@@ -117,6 +132,15 @@ router.post('/logs', authenticateToken, async (req: any, res) => {
         try {
           const { calculateDashboardStats } = await import('./dashboard');
           await calculateDashboardStats(userId, new Date());
+          
+          // Emit health data update after dashboard recalculation
+          if (io) {
+            io.to('health_updates').emit('health_data_updated', {
+              userId,
+              type: 'dashboard_refresh',
+              timestamp: new Date().toISOString()
+            });
+          }
         } catch (dashboardError) {
           console.warn('Dashboard stats update failed after achievement:', dashboardError);
         }
@@ -548,6 +572,25 @@ router.post('/water', authenticateToken, async (req: any, res) => {
 
     await waterLog.save();
 
+    // Emit real-time update for water intake
+    if (io) {
+      io.to('health_updates').emit('new_health_log', {
+        userId,
+        log: waterLog,
+        type: 'water',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Also emit a general health data update to trigger dashboard refresh
+      io.to('health_updates').emit('health_data_updated', {
+        userId,
+        type: 'water_intake',
+        amount,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`📡 Emitted water intake update for user ${userId}: ${amount}ml`);
+    }
+
     const response: HealthLogResponse = {
       success: true,
       data: waterLog as any
@@ -583,6 +626,25 @@ router.post('/exercise', authenticateToken, async (req: any, res) => {
     });
 
     await exerciseLog.save();
+
+    // Emit real-time update for exercise
+    if (io) {
+      io.to('health_updates').emit('new_health_log', {
+        userId,
+        log: exerciseLog,
+        type: 'exercise',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Also emit a general health data update to trigger dashboard refresh
+      io.to('health_updates').emit('health_data_updated', {
+        userId,
+        type: 'exercise',
+        duration,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`📡 Emitted exercise update for user ${userId}: ${type} for ${duration} minutes`);
+    }
 
     const response: HealthLogResponse = {
       success: true,

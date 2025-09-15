@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { initializeGoogleAuth } from "@/lib/auth";
-import { Loader2, Mail, AlertCircle, WifiOff } from "lucide-react";
+import { Loader2, Mail, AlertCircle, WifiOff, Heart, User } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -171,26 +171,43 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
-            ヘルスバディにようこそ
-          </DialogTitle>
-          <DialogDescription className="text-center">
-            あなたの健康管理パートナーにログインしてください
-          </DialogDescription>
+      <DialogContent className="max-w-md glass border border-white/30 shadow-2xl">
+        <DialogHeader className="text-center space-y-4">
+          {/* Health Logo Section */}
+          <div className="flex justify-center">
+            <div className="relative">
+              <img
+                src="/images/favicon.jpg"
+                alt="Health Buddy Logo"
+                className="w-20 h-20 rounded-2xl shadow-xl ring-4 ring-health-green/20"
+              />
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-health-green to-health-blue rounded-full flex items-center justify-center shadow-lg">
+                <Heart className="w-3 h-3 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-health-green to-health-blue bg-clip-text text-transparent">
+              ヘルスバディにようこそ
+            </DialogTitle>
+            <DialogDescription className="text-center text-muted-foreground mt-2">
+              あなたの健康管理パートナーと一緒に<br />
+              新しい健康習慣を始めましょう
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Google Auth Warning */}
+        <div className="space-y-5">
+          {/* Alerts with better styling */}
           {googleAuthError && (
-            <Alert className="border-orange-200 bg-orange-50 text-orange-800">
-              <WifiOff className="h-4 w-4" />
+            <Alert className="glass border-orange-300/50 bg-orange-50/80">
+              <WifiOff className="h-4 w-4 text-orange-600" />
               <AlertDescription>
                 <div className="space-y-2">
-                  <p className="font-medium">Google認証について</p>
-                  <p>{googleAuthError}</p>
-                  <p className="text-xs opacity-75">
+                  <p className="font-medium text-orange-800">Google認証について</p>
+                  <p className="text-orange-700">{googleAuthError}</p>
+                  <p className="text-xs text-orange-600">
                     メール認証は引き続き利用できます。
                   </p>
                 </div>
@@ -198,28 +215,26 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </Alert>
           )}
 
-          {/* Success Message */}
           {success && (
-            <Alert className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-900">
-              <AlertCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <AlertDescription className="text-green-800 dark:text-green-200">
+            <Alert className="glass border-health-green/50 bg-health-green/10">
+              <AlertCircle className="h-4 w-4 text-health-green" />
+              <AlertDescription className="text-health-green font-medium">
                 {success}
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Error Message */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="glass">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-1">
                   <p>{error}</p>
                   {error.includes("ネットワーク") && (
                     <p className="text-xs opacity-75">
-                      • インターネット接続を確認してください •
-                      ファイアウォールやVPNが影響していないか確認してください •
-                      しばらく時間をおいてから再度お試しください
+                      • インターネット接続を確認してください<br />
+                      • ファイアウォールやVPNが影響していないか確認してください<br />
+                      • しばらく時間をおいてから再度お試しください
                     </p>
                   )}
                 </div>
@@ -227,11 +242,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </Alert>
           )}
 
-          {/* Google Login Button */}
+          {/* Enhanced Google Login Button */}
           <Button
             onClick={handleGoogleSignIn}
             disabled={true}
-            className="w-full flex items-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="w-full flex items-center gap-3 h-12 glass border border-white/30 hover:bg-white/20 text-gray-700 disabled:opacity-50 dark:text-gray-300"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -260,21 +275,29 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-white/30" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
+              <span className="glass px-3 py-1 text-muted-foreground border border-white/20 rounded-full">
                 または
               </span>
             </div>
           </div>
 
           <Tabs defaultValue="login" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 h-auto md:h-12 sm:h-10">
-              <TabsTrigger value="login" disabled={isLoading}>
+            <TabsList className="grid w-full grid-cols-2 glass border border-white/30 h-auto">
+              <TabsTrigger
+                value="login"
+                disabled={isLoading}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-health-green data-[state=active]:to-health-blue data-[state=active]:text-white"
+              >
                 ログイン
               </TabsTrigger>
-              <TabsTrigger value="signup" disabled={isLoading}>
+              <TabsTrigger
+                value="signup"
+                disabled={isLoading}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-character-primary data-[state=active]:to-character-secondary data-[state=active]:text-white"
+              >
                 新規登録
               </TabsTrigger>
             </TabsList>
@@ -282,7 +305,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <TabsContent value="login" className="space-y-4">
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">メールアドレス</Label>
+                  <Label htmlFor="login-email" className="font-medium">メールアドレス</Label>
                   <Input
                     id="login-email"
                     type="email"
@@ -291,11 +314,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     required
                     disabled={isLoading}
                     placeholder="your@example.com"
+                    className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">パスワード</Label>
+                  <Label htmlFor="login-password" className="font-medium">パスワード</Label>
                   <Input
                     id="login-password"
                     type="password"
@@ -304,10 +328,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     required
                     disabled={isLoading}
                     placeholder="パスワードを入力"
+                    className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-health-green to-health-blue hover:from-health-green/90 hover:to-health-blue/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -316,7 +345,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   ) : (
                     <>
                       <Mail className="w-4 h-4 mr-2" />
-                      メールでログイン
+                      健康管理を始める
                     </>
                   )}
                 </Button>
@@ -326,7 +355,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <TabsContent value="signup" className="space-y-4">
               <form onSubmit={handleEmailSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">お名前</Label>
+                  <Label htmlFor="signup-name" className="font-medium">お名前</Label>
                   <Input
                     id="signup-name"
                     type="text"
@@ -335,11 +364,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     required
                     disabled={isLoading}
                     placeholder="田中 太郎"
+                    className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">メールアドレス</Label>
+                  <Label htmlFor="signup-email" className="font-medium">メールアドレス</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -348,11 +378,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     required
                     disabled={isLoading}
                     placeholder="your@example.com"
+                    className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">パスワード</Label>
+                  <Label htmlFor="signup-password" className="font-medium">パスワード</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -362,11 +393,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     disabled={isLoading}
                     minLength={6}
                     placeholder="6文字以上のパスワード"
+                    className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">パスワード（確認）</Label>
+                  <Label htmlFor="confirm-password" className="font-medium">パスワード（確認）</Label>
                   <Input
                     id="confirm-password"
                     type="password"
@@ -376,10 +408,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     disabled={isLoading}
                     minLength={6}
                     placeholder="パスワードを再入力"
+                    className="glass border-white/30 bg-white/50 focus:bg-white/70"
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-character-primary to-character-secondary hover:from-character-primary/90 hover:to-character-secondary/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -387,7 +424,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </>
                   ) : (
                     <>
-                      <Mail className="w-4 h-4 mr-2" />
+                      <User className="w-4 h-4 mr-2" />
                       アカウント作成
                     </>
                   )}
@@ -395,6 +432,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </form>
             </TabsContent>
           </Tabs>
+
+          {/* Health Benefits Footer */}
+          <div className="text-center pt-4 border-t border-white/20">
+            <p className="text-xs text-muted-foreground">
+              🎯 健康記録 • 💬 AI相談 • 📊 進捗追跡 • 🌟 キャラクター成長
+            </p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
