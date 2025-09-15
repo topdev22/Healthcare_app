@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Blend, Footprints, MessageCircle, Sparkles, Heart, Plus, Camera } from "lucide-react";
+import {
+  BarChart3,
+  Blend,
+  Footprints,
+  MessageCircle,
+  Sparkles,
+  Heart,
+  Plus,
+  Camera,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Components
@@ -180,8 +189,14 @@ export default function Index() {
             </p>
             <div className="flex items-center justify-center gap-1">
               <div className="w-2 h-2 bg-health-green rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-health-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-wellness-amber rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div
+                className="w-2 h-2 bg-health-blue rounded-full animate-bounce"
+                style={{ animationDelay: "0.1s" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-wellness-amber rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -203,15 +218,14 @@ export default function Index() {
 
       {currentUser ? (
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4 safe-area-bottom">
-          
-{/* Character Section - Simplified */}
-              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="text-center">
-                    <Character />
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Character Section - Simplified */}
+          <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
+            <CardContent className="p-4 sm:p-6">
+              <div className="text-center">
+                <Character />
+              </div>
+            </CardContent>
+          </Card>
           {/* Main Tabs */}
           <Tabs
             value={activeTab}
@@ -228,7 +242,7 @@ export default function Index() {
                   ホーム
                 </span>
               </TabsTrigger>
-              
+
               <TabsTrigger
                 value="chat"
                 className="flex flex-col items-center justify-center gap-1 touch-target text-xs sm:text-sm w-full h-14 sm:h-16 py-2 px-2 data-[state=active]:bg-gradient-to-br data-[state=active]:from-character-primary data-[state=active]:to-character-secondary data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-white/20 transition-all duration-300 ease-in-out rounded-xl font-medium"
@@ -277,47 +291,57 @@ export default function Index() {
                       onClick={handleLogHealth}
                     >
                       <Heart className="w-6 h-6 sm:w-7 sm:h-7" />
-                      <span className="text-sm sm:text-base font-medium">健康記録</span>
+                      <span className="text-sm sm:text-base font-medium">
+                        健康記録
+                      </span>
                     </Button>
-                    
+
                     <Button
                       size="lg"
                       className="h-20 sm:h-24 flex flex-col items-center gap-2 bg-gradient-to-br from-health-blue to-health-blue/80 hover:from-health-blue/90 hover:to-health-blue/70 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                       onClick={handleTakePhoto}
                     >
                       <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
-                      <span className="text-sm sm:text-base font-medium">食事記録</span>
+                      <span className="text-sm sm:text-base font-medium">
+                        食事記録
+                      </span>
                     </Button>
                   </div>
                 </CardContent>
               </Card>
               {/* Health Overview Banner */}
-          <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 shadow-xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
-                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">今日の健康スコア</h2>
-                  <p className="text-sm text-muted-foreground">継続は力なり、今日も頑張りましょう！</p>
+              <div className="glass rounded-2xl p-4 sm:p-6 border border-white/20 shadow-xl">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-health-green to-health-blue flex items-center justify-center shadow-lg">
+                      <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-bold text-foreground">
+                        今日の健康スコア
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        継続は力なり、今日も頑張りましょう！
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl sm:text-3xl font-bold text-health-green">
+                      {realTimeStats?.healthLevel
+                        ? `${realTimeStats.healthLevel}%`
+                        : "--"}
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      {realTimeStats?.currentStreak
+                        ? `${realTimeStats.currentStreak}日連続`
+                        : "データ読み込み中..."}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-health-green">
-                  {realTimeStats?.healthLevel ? `${realTimeStats.healthLevel}%` : '--'}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  {realTimeStats?.currentStreak ? `${realTimeStats.currentStreak}日連続` : 'データ読み込み中...'}
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Quick Stats Cards - Moved to top for better visibility */}
-          <QuickStatsCards />
-
-              
+              {/* Quick Stats Cards - Moved to top for better visibility */}
+              <QuickStatsCards />
 
               {/* Quick Actions - Secondary */}
               <QuickActions
@@ -363,8 +387,8 @@ export default function Index() {
 
       {/* Floating Action Button */}
       {currentUser && <FloatingActionButton onClick={handleLogHealth} />}
-      
-      {/* Character Exchange Button */}
+
+      {/* Character Exchange Button
       {currentUser && (
         <div className="fixed bottom-4 left-8 z-50">
           <span
@@ -373,7 +397,7 @@ export default function Index() {
             role="button"
             tabIndex={0}
             aria-label="キャラクター変更"
-            onKeyDown={(e) => e.key === 'Enter' && navigate("/select")}
+            onKeyDown={(e) => e.key === "Enter" && navigate("/select")}
           >
             <img
               src="/images/exchange.png"
@@ -382,7 +406,7 @@ export default function Index() {
             />
           </span>
         </div>
-      )}
+      )} */}
 
       {/* Modals */}
       <HealthLogModal
