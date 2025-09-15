@@ -146,39 +146,71 @@ export default function HealthStatsModal({ isOpen, onClose, healthData }: Health
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-health-blue" />
-            健康統計
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto glass border border-white/30 shadow-2xl">
+        <DialogHeader className="text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-health-blue to-wellness-amber flex items-center justify-center shadow-xl">
+              <BarChart3 className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-health-blue to-wellness-amber bg-clip-text text-transparent">
+            健康統計ダッシュボード
           </DialogTitle>
-          <DialogDescription>
-            健康データの詳細分析とトレンドを確認
+          <DialogDescription className="text-center">
+            あなたの健康データの詳細分析とトレンドを確認して<br />
+            より良い健康習慣を身につけましょう
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Period Selection */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">期間:</span>
-            <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => setSelectedPeriod(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7days">7日間</SelectItem>
-                <SelectItem value="30days">30日間</SelectItem>
-                <SelectItem value="90days">90日間</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Enhanced Period Selection */}
+          <Card className="glass border border-white/30 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-health-blue" />
+                  <span className="font-medium">分析期間:</span>
+                </div>
+                <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => setSelectedPeriod(value)}>
+                  <SelectTrigger className="w-40 glass border-white/30 bg-white/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7days">📅 過去7日間</SelectItem>
+                    <SelectItem value="30days">📊 過去30日間</SelectItem>
+                    <SelectItem value="90days">📈 過去90日間</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 h-auto md:h-12 sm:h-10">
-              <TabsTrigger value="overview">概要</TabsTrigger>
-              <TabsTrigger value="weight">体重</TabsTrigger>
-              <TabsTrigger value="mood">気分</TabsTrigger>
-              <TabsTrigger value="calories">カロリー</TabsTrigger>
+          <Tabs defaultValue="overview" className="space-y-5">
+            <TabsList className="grid w-full grid-cols-4 glass border border-white/30 h-auto">
+              <TabsTrigger
+                value="overview"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-health-blue data-[state=active]:to-health-green data-[state=active]:text-white"
+              >
+                📊 概要
+              </TabsTrigger>
+              <TabsTrigger
+                value="weight"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-health-blue data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              >
+                ⚖️ 体重
+              </TabsTrigger>
+              <TabsTrigger
+                value="mood"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-character-primary data-[state=active]:to-character-secondary data-[state=active]:text-white"
+              >
+                😊 気分
+              </TabsTrigger>
+              <TabsTrigger
+                value="calories"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-wellness-amber data-[state=active]:to-orange-500 data-[state=active]:text-white"
+              >
+                🔥 カロリー
+              </TabsTrigger>
             </TabsList>
 
             {/* 概要タブ */}

@@ -42,30 +42,34 @@ export function transformFormDataToApiRequests(formData: HealthLogFormData): Cre
     date: currentDate
   });
 
-  // Sleep log
-  requests.push({
-    type: 'sleep',
-    title: '睡眠記録',
-    data: {
-      hours: formData.sleep,
-      quality: undefined, // Can be added later
-      bedTime: undefined,
-      wakeTime: undefined
-    },
-    date: currentDate
-  });
+  // Sleep log (only if sleep data is provided)
+  if (formData.sleep !== undefined && formData.sleep > 0) {
+    requests.push({
+      type: 'sleep',
+      title: '睡眠記録',
+      data: {
+        hours: formData.sleep,
+        quality: undefined, // Can be added later
+        bedTime: undefined,
+        wakeTime: undefined
+      },
+      date: currentDate
+    });
+  }
 
-  // Water log
-  requests.push({
-    type: 'water',
-    title: '水分補給記録',
-    data: {
-      amount: formData.water * 250, // Convert glasses to ml (1 glass = 250ml)
-      unit: 'ml',
-      glasses: formData.water
-    },
-    date: currentDate
-  });
+  // Water log (only if water data is provided)
+  if (formData.water !== undefined && formData.water > 0) {
+    requests.push({
+      type: 'water',
+      title: '水分補給記録',
+      data: {
+        amount: formData.water * 250, // Convert glasses to ml (1 glass = 250ml)
+        unit: 'ml',
+        glasses: formData.water
+      },
+      date: currentDate
+    });
+  }
 
   // Food logs
   if (formData.foodItems && formData.foodItems.length > 0) {
@@ -148,13 +152,13 @@ export function validateFormData(formData: HealthLogFormData): { isValid: boolea
     errors.push('体重は20kgから300kgの間で入力してください');
   }
   
-  // Validate sleep
-  if (formData.sleep < 0 || formData.sleep > 24) {
+  // Validate sleep (only if provided)
+  if (formData.sleep !== undefined && (formData.sleep < 0 || formData.sleep > 24)) {
     errors.push('睡眠時間は0時間から24時間の間で入力してください');
   }
   
-  // Validate water
-  if (formData.water < 0 || formData.water > 20) {
+  // Validate water (only if provided)
+  if (formData.water !== undefined && (formData.water < 0 || formData.water > 2000)) {
     errors.push('水分摂取は0杯から20杯の間で入力してください');
   }
   
@@ -212,4 +216,29 @@ export function getMoodLabel(mood: MoodType): string {
   };
   
   return moodLabels[mood] || '普通';
+}
+
+/**
+ * Calculate character level based on health level
+ * Standardized formula to ensure consistency across components
+ */
+export function calculateCharacterLevel(healthLevel: number): number {
+  // Ensure healthLevel is within valid range
+  const validHealthLevel = Math.max(0, Math.min(100, healthLevel));
+  
+  // Level progression:
+  // Level 1: 0-24 health
+  // Level 2: 25-49 health
+  // Level 3: 50-74 health
+  // Level 4: 75-99 health
+  // Level 5: 100 health
+  return Math.floor(validHealthLevel / 25) + 1;
+}
+
+/**
+ * Calculate experience progress within current level
+ */
+export function calculateLevelProgress(healthLevel: number): number {
+  const validHealthLevel = Math.max(0, Math.min(100, healthLevel));
+  return (validHealthLevel % 25) * 4; // Convert to 0-100 scale for progress bar
 }

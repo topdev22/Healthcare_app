@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { cn } from '@/lib/utils';
 
+
 interface LottieCharacterProps {
   className?: string;
   size?: number;
@@ -38,7 +39,7 @@ const getCharacterStage = (totalLogs: number, streak: number, healthLevel: numbe
 const getCharacterExpression = (stage: string, mood: string) => {
   // For otona2 (blank expression), always return the same file
   if (stage === 'otona2') {
-    return '/charactor/otona2.json';
+    return '/charactor/neutral/otona2.json';
   }
   
   // For other stages, use the base animation
@@ -46,17 +47,17 @@ const getCharacterExpression = (stage: string, mood: string) => {
   // For now, we'll use the single animation file per stage
   switch (stage) {
     case 'tamago':
-      return '/charactor/tamago.json';
+      return '/charactor/neutral/tamago.json';
     case 'kodomo1':
-      return '/charactor/kodomo1.json';
+      return `/charactor/${mood}/kodomo1.json`;
     case 'kodomo2':
-      return '/charactor/kodomo2.json';
+      return `/charactor/${mood}/kodomo2.json`;
     case 'kodomo3':
-      return '/charactor/kodomo3.json';
+      return `/charactor/${mood}/kodomo3.json`;
     case 'otona1':
-      return '/charactor/otona1.json';
+      return '/charactor/neutral/otona1.json';
     default:
-      return '/charactor/tamago.json';
+      return '/charactor/neutral/tamago.json';
   }
 };
 
@@ -66,13 +67,15 @@ export default function LottieCharacter({
   healthLevel,
   totalLogs,
   streak,
-  recentMood = 'happy',
+  recentMood,
   isInteracting = false
 }: LottieCharacterProps) {
   const characterStage = useMemo(() => 
     getCharacterStage(totalLogs, streak, healthLevel), 
     [totalLogs, streak, healthLevel]
   );
+
+  console.log("recentmood======", recentMood)
 
   const animationSrc = useMemo(() => 
     getCharacterExpression(characterStage, recentMood),
@@ -162,17 +165,6 @@ export default function LottieCharacter({
           autoplay
           className="w-full h-full"
         />
-        
-        {/* Growth stage indicator */}
-        {/* <div className={cn(
-          "absolute -top-2 -right-2 px-2 py-1 rounded-full text-xs font-bold text-white",
-          "bg-gradient-to-r from-character-primary to-character-secondary",
-          "shadow-lg border-2 border-white/50",
-          "transition-transform duration-300",
-          isInteracting && "scale-110"
-        )}>
-          {characterInfo.stage}
-        </div> */}
       </div>
 
       {/* Character Info */}
