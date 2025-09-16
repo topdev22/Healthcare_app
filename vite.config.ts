@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ["hapiken.jp", "www.hapiken.jp"],
+    allowedHosts: ["hapiken.jp", "www.hapiken.jp", "localhost:8000"],
     proxy: {
       "/api": {
         target: process.env.VITE_API_BASE_URL || "https://hapiken.jp/api",
