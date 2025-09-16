@@ -1,8 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Heart } from "lucide-react";
+import { Heart, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { characterAPI } from "@/lib/api";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import Lottie from "lottie-react";
 
 interface CharacterFiles {
   [folder: string]: string[];
@@ -14,70 +25,94 @@ interface VideoPlaylistProps {
   folder: string;
 }
 
-const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ files, baseURL, folder }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+const LottiePlaylist: React.FC<VideoPlaylistProps> = ({ files, baseURL, folder }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lottieRef = useRef(null);
   const [playlistIndex, setPlaylistIndex] = useState(0);
-  const [currentSrc, setCurrentSrc] = useState("");
+  const [animationData, setAnimationData] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Set initial source
+  const currentSrc = files.length > 0 ? `${baseURL}/${folder}/${files[playlistIndex]}` : "";
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Fetch animation data when visible and currentSrc changes
+  useEffect(() => {
+    if (!isVisible || !currentSrc) return;
+
+    fetch(currentSrc)
+      .then((response) => response.json())
+      .then((data) => {
+        setAnimationData(data);
+      })
+      .catch((error) => {
+        console.error("Failed to load Lottie animation:", error);
+      });
+  }, [currentSrc, isVisible]);
+
   useEffect(() => {
     if (files.length > 0) {
-      setCurrentSrc(`${baseURL}/${folder}/${files[0]}`);
       setPlaylistIndex(0);
     }
   }, [files, baseURL, folder]);
 
-  // Handle source change and load
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !currentSrc) return;
-
-    const handleLoadedData = () => {
-      video.play().catch((e) => console.error("Auto-play failed:", e));
-      video.removeEventListener("loadeddata", handleLoadedData);
-    };
-
-    video.src = currentSrc;
-    video.load();
-    video.addEventListener("loadeddata", handleLoadedData);
-  }, [currentSrc, playlistIndex]);
-
-  // Handle ended event to switch to next video
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || files.length <= 1) return;
-
-    const handleEnded = () => {
+  const handleComplete = () => {
+    if (files.length > 1) {
       const nextIndex = (playlistIndex + 1) % files.length;
       setPlaylistIndex(nextIndex);
-      setCurrentSrc(`${baseURL}/${folder}/${files[nextIndex]}`);
-    };
-
-    video.addEventListener("ended", handleEnded);
-    return () => video.removeEventListener("ended", handleEnded);
-  }, [playlistIndex, files, baseURL, folder]);
+    }
+  };
 
   if (files.length === 0) {
-    return <p className="text-gray-500 text-sm">No .mp4 files available.</p>;
+    return <p className="text-gray-500 text-sm">No .json files available.</p>;
   }
 
   return (
-    <video
-      ref={videoRef}
-      className="w-full h-full object-cover rounded border"
-      controls
-      autoPlay
-      muted
-      preload="metadata"
-    >
-      Your browser does not support the video tag.
-    </video>
+    <div ref={containerRef} className="w-full h-full rounded">
+      {!animationData && isVisible ? (
+        <div className="w-full h-full bg-gray-200 rounded border animate-pulse" />
+      ) : !isVisible ? (
+        <div className="w-full h-full bg-gray-200 rounded border animate-pulse" />
+      ) : null}
+      {animationData && (
+        <Lottie
+          lottieRef={lottieRef}
+          animationData={animationData}
+          loop={files.length <= 1}
+          autoplay={true}
+          className="w-full h-full object-cover rounded"
+          onComplete={handleComplete}
+        />
+      )}
+    </div>
   );
 };
 
 const ChangeModel = () => {
+  const navigate = useNavigate();
   const [characterList, setCharacterList] = useState<CharacterFiles>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [selectedItem, setSelectedItem] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingItem, setPendingItem] = useState<string>("");
   const baseURL = "/templates";
 
   useEffect(() => {
@@ -132,41 +167,91 @@ const ChangeModel = () => {
   }
 
   return (
-    <div className="min-h-screen min-w-screen p-2">
-      <h1 className="text-2xl font-bold mb-4">
-        Hapiken Model Change Interface
+    <div className="min-h-screen min-w-screen p-2 flex flex-col justify-center items-center gap-2">
+      <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-health-green to-health-blue bg-clip-text text-transparent">
+        ハピケン モデル切り替えインターフェース
       </h1>
       {/* Render character list here once data is available */}
       {Object.keys(characterList).length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
-          {Object.entries(characterList).map(([key, files]) => {
-            const mp4Files = files.filter((file: string) =>
-              file.endsWith(".mp4"),
-            );
-            return (
-              <Label
-                key={key}
-                className="border p-4 rounded-lg aspect-[1/1.5] hover:bg-accent/50 flex flex-col items-start gap-3 has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-white dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950"
-              >
-                <h2 className="font-semibold text-lg mb-2">{key} Models</h2>
-                {mp4Files.length > 0 ? (
-                  <VideoPlaylist files={mp4Files} baseURL={baseURL} folder={key} />
-                ) : (
-                  <p className="text-gray-500 text-sm">
-                    No .mp4 files available.
-                  </p>
-                )}
-                <Checkbox
-                  id={key}
-                  className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
-                />
-              </Label>
-            );
-          })}
-        </div>
-      ) : (
-        <p>No characters available.</p>
-      )}
+        <>
+          <RadioGroup
+            value={selectedModel}
+            className="flex overflow-x-auto snap-x snap-mandatory space-x-0 pb-4 md:pb-0 md:gap-4 md:space-x-0 md:grid md:grid-cols-3 lg:grid-cols-4 w-full scrollbar-hide"
+          >
+            {Object.entries(characterList).map(([key, files]) => {
+              const jsonFiles = files.filter((file: string) =>
+                file.endsWith(".json"),
+              );
+              return (
+                <div key={key} className="flex-shrink-0 w-full snap-start md:w-auto md:flex-1 md:snap-none">
+                  <Label
+                    htmlFor={key}
+                    className="relative group p-4 rounded-lg aspect-[1/1.5] hover:bg-accent/50 flex flex-col items-start gap-3 group-data-[state=checked]:border-health-blue-600 group-data-[state=checked]:bg-white dark:group-data-[state=checked]:border-health-blue-900 dark:group-data-[state=checked]:bg-health-blue-950 cursor-pointer"
+                    onClick={() => {
+                      setPendingItem(key);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    {/* <h2 className="font-semibold text-lg mb-2 bg-gradient-to-r from-health-green to-health-blue bg-clip-text text-transparent">{key} モデル</h2> */}
+                    {jsonFiles.length > 0 ? (
+                      <LottiePlaylist files={jsonFiles} baseURL={baseURL} folder={key} />
+                    ) : (
+                      <p className="text-center text-sm font-medium bg-gradient-to-r from-health-green to-health-blue bg-clip-text text-transparent mt-2">
+                        利用可能な .json ファイルがありません。
+                      </p>
+                    )}
+                    <RadioGroupItem
+                      value={key}
+                      id={key}
+                      className="absolute right-1 bottom-1 data-[state=checked]:border-health-blue-600 data-[state=checked]:bg-health-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-health-blue-700 dark:data-[state=checked]:bg-health-blue-700"
+                    />
+                  </Label>
+                </div>
+              );
+            })}
+          </RadioGroup>
+
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>設定の確認</DialogTitle>
+                <DialogDescription>
+                  このモデル「{pendingItem}」に切り替えますか？この設定を適用すると、キャラクターが変更されます。
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={() => {
+                  setSelectedModel(pendingItem);
+                  setSelectedItem(pendingItem);
+                  setIsModalOpen(false);
+                  }}
+                >
+                  はい
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+    ) : (
+      <p className="text-center text-lg font-medium bg-gradient-to-r from-health-green to-health-blue bg-clip-text text-transparent py-8">
+        利用可能なキャラクターがありません。
+      </p>
+    )}
+    <Button
+      variant="outline"
+      onClick={() => navigate(-1)}
+      className="w-full max-w-sm bg-health-blue/10 border-health-blue text-health-blue hover:bg-health-blue/20 dark:bg-health-blue/20 dark:border-health-blue dark:text-health-blue dark:hover:bg-health-blue/30 flex items-center gap-2 mt-4"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      戻る
+    </Button>
     </div>
   );
 };
