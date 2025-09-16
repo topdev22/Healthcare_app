@@ -34,7 +34,7 @@ const io = new Server(server, {
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
+    // credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
   },
   // Additional configuration for mobile stability
@@ -60,7 +60,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
       scriptSrc: ["'self'", "https:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https:"],
+      connectSrc: ["'self'", "https:", "http://localhost:8000", "ws://localhost:8000"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
