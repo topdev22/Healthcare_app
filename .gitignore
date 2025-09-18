@@ -7,7 +7,7 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 .pnpm-debug.log*
-
+vercel.json
 # Build outputs
 dist/
 dist-ssr/
