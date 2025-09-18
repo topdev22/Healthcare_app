@@ -14,6 +14,9 @@ import {
   sanitizeConversation 
 } from '../utils/validation';
 
+// Import animation types from LottieCharacter component
+type AnimationKey = 'banzai' | 'folddown' | 'greeting' | 'jump' | 'pose' | 'pose1' | 'shark' | 'sit' | 'sit1' | 'tilt' | 'turn';
+
 const router = express.Router();
 
 // Initialize OpenAI service
@@ -270,6 +273,10 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       aiResponseData = generateHealthResponse(sanitizedMessage.content, userContext);
     }
 
+    // Determine animation based on AI response
+    const animationKey = getAnimationFromResponse(aiResponseData.message);
+    console.log('🎭 Selected animation for response:', animationKey);
+
     // Save AI response to database
     const aiMessage = new ChatMessage({
       conversationId: conversation._id,
@@ -320,6 +327,7 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       success: true,
       message: aiResponseData.message,
       mood: aiResponseData.mood || 'happy',
+      animation: animationKey,
       conversationId: conversation._id,
       messageId: aiMessage._id,
       userMessageId: userMessage._id,
@@ -631,6 +639,77 @@ function analyzeSentiment(message: string): 'positive' | 'negative' | 'neutral' 
   if (positiveCount > negativeCount) return 'positive';
   if (negativeCount > positiveCount) return 'negative';
   return 'neutral';
+}
+
+// Map AI response to character animation based on Japanese phrases and sentiment
+function getAnimationFromResponse(response: string): AnimationKey {
+  const lowerResponse = response.toLowerCase();
+  
+  // Check for specific Japanese encouragement phrases
+  if (lowerResponse.includes('頑張ってください') || lowerResponse.includes('がんばってください')) {
+    return 'pose';
+  }
+  
+  if (lowerResponse.includes('おめでとう') || lowerResponse.includes('おめでとうございます')) {
+    return 'jump';
+  }
+  
+  if (lowerResponse.includes('がんばれ') || lowerResponse.includes('頑張れ')) {
+    return 'banzai';
+  }
+  
+  if (lowerResponse.includes('すごい') || lowerResponse.includes('素晴らしい') || lowerResponse.includes('素晴らしいですね')) {
+    return 'jump';
+  }
+  
+  if (lowerResponse.includes('お疲れ様') || lowerResponse.includes('おつかれさま')) {
+    return 'sit';
+  }
+  
+  if (lowerResponse.includes('ありがとう') || lowerResponse.includes('感謝')) {
+    return 'pose';
+  }
+  
+  if (lowerResponse.includes('こんにちは') || lowerResponse.includes('おはよう') || lowerResponse.includes('こんばんは')) {
+    return 'greeting';
+  }
+  
+  // Check for negative/sad sentiment
+  if (lowerResponse.includes('残念') || lowerResponse.includes('残念ですね') || 
+      lowerResponse.includes('申し訳ありません') || lowerResponse.includes('すみません')) {
+    return 'folddown';
+  }
+  
+  if (lowerResponse.includes('心配') || lowerResponse.includes('不安') || lowerResponse.includes('大丈夫ですか')) {
+    return 'tilt';
+  }
+  
+  // Check for excitement or energy
+  if (lowerResponse.includes('やった') || lowerResponse.includes('やったー') || 
+      lowerResponse.includes('わーい') || lowerResponse.includes('うれしい')) {
+    return 'jump';
+  }
+  
+  // Check for playful or fun responses
+  if (lowerResponse.includes('楽しい') || lowerResponse.includes('面白い') || 
+      lowerResponse.includes('笑') || lowerResponse.includes('😊') || lowerResponse.includes('😄')) {
+    return 'shark';
+  }
+  
+  // Check for thinking or considering
+  if (lowerResponse.includes('考え') || lowerResponse.includes('検討') || 
+      lowerResponse.includes('どうしよう') || lowerResponse.includes('どうしましょう')) {
+    return 'tilt';
+  }
+  
+  // Check for movement or action
+  if (lowerResponse.includes('動き') || lowerResponse.includes('運動') || 
+      lowerResponse.includes('歩く') || lowerResponse.includes('走る')) {
+    return 'turn';
+  }
+  
+  // Default to greeting for neutral responses
+  return 'greeting';
 }
 
 // Enhanced health-focused response generator (fallback when GPT is unavailable)

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import LottieCharacter from '@/components/LottieCharacter';
+import LottieCharacter, { AnimationKey } from '@/components/LottieCharacter';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -15,9 +15,11 @@ interface CharacterProps {
   mood?: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'sleeping';
   healthLevel?: number;
   isInteracting?: boolean;
+  // Animation prop for dynamic character animations
+  animationKey?: AnimationKey;
 }
 
-export default function Character({ className, mood: overrideMood, healthLevel: overrideHealthLevel, isInteracting: overrideInteracting }: CharacterProps) {
+export default function Character({ className, mood: overrideMood, healthLevel: overrideHealthLevel, isInteracting: overrideInteracting, animationKey }: CharacterProps) {
   const { currentUser } = useAuth();
   const { characterData, healthStats, userProfile, loading, error } = useCharacterData(currentUser);
 
@@ -154,6 +156,7 @@ export default function Character({ className, mood: overrideMood, healthLevel: 
             streak={streakDays}
             recentMood={rawMood as any}
             isInteracting={isInteracting}
+            animationKey={animationKey}
             className="transition-all duration-700 ease-out relative z-10"
           />
 

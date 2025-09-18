@@ -9,6 +9,7 @@ interface Message {
   timestamp: Date;
   healthDataExtracted?: boolean;
   extractedData?: any;
+  animation?: string;
 }
 
 export function useChat(userProfile: any) {
@@ -21,6 +22,7 @@ export function useChat(userProfile: any) {
     }
   ]);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  const [currentAnimation, setCurrentAnimation] = useState<string>('greeting');
 
   const triggerHaptics = async (style: ImpactStyle = ImpactStyle.Medium) => {
     try {
@@ -54,10 +56,18 @@ export function useChat(userProfile: any) {
         sender: 'character',
         timestamp: new Date(),
         healthDataExtracted: response.healthDataExtracted,
-        extractedData: response.extractedHealthData
+        extractedData: response.extractedHealthData,
+        animation: response.animation
       };
       
       setMessages(prev => [...prev, characterResponse]);
+      
+      // Update animation if provided in response
+      if (response.animation) {
+        setCurrentAnimation(response.animation);
+        console.log('🎭 Animation updated to:', response.animation);
+      }
+      
       await triggerHaptics(ImpactStyle.Light);
 
       // Always trigger character data refresh for chat activity (experience gain)
@@ -91,6 +101,7 @@ export function useChat(userProfile: any) {
   return {
     messages,
     isLoadingResponse,
+    currentAnimation,
     handleSendMessage,
     addMessage,
     triggerHaptics
