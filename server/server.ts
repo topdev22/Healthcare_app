@@ -11,6 +11,7 @@ import healthRoutes, { setSocketIO as setHealthSocketIO } from './routes/health'
 import chatRoutes from './routes/chat';
 import dashboardRoutes from './routes/dashboard';
 import achievementRoutes from './routes/achievements';
+import characterRoutes from './routes/character';
 
 
 const app = express();
@@ -34,7 +35,7 @@ const io = new Server(server, {
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
+    // credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
   },
   // Additional configuration for mobile stability
@@ -60,7 +61,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
       scriptSrc: ["'self'", "https:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https:"],
+      connectSrc: ["'self'", "https:", "http://localhost:8000", "ws://localhost:8000"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -69,12 +70,29 @@ app.use(helmet({
   },
 }));
 
-// Serve React app static files in production
-// if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('public'));
-// }
-
-
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests from Android WebView and various environments
+    const allowedOrigins = [
+      'https://hapiken.jp',
+      'http://localhost:8080',
+      'capacitor://localhost',
+      'http://localhost',
+      'https://care-delta-woad.vercel.app'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('capacitor://')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Set-Cookie"]
+}));
+ 
 // Body parsing middleware with increased limits for file uploads
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -88,7 +106,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Serve static files from public directory
 app.use('/profile', express.static('server/public/profile'));
-app.use('/public', express.static('server/public'));
+app.use('/public', express.static('public'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -109,6 +127,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/character', characterRoutes)
 
 // Socket.IO event handlers
 io.on('connection', (socket) => {

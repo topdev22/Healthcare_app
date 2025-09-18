@@ -9,6 +9,7 @@ interface Message {
   timestamp: Date;
   healthDataExtracted?: boolean;
   extractedData?: any;
+  animation?: string;
 }
 
 export function useChat(userProfile: any) {
@@ -21,6 +22,7 @@ export function useChat(userProfile: any) {
     }
   ]);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  const [currentAnimation, setCurrentAnimation] = useState<string>('greeting');
 
   const triggerHaptics = async (style: ImpactStyle = ImpactStyle.Medium) => {
     try {
@@ -54,24 +56,26 @@ export function useChat(userProfile: any) {
         sender: 'character',
         timestamp: new Date(),
         healthDataExtracted: response.healthDataExtracted,
-        extractedData: response.extractedHealthData
+        extractedData: response.extractedHealthData,
+        animation: response.animation
       };
       
       setMessages(prev => [...prev, characterResponse]);
+      
+      // Update animation if provided in response
+      if (response.animation) {
+        setCurrentAnimation(response.animation);
+        console.log('🎭 Animation updated to:', response.animation);
+      }
+      
       await triggerHaptics(ImpactStyle.Light);
 
       // Always trigger character data refresh for chat activity (experience gain)
       // console.log('💬 Chat interaction completed, refreshing character data for experience...');
-      try {
-        const { triggerCharacterRefresh } = await import('@/lib/characterHelpers');
-        triggerCharacterRefresh();
-        
-        // Show additional feedback if health data was extracted
-        if (response.healthDataExtracted) {
-          console.log('🎯 Health data also extracted from chat!');
-        }
-      } catch (error) {
-        console.warn('Failed to trigger character refresh:', error);
+      
+      // Show additional feedback if health data was extracted
+      if (response.healthDataExtracted) {
+        console.log('🎯 Health data also extracted from chat!');
       }
     } catch (error) {
       console.error('チャットエラー:', error);
@@ -97,6 +101,7 @@ export function useChat(userProfile: any) {
   return {
     messages,
     isLoadingResponse,
+    currentAnimation,
     handleSendMessage,
     addMessage,
     triggerHaptics

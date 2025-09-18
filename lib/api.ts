@@ -599,6 +599,13 @@ export const notificationAPI = {
   }
 };
 
+export const characterAPI = {
+  async getCharacterData() {
+    const response = await apiClient.get("/character/list");
+    return response.data;
+  }
+}
+
 // Type definitions
 export interface APIError {
   message: string;
