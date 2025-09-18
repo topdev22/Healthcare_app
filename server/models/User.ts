@@ -15,6 +15,7 @@ export interface IUser extends Document {
   height?: number;
   activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
   healthGoals?: string[];
+  template: String;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -81,6 +82,10 @@ const userSchema = new Schema<IUser>({
   healthGoals: {
     type: [String],
     default: []
+  },
+  template: {
+    type: String,
+    default: "default"
   }
 }, {
   timestamps: true,
