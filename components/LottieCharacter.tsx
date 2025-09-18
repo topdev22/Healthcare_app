@@ -35,6 +35,18 @@ const getCharacterStage = (totalLogs: number, streak: number, healthLevel: numbe
   }
 };
 
+const banzai = "banzai";
+const folldown = "folldown";
+const greeting = "greeting";
+const jump = "jump";
+const pose = "pose";
+const pose1 = "pose1";
+const shark = "shark";
+const sit = "sit";
+const sit1 = "sit1";
+const tilt = "tild";
+const turn = "turn";
+
 // Map mood to appropriate character expression
 const getCharacterExpression = (stage: string, mood: string) => {
   // For otona2 (blank expression), always return the same file
