@@ -49,6 +49,7 @@ export default function Index() {
   const {
     messages,
     isLoadingResponse,
+    currentAnimation,
     handleSendMessage,
     addMessage,
     triggerHaptics,
@@ -222,7 +223,7 @@ export default function Index() {
           <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
             <CardContent className="p-4 sm:p-6">
               <div className="text-center">
-                <Character />
+                <Character animationKey={currentAnimation as any} />
               </div>
             </CardContent>
           </Card>
@@ -352,11 +353,11 @@ export default function Index() {
               />
             </TabsContent>
 
-            <TabsContent value="chat" className="space-y-3 sm:space-y-4">
-              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
-                <CardContent className="p-0">
-                  <div className="flex flex-col lg:flex-row lg:divide-x lg:divide-character-primary/20">
-                    <div className="lg:flex-1 lg:pl-4 p-4 lg:pt-4 border-t border-character-primary/20 lg:border-t-0">
+            <TabsContent value="chat" className="space-y-3 sm:space-y-4 overflow-hidden">
+              <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg h-full flex-1">
+                <CardContent className="p-0 h-full">
+                  <div className="flex flex-col lg:flex-row lg:divide-x lg:divide-character-primary/20 h-full">
+                    <div className="lg:flex-1 lg:pl-4 p-4 lg:pt-4 border-t border-character-primary/20 lg:border-t-0 flex-1 overflow-hidden">
                       <ChatInterface
                         onSendMessage={handleChatMessage}
                         messages={messages}
