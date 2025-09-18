@@ -36,7 +36,11 @@ export default function ChatInterface({
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight + messagesContainerRef.current.clientHeight;
+      const container = messagesContainerRef.current;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      if (isLoading || messages.length === 0 || isNearBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   };
 
@@ -47,7 +51,7 @@ export default function ChatInterface({
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [messages]);
+  }, [messages, isLoading]);
 
   // Sync component state with TTS service state on mount
   useEffect(() => {
