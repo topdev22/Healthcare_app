@@ -82,7 +82,7 @@ self.addEventListener('fetch', (event) => {
   const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|ico|woff2?|ttf|svg)(\?.*)?$/.test(url.pathname) ||
                         url.pathname.startsWith('/assets/') ||
                         url.pathname.startsWith('/images/') ||
-                        url.pathname.startsWith('/charactor/');
+                        url.pathname.startsWith('/character/');
 
   if (isStaticAsset) {
     event.respondWith(

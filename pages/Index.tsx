@@ -49,6 +49,7 @@ export default function Index() {
   const {
     messages,
     isLoadingResponse,
+    currentAnimation,
     handleSendMessage,
     addMessage,
     triggerHaptics,
@@ -222,7 +223,7 @@ export default function Index() {
           <Card className="character-bg border-character-primary/30 card-hover overflow-hidden shadow-lg">
             <CardContent className="p-4 sm:p-6">
               <div className="text-center">
-                <Character />
+                <Character animationKey={currentAnimation as any} />
               </div>
             </CardContent>
           </Card>
