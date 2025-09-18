@@ -34,6 +34,24 @@ export default function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  // Smooth scroll to bottom on new messages or loading, isolated to chat container
+  // Note: Page-level scroll jumps may occur due to layout shifts from triggerCharacterRefresh() in useChat.ts
+  // dispatching storage events, re-rendering Character component in Index.tsx
+  const previousMessageCountRef = useRef(messages.length);
+  useEffect(() => {
+    const previousCount = previousMessageCountRef.current;
+    if (messages.length > previousCount || isLoading) {
+      // Use requestAnimationFrame for smooth scroll after DOM update
+      const rafId = requestAnimationFrame(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      });
+      return () => cancelAnimationFrame(rafId);
+    }
+    previousMessageCountRef.current = messages.length;
+  }, [messages.length, isLoading]);
+
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
@@ -44,14 +62,6 @@ export default function ChatInterface({
     }
   };
 
-  useEffect(() => {
-    // Use requestAnimationFrame to ensure DOM is updated before scrolling
-    const rafId = requestAnimationFrame(() => {
-      scrollToBottom();
-    });
-
-    return () => cancelAnimationFrame(rafId);
-  }, [messages, isLoading]);
 
   // Sync component state with TTS service state on mount
   useEffect(() => {
