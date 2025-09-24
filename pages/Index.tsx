@@ -390,7 +390,7 @@ export default function Index() {
       {currentUser && <FloatingActionButton onClick={handleLogHealth} />}
       
       {/* Character Exchange Button */}
-      {currentUser && (
+      {/* {currentUser && (
         <div className="fixed bottom-4 left-8 z-50">
           <span
             onClick={() => navigate("/select")}
@@ -407,7 +407,7 @@ export default function Index() {
             />
           </span>
         </div>
-      )}
+      )} */}
 
       {/* Modals */}
       <HealthLogModal
