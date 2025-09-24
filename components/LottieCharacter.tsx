@@ -256,11 +256,11 @@ export default function LottieCharacter({
         )}
         
         {/* Loading state */}
-        {isLoading && (
+        {/* {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/20 rounded-full">
             <div className="w-8 h-8 border-2 border-character-primary border-t-transparent rounded-full animate-spin" />
           </div>
-        )}
+        )} */}
         
         {/* Lottie Animation */}
         <DotLottieReact
@@ -272,14 +272,14 @@ export default function LottieCharacter({
       </div>
 
       {/* Character Info */}
-      <div className="mt-4 text-center space-y-1">
+      {/* <div className="mt-4 text-center space-y-1">
         <h3 className={cn("font-medium text-sm", characterInfo.color)}>
           {characterInfo.name}
         </h3>
         <p className="text-xs text-muted-foreground max-w-[200px]">
           {characterInfo.description}
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }
