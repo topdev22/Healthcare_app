@@ -108,10 +108,15 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/profile', express.static('server/public/profile'));
 app.use('/public', express.static('public'));
 
+// Serve manifest.json from root for proper CORS handling
+app.get('/manifest.json', (req, res) => {
+  res.sendFile('manifest.json', { root: 'public' });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
