@@ -183,13 +183,12 @@ class TTSService {
         };
 
         utterance.onerror = (event) => {
-          console.error('Speech synthesis error:', event.error);
-          
           // Handle interrupted errors more gracefully
           if (event.error === 'interrupted') {
             console.log('Speech was interrupted, treating as completed');
             safeResolve(); // Treat interruption as completion rather than error
           } else {
+            console.error('Speech synthesis error:', event.error);
             safeReject(new Error(`Speech synthesis failed: ${event.error}`));
           }
         };
