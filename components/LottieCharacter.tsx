@@ -81,7 +81,6 @@ const getCharacterExpression = (stage: string, mood: string) => {
 
 // New function to get character expression based on animation key and character progression
 const getCharacterExpressionByAnimation = (animationKey: AnimationKey, characterStage: string = 'kodomo1'): string => {
-  console.log("animationKey======", animationKey, "characterStage======", characterStage);
   
   // Map character stages to their appropriate character names for animations
   const getCharacterNameForAnimation = (stage: string): string => {
@@ -140,7 +139,6 @@ export default function LottieCharacter({
     [totalLogs, streak, healthLevel]
   );
 
-  console.log("recentmood======", recentMood)
 
   // Update animation when animationKey prop changes
   useEffect(() => {
@@ -160,7 +158,6 @@ export default function LottieCharacter({
     }
     return getCharacterExpression(characterStage, recentMood || 'neutral');
   }, [animationKey, characterStage, recentMood]);
-  console.log("animationSrc======", animationSrc)
 
   // Get character info for display
   const getCharacterInfo = () => {
