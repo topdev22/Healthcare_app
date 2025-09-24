@@ -9,7 +9,6 @@ const CACHE_NAME = 'health-buddy-v2'; // Bump version for cache cleanup
 const urlsToPrecache = [
   '/',
   '/index.html',
-  '/global.css',
   '/manifest.json'
   // Note: Dynamic JS/CSS files are cached on first fetch
 ];
