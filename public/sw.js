@@ -9,7 +9,6 @@ const CACHE_NAME = 'health-buddy-v2'; // Bump version for cache cleanup
 const urlsToPrecache = [
   '/',
   '/index.html',
-  '/global.css',
   '/manifest.json'
   // Note: Dynamic JS/CSS files are cached on first fetch
 ];
@@ -82,8 +81,7 @@ self.addEventListener('fetch', (event) => {
   const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|ico|woff2?|ttf|svg)(\?.*)?$/.test(url.pathname) ||
                         url.pathname.startsWith('/assets/') ||
                         url.pathname.startsWith('/images/') ||
-                        url.pathname.startsWith('/character/')||
-                        url.pathname.startsWith('/templates/');
+                        url.pathname.startsWith('/character/');
 
   if (isStaticAsset) {
     event.respondWith(
