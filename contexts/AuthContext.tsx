@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authAPI, userAPI, setAuthToken, removeAuthToken, getAuthToken } from '@/lib/api';
-import { 
-  signInWithGoogle as googleSignIn, 
-  validateEmail, 
+import {
+  validateEmail,
   validatePassword,
-  initializeGoogleAuth,
   isAuthenticated,
   getStoredUser,
   setStoredUser,
@@ -45,7 +43,12 @@ interface AuthContextType {
   currentUser: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (userData: {
+    googleId: string;
+    email: string;
+    displayName: string;
+    photoURL?: string;
+  }) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -71,9 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Initialize Google Auth
-        await initializeGoogleAuth();
-        
         // Check if user is already authenticated
         const storedUser = getStoredUser();
         const token = getAuthToken();
@@ -158,15 +158,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     notifyAuthStateChange(null);
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (userData: {
+    googleId: string;
+    email: string;
+    displayName: string;
+    photoURL?: string;
+  }) => {
     try {
       setLoading(true);
       
-      // Get Google user data from frontend OAuth
-      const googleData = await googleSignIn();
-      
       // Send Google data to backend
-      const response = await authAPI.signInWithGoogle(googleData);
+      const response = await authAPI.signInWithGoogle(userData);
       
       // Handle successful authentication
       await handleAuthSuccess(response);
