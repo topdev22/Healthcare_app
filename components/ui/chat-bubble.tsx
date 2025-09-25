@@ -16,6 +16,93 @@ interface ChatBubbleProps {
   avatarAlt?: string;
 }
 
+interface TextSegment {
+  text: string;
+  type: 'normal' | 'bold' | 'italic' | 'code';
+}
+
+// Function to parse text with markdown-like formatting
+function parseMarkdown(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let currentIndex = 0;
+  
+  while (currentIndex < text.length) {
+    // Look for bold text **text**
+    const boldMatch = text.substring(currentIndex).match(/^\*\*(.*?)\*\*/);
+    if (boldMatch) {
+      segments.push({ text: boldMatch[1], type: 'bold' });
+      currentIndex += boldMatch[0].length;
+      continue;
+    }
+    
+    // Look for italic text *text* (but not if it's part of **)
+    const italicMatch = text.substring(currentIndex).match(/^(?<!\*)\*([^*]+?)\*(?!\*)/);
+    if (italicMatch) {
+      segments.push({ text: italicMatch[1], type: 'italic' });
+      currentIndex += italicMatch[0].length;
+      continue;
+    }
+    
+    // Look for inline code `text`
+    const codeMatch = text.substring(currentIndex).match(/^`([^`]+?)`/);
+    if (codeMatch) {
+      segments.push({ text: codeMatch[1], type: 'code' });
+      currentIndex += codeMatch[0].length;
+      continue;
+    }
+    
+    // Regular text - find the next special character or end of string
+    let nextSpecialIndex = text.length;
+    const specialChars = [text.indexOf('**', currentIndex), text.indexOf('*', currentIndex), text.indexOf('`', currentIndex)];
+    
+    for (const index of specialChars) {
+      if (index !== -1 && index < nextSpecialIndex) {
+        nextSpecialIndex = index;
+      }
+    }
+    
+    if (nextSpecialIndex > currentIndex) {
+      segments.push({ 
+        text: text.substring(currentIndex, nextSpecialIndex), 
+        type: 'normal' 
+      });
+      currentIndex = nextSpecialIndex;
+    } else {
+      // No more special characters, add rest of text
+      segments.push({ 
+        text: text.substring(currentIndex), 
+        type: 'normal' 
+      });
+      break;
+    }
+  }
+  
+  return segments;
+}
+
+// Function to render formatted text segments
+function renderFormattedText(segments: TextSegment[]): React.ReactNode {
+  return segments.map((segment, index) => {
+    switch (segment.type) {
+      case 'bold':
+        return <strong key={index} className="font-bold">{segment.text}</strong>;
+      case 'italic':
+        return <em key={index} className="italic">{segment.text}</em>;
+      case 'code':
+        return (
+          <code 
+            key={index} 
+            className="bg-muted/50 text-foreground px-1 py-0.5 rounded text-xs font-mono border"
+          >
+            {segment.text}
+          </code>
+        );
+      default:
+        return segment.text;
+    }
+  });
+}
+
 export function ChatBubble({
   content,
   sender,
@@ -137,12 +224,12 @@ export function ChatBubble({
       >
         {/* Message content */}
         <div className="space-y-2">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-            {displayedContent}
+          <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+            {renderFormattedText(parseMarkdown(displayedContent))}
             {/* {isStreaming && (
               <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
             )} */}
-          </p>
+          </div>
 
           {/* Timestamp */}
           <p
