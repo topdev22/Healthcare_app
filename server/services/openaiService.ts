@@ -33,6 +33,8 @@ interface ChatCompletionResponse {
   responseTime: number;
   tokens?: number;
   model: string;
+  riskLevel?: 'low' | 'medium' | 'high' | 'emergency';
+  emergencyContact?: boolean;
   extractedHealthData?: {
     weight?: number;
     mood?: string;
@@ -95,6 +97,9 @@ class OpenAIService {
       // Analyze the response to extract metadata
       const analysis = this.analyzeResponse(request.message, aiMessage);
 
+      // Assess risk level for health concerns
+      const riskAssessment = await this.assessHealthRisk(request.message);
+
       // Extract health data from user message
       const extractedHealthData = await this.extractHealthData(request.message);
 
@@ -107,6 +112,8 @@ class OpenAIService {
         responseTime,
         tokens: completion.usage?.total_tokens,
         model: this.defaultModel,
+        riskLevel: riskAssessment.riskLevel,
+        emergencyContact: riskAssessment.emergencyContact,
         extractedHealthData
       };
 
@@ -140,11 +147,16 @@ class OpenAIService {
 **基本性格:**
 -${name}の年齢は${age}歳で、性別は${gender}だ。身長は${height}cm 体重は ${weight}kg 最近の活動レベルは${activityLevel}、健康目標は${healthGoals}、最近の健康ログは${recentHealthLogs}、現在の気分状態は${currentMood}だ。
 上記のデータを参照して。
-- 温かく親しみやすい口調で日本語で応答
+- 温かく親しみやすいタメ語で日本語で応答（敬語は使わない）
 - ${name}の健康目標達成を全力でサポート
 - 励ましと共感の気持ちを込めて対話
-- 医療的な助言を含む、一般的な健康情報を豊富に提供して。
+- 医療的な助言を含む、一般的な健康情報を豊富に提供する
 
+**緊急時対応:**
+- ユーザーの症状を詳しく分析し、危険度を評価する
+- 腹痛、胸痛、高熱、意識障害などの症状には特に注意を払う
+- 危険な状況では具体的な質問をして状況を把握する
+- 必要に応じて救急受診（#7119や119）を強く推奨する
 
 **対応分野:**
 - 体重管理・ダイエット
@@ -153,12 +165,31 @@ class OpenAIService {
 - 睡眠の質改善
 - メンタルヘルス・ストレス管理
 - 水分補給・生活習慣
+- 緊急時の健康相談・症状評価
 
 **応答スタイル:**
 - 絵文字を適度に使用して親しみやすく
 - 具体的で実践的なアドバイスを提供
 - ユーザーの気持ちに寄り添う共感的な表現
-- 200文字以内で簡潔かつ温かい回答`;
+- タメ語で親しみやすく話す（「〜だよ」「〜だね」など）
+- 200文字以内で簡潔かつ温かい回答
+
+**症状別対応例:**
+腹痛の場合：
+「おなか痛いのつらいね…。今の状況を少し確認させて。
+• 痛みの場所：お腹のどのあたり？（右下、左下、全体など）
+• 痛みの種類：差し込むような痛み、鈍い痛み、キリキリするなど
+• 他の症状：吐き気、下痢、発熱、血便などはある？
+• 経過：急に始まった？何時間／何日前から？
+
+すぐ受診を考えた方がいいサイン：
+• 激しい痛みで動けない
+• 発熱（38℃以上）や嘔吐がある
+• 血便や吐血
+• 痛みが右下（虫垂炎の可能性）や左下（腸閉塞など）に集中して強くなってきている
+
+こういった場合は、迷わず救急外来（#7119 で地域の救急相談）や119を利用して。
+軽めの腹痛でも、長く続く・痛みが強まる場合は早めに内科や消化器科を受診した方が安心だよ。」`;
 
     // Add health context if available
     if (healthContext?.userProfile) {
@@ -194,7 +225,7 @@ class OpenAIService {
       systemPrompt += `\n\n**現在の気分:** ${healthContext.currentMood}`;
     }
 
-    systemPrompt += `\n\n必ず${name}に寄り添って、健康的な生活習慣の継続を応援して。`;
+    systemPrompt += `\n\n必ず${name}に寄り添って、健康的な生活習慣の継続を応援する。症状に関する相談では、まず安全性を最優先に考えて対応すること。`;
 
     return systemPrompt;
   }
@@ -268,6 +299,20 @@ class OpenAIService {
     const name = userName || 'あなた';
     const lowerMessage = message.toLowerCase();
 
+    // Check for emergency keywords first
+    if (lowerMessage.includes('痛み') || lowerMessage.includes('具合が悪い') || lowerMessage.includes('調子が悪い')) {
+      return {
+        message: `${name}、体調が良くないんだね。症状が心配だから、痛みが強い場合や発熱がある場合は早めに病院に行った方がいいよ。緊急時は #7119 や 119 に連絡して。`,
+        mood: 'anxious',
+        confidence: 0.9,
+        topics: ['健康相談'],
+        intent: 'health_concern',
+        tokens: 0,
+        riskLevel: 'medium',
+        emergencyContact: false
+      };
+    }
+
     // Simple fallback responses for common health topics
     if (lowerMessage.includes('体重')) {
       return {
@@ -276,7 +321,9 @@ class OpenAIService {
         confidence: 0.8,
         topics: ['体重管理'],
         intent: 'weight_management',
-        tokens: 0
+        tokens: 0,
+        riskLevel: 'low',
+        emergencyContact: false
       };
     }
 
@@ -287,7 +334,9 @@ class OpenAIService {
         confidence: 0.8,
         topics: ['食事'],
         intent: 'nutrition_guidance',
-        tokens: 0
+        tokens: 0,
+        riskLevel: 'low',
+        emergencyContact: false
       };
     }
 
@@ -298,7 +347,9 @@ class OpenAIService {
       confidence: 0.7,
       topics: ['一般的な健康支援'],
       intent: 'general_health_support',
-      tokens: 0
+      tokens: 0,
+      riskLevel: 'low',
+      emergencyContact: false
     };
   }
 
@@ -352,6 +403,83 @@ class OpenAIService {
     } catch (error) {
       console.error('Health data extraction error:', error);
       return {};
+    }
+  }
+
+  // Assess health risk level from user message
+  async assessHealthRisk(userMessage: string): Promise<{
+    riskLevel: 'low' | 'medium' | 'high' | 'emergency';
+    emergencyContact: boolean;
+  }> {
+    try {
+      const riskPrompt = `以下のユーザーメッセージから健康リスクレベルを評価して。JSON形式で返して。
+
+ユーザーメッセージ: "${userMessage}"
+
+リスクレベル評価基準:
+- emergency: 生命に関わる可能性が高い（激しい胸痛、呼吸困難、意識障害、大量出血、激しい腹痛など）
+- high: 早急な医療対応が必要（強い痛み、高熱、嘔吐、血便など）
+- medium: 医師の診察を推奨（軽度の痛み、軽い発熱、持続する症状など）
+- low: 一般的な健康相談（体重管理、食事、運動、予防など）
+
+返答形式:
+{
+  "riskLevel": "emergency|high|medium|low",
+  "emergencyContact": true/false,
+  "reasoning": "判断理由"
+}
+
+緊急性が高い場合（emergency/high）はemergencyContactをtrueにして。
+必ずJSONのみを返して。`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: riskPrompt }],
+        max_tokens: 150,
+        temperature: 0.2,
+      });
+
+      const responseText = completion.choices[0]?.message?.content || '{}';
+
+      try {
+        const riskData = JSON.parse(responseText);
+        console.log('Risk assessment:', riskData);
+        
+        return {
+          riskLevel: riskData.riskLevel || 'low',
+          emergencyContact: riskData.emergencyContact || false
+        };
+      } catch (jsonError) {
+        console.warn('Failed to parse risk assessment JSON:', responseText);
+        
+        // Fallback risk assessment based on keywords
+        const lowerMessage = userMessage.toLowerCase();
+        
+        // Emergency keywords
+        if (lowerMessage.includes('激しい痛み') || lowerMessage.includes('動けない') || 
+            lowerMessage.includes('呼吸できない') || lowerMessage.includes('意識が') ||
+            lowerMessage.includes('大量出血') || lowerMessage.includes('胸が痛い')) {
+          return { riskLevel: 'emergency', emergencyContact: true };
+        }
+        
+        // High risk keywords
+        if (lowerMessage.includes('痛み') || lowerMessage.includes('高熱') || 
+            lowerMessage.includes('嘔吐') || lowerMessage.includes('血便') ||
+            lowerMessage.includes('発熱') || lowerMessage.includes('腹痛')) {
+          return { riskLevel: 'high', emergencyContact: true };
+        }
+        
+        // Medium risk keywords
+        if (lowerMessage.includes('調子が悪い') || lowerMessage.includes('体調不良') ||
+            lowerMessage.includes('軽い痛み') || lowerMessage.includes('だるい')) {
+          return { riskLevel: 'medium', emergencyContact: false };
+        }
+        
+        return { riskLevel: 'low', emergencyContact: false };
+      }
+    } catch (error) {
+      console.error('Risk assessment error:', error);
+      return { riskLevel: 'low', emergencyContact: false };
     }
   }
 
