@@ -159,17 +159,17 @@ export default function ChatInterface({
                   お気軽にお話しください。
                 </p>
               </div>
-              <div className="flex flex-wrap justify-center gap-2 mt-6">
-                {/* <Button variant="outline" size="sm" onClick={() => setInputMessage("今日の体調はどうですか？")}>
+              {/* <div className="w-full flex  justify-end gap-2 mt-6">
+                <Button variant="outline" size="sm" onClick={() => setInputMessage("今日の体調はどうですか？")}>
                   体調について
-                </Button> */}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setInputMessage("健康的な食事のアドバイスをください")}>
                   食事相談
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setInputMessage("運動習慣を始めたいです")}>
                   運動相談
                 </Button>
-              </div>
+              </div> */}
             </div>
           ) : (
             messages.map((message) => (
@@ -214,7 +214,7 @@ export default function ChatInterface({
         {/* Enhanced Input Area */}
         <div className="px-4 sm:px-6 py-4 border-t border-white/20 bg-gradient-to-r from-white/5 to-white/10">
           <div className="flex gap-3">
-            <div className="flex-1 relative">
+            <div className="flex-1 relative pl-12">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
@@ -245,7 +245,7 @@ export default function ChatInterface({
           </div>
           
           {/* Quick Actions */}
-          <div className="flex gap-2 mt-3">
+          {/* <div className="flex gap-2 mt-3"> */}
             {/* <Button
               variant="outline"
               size="sm"
@@ -254,7 +254,7 @@ export default function ChatInterface({
             >
               今日の体調
             </Button> */}
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("食事のアドバイスをください")}
@@ -270,7 +270,7 @@ export default function ChatInterface({
             >
               運動提案
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

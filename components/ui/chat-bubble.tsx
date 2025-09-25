@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
 import { Volume2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 
 interface ChatBubbleProps {
   content: string;
@@ -83,11 +84,16 @@ export function ChatBubble({
 
     const user = getUserData();
     return (
-      <img
-        src={isUser ? ("https://hapiken.jp" + user.photoURL || "https://hapiken.jp" + '/profile/defaultUser.png') : '/images/favicon.jpg'}
-        alt={avatarAlt || `${sender} avatar`}
-        className="w-8 h-8 rounded-full object-cover"
-      />
+      <Avatar className="w-8 h-8">
+        <AvatarImage
+          src={isUser ? (user.photoURL || "https://hapiken.jp/profile/defaultUser.png") : '/images/favicon.jpg'}
+          alt={avatarAlt || `${sender} avatar`}
+          className="object-cover"
+        />
+        <AvatarFallback>
+          {isUser ? 'U' : 'C'}
+        </AvatarFallback>
+      </Avatar>
     );
   };
 
