@@ -11,12 +11,13 @@ import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // Capacitor imports
-import { App as CapacitorApp } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
-import { Keyboard } from '@capacitor/keyboard';
+import { App as CapacitorApp } from "@capacitor/app";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { SplashScreen } from "@capacitor/splash-screen";
+import { Keyboard } from "@capacitor/keyboard";
 import ChangeModel from "./pages/ChangeModel";
 
 // Extend Window interface for Capacitor
@@ -45,40 +46,39 @@ function useCapacitorInit() {
       try {
         // Hide splash screen after app loads
         await SplashScreen.hide();
-        
+
         // Configure status bar
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
           await StatusBar.setStyle({ style: Style.Light });
-          await StatusBar.setBackgroundColor({ color: '#78c896' });
+          await StatusBar.setBackgroundColor({ color: "#78c896" });
         }
 
         // Handle keyboard events for better UX (only on native platforms)
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-          Keyboard.addListener('keyboardWillShow', () => {
-            document.body.classList.add('keyboard-open');
+          Keyboard.addListener("keyboardWillShow", () => {
+            document.body.classList.add("keyboard-open");
           });
 
-          Keyboard.addListener('keyboardWillHide', () => {
-            document.body.classList.remove('keyboard-open');
+          Keyboard.addListener("keyboardWillHide", () => {
+            document.body.classList.remove("keyboard-open");
           });
         }
 
         // Handle app state changes
-        CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-          console.log('App state changed. Is active?', isActive);
+        CapacitorApp.addListener("appStateChange", ({ isActive }) => {
+          console.log("App state changed. Is active?", isActive);
         });
 
         // Handle back button on Android
-        CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+        CapacitorApp.addListener("backButton", ({ canGoBack }) => {
           if (!canGoBack) {
             CapacitorApp.exitApp();
           } else {
             window.history.back();
           }
         });
-
       } catch (error) {
-        console.log('Capacitor initialization error:', error);
+        console.log("Capacitor initialization error:", error);
       }
     };
 
@@ -93,20 +93,22 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <TooltipProvider>
-            <div className="mobile-app safe-area-all">
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="select" element={<ChangeModel />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </div>
-          </TooltipProvider>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <TooltipProvider>
+              <div className="mobile-app safe-area-all">
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="select" element={<ChangeModel />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </div>
+            </TooltipProvider>
+          </GoogleOAuthProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
