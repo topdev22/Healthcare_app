@@ -214,7 +214,7 @@ export default function ChatInterface({
         {/* Enhanced Input Area */}
         <div className="px-4 sm:px-6 py-4 border-t border-white/20 bg-gradient-to-r from-white/5 to-white/10">
           <div className="flex gap-3">
-            <div className="flex-1 relative pl-12">
+            <div className="flex-1 relative pl-6">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
