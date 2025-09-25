@@ -277,8 +277,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             useOneTap
             auto_select
             context="signin"
-            shape="rectangular"
-            theme="filled_blue"
+            shape="circle"
+            theme="outline"
             size="large"
             text="signin_with"
             logo_alignment="left"
