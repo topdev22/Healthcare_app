@@ -8,7 +8,7 @@ interface FloatingActionButtonProps {
 export default function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
   return (
     <button
-      className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-health-green to-health-blue shadow-2xl hover:shadow-3xl group transition-all duration-300 ease-out hover:scale-110 active:scale-95 pulse-soft"
+      className="fixed bottom-6 left-6 sm:bottom-8 sm:left-8 z-50 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-health-green to-health-blue shadow-2xl hover:shadow-3xl group transition-all duration-300 ease-out hover:scale-110 active:scale-95 pulse-soft"
       onClick={onClick}
       title="健康データを記録"
     >
