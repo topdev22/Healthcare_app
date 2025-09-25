@@ -93,9 +93,9 @@ app.use(cors({
   exposedHeaders: ["Set-Cookie"]
 }));
  
-// Body parsing middleware with increased limits for file uploads
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing middleware with increased limits for file uploads (50MB)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: false }));
 
 // Logging middleware
 if (process.env.NODE_ENV !== 'production') {
@@ -108,10 +108,24 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/profile', express.static('server/public/profile'));
 app.use('/public', express.static('public'));
 
+// Serve static files from the built React app
+app.use(express.static('dist'));
+
+// Serve static assets with proper caching headers
+app.use('/assets', express.static('dist/assets', {
+  maxAge: '1y', // Cache assets for 1 year
+  immutable: true
+}));
+
+// Serve manifest.json from root for proper CORS handling
+app.get('/manifest.json', (req, res) => {
+  res.sendFile('manifest.json', { root: 'public' });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
@@ -183,9 +197,15 @@ io.on('connection', (socket) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+// SPA fallback - serve index.html for any non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API route not found' });
+  }
+  
+  // Serve the React app for all other routes
+  res.sendFile('index.html', { root: 'dist' });
 });
 
 // Global error handler

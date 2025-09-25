@@ -84,7 +84,7 @@ export function ChatBubble({
     const user = getUserData();
     return (
       <img
-        src={isUser ? ("https://hapiken.jp" + user.photoURL || 'https://hapiken.jp/profile/defaultUser.png') : '/images/favicon.jpg'}
+        src={isUser ? (process.env.VITE_BASE_PROFILE_URL + user.photoURL || process.env.VITE_BASE_PROFILE_URL + `/profile/defaultUser.png`) : '/images/favicon.jpg'}
         alt={avatarAlt || `${sender} avatar`}
         className="w-8 h-8 rounded-full object-cover"
       />
