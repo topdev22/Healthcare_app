@@ -12,6 +12,8 @@ import chatRoutes from './routes/chat';
 import dashboardRoutes from './routes/dashboard';
 import achievementRoutes from './routes/achievements';
 import characterRoutes from './routes/character';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 
 const app = express();
@@ -48,6 +50,14 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 8000;
 
+// Resolve absolute paths based on this file location
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRootDir = path.resolve(__dirname, '..');
+const distDir = path.join(projectRootDir, 'dist');
+const publicDir = path.join(projectRootDir, 'public');
+const profilePublicDir = path.join(projectRootDir, 'server', 'public', 'profile');
+
 console.log('🔄 Starting server...');
 
 // Connect to MongoDB
@@ -61,7 +71,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
       scriptSrc: ["'self'", "https:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https:", "http://localhost:8000", "ws://localhost:8000"],
+      connectSrc: ["'self'", "https:", `http://localhost:${PORT}`, `ws://localhost:${PORT}`],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -105,21 +115,27 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Serve static files from public directory
-app.use('/profile', express.static('server/public/profile'));
-app.use('/public', express.static('public'));
+app.use('/profile', express.static(profilePublicDir));
+app.use('/public', express.static(publicDir));
 
 // Serve static files from the built React app
-app.use(express.static('dist'));
+app.use(express.static(distDir));
+// Also explicitly expose the dist directory at /dist
+app.use('/dist', express.static(distDir));
+// Expose templates and charater trees (recursively)
+app.use('/templates', express.static(path.join(distDir, 'templates')));
+// Alias for common misspelling
+app.use('/charactor', express.static(path.join(distDir, 'charater')));
 
 // Serve static assets with proper caching headers
-app.use('/assets', express.static('dist/assets', {
+app.use('/assets', express.static(path.join(distDir, 'assets'), {
   maxAge: '1y', // Cache assets for 1 year
   immutable: true
 }));
 
 // Serve manifest.json from root for proper CORS handling
 app.get('/manifest.json', (req, res) => {
-  res.sendFile('manifest.json', { root: 'public' });
+  res.sendFile('manifest.json', { root: publicDir });
 });
 
 // Health check endpoint
@@ -205,7 +221,7 @@ app.get('*', (req, res) => {
   }
   
   // Serve the React app for all other routes
-  res.sendFile('index.html', { root: 'dist' });
+  res.sendFile(path.join(distDir, 'index.html'));
 });
 
 // Global error handler
