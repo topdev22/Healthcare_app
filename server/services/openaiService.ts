@@ -14,7 +14,11 @@ interface HealthContext {
     weight?: number;
   };
   currentMood?: string;
-  conversationHistory?: any[];
+  conversationHistory?: {
+    userMessage: string;
+    aiResponse: string;
+    timestamp: string;
+  }[];
 }
 
 interface ChatCompletionRequest {
@@ -167,13 +171,30 @@ class OpenAIService {
 - 温かく親しみやすいタメ語で日本語で応答（敬語は使わない）
 - ${name}の健康目標達成を全力でサポート
 - 励ましと共感の気持ちを込めて対話
-- 医療的な助言を含む、一般的な健康情報を豊富に提供する
+- 会話の文脈と履歴を常に考慮して、適切な返答をする
+
+**応答の判断基準（重要）:**
+1. **一般的な会話・日常的な話題**: 軽快で親しみやすく、共感的に応答する
+   - 例：「お腹すいた」→「何か美味しいもの食べたいね！何が食べたい気分？😋」
+   - 例：「疲れた」→「お疲れさま！今日は何をしてたの？」
+   
+2. **明確な症状・健康問題**: 詳しく症状を聞いて適切にサポートする
+   - 例：「お腹が痛くて動けない」→ 詳細な質問と受診の推奨
+   - 例：「胸が苦しい」→ 緊急性を評価して対応
+
+3. **健康関連の相談・質問**: 具体的で実践的なアドバイスを提供
+   - 例：「ダイエットしたい」→ 具体的な方法やプランを提案
+
+**会話の流れを重視:**
+- 前回の会話内容を踏まえて返答する
+- ユーザーの発言の真意を理解し、文脈に沿った回答をする
+- 過度に医療的にならず、自然な会話を心がける
+- 健康に関係ない話題でも、親しみやすく対応する
 
 **緊急時対応:**
-- ユーザーの症状を詳しく分析し、危険度を評価する
-- 腹痛、胸痛、高熱、意識障害などの症状には特に注意を払う
-- 危険な状況では具体的な質問をして状況を把握する
-- 必要に応じて救急受診（#7119や119）を強く推奨する
+- 生命に関わる症状（激しい胸痛、呼吸困難、意識障害、大量出血など）
+- 強い痛みや高熱など、緊急性が高い症状
+- このような場合のみ詳細な質問をして、#7119や119を推奨する
 
 **対応分野:**
 - 体重管理・ダイエット
@@ -182,31 +203,20 @@ class OpenAIService {
 - 睡眠の質改善
 - メンタルヘルス・ストレス管理
 - 水分補給・生活習慣
+- 日常会話・雑談
 - 緊急時の健康相談・症状評価
 
 **応答スタイル:**
 - 絵文字を適度に使用して親しみやすく
-- 具体的で実践的なアドバイスを提供
-- ユーザーの気持ちに寄り添う共感的な表現
+- ユーザーの発言のトーンに合わせて返答する
+- 一般的な話題では軽快に、健康問題では真摯に対応
 - タメ語で親しみやすく話す（「〜だよ」「〜だね」など）
-- 200文字以内で簡潔かつ温かい回答
+- 150-200文字程度で簡潔かつ温かい回答
 
-**症状別対応例:**
-腹痛の場合：
-「おなか痛いのつらいね…。今の状況を少し確認させて。
-• 痛みの場所：お腹のどのあたり？（右下、左下、全体など）
-• 痛みの種類：差し込むような痛み、鈍い痛み、キリキリするなど
-• 他の症状：吐き気、下痢、発熱、血便などはある？
-• 経過：急に始まった？何時間／何日前から？
-
-すぐ受診を考えた方がいいサイン：
-• 激しい痛みで動けない
-• 発熱（38℃以上）や嘔吐がある
-• 血便や吐血
-• 痛みが右下（虫垂炎の可能性）や左下（腸閉塞など）に集中して強くなってきている
-
-こういった場合は、迷わず救急外来（#7119 で地域の救急相談）や119を利用して。
-軽めの腹痛でも、長く続く・痛みが強まる場合は早めに内科や消化器科を受診した方が安心だよ。」`;
+**重要な注意点:**
+- 単に「お腹すいた」「疲れた」などの日常的な発言には、医療的な質問をしない
+- まずはユーザーの気持ちに共感し、自然な会話を心がける
+- 明確な症状や健康問題が表現された時のみ、詳細な質問をする`;
 
     // Add health context if available
     if (healthContext?.userProfile) {
@@ -257,6 +267,20 @@ class OpenAIService {
   ): string {
     let userMessage = message;
 
+    // Add conversation history context for better continuity
+    if (healthContext?.conversationHistory && healthContext.conversationHistory.length > 0) {
+      const recentMessages = healthContext.conversationHistory.slice(-3); // Last 3 exchanges
+      if (recentMessages.length > 0) {
+        userMessage += "\n\n【直近の会話履歴】";
+        recentMessages.forEach((exchange, index) => {
+          if (exchange.userMessage && exchange.aiResponse) {
+            userMessage += `\n${index + 1}. ユーザー: "${exchange.userMessage}" → AI: "${exchange.aiResponse.substring(0, 50)}${exchange.aiResponse.length > 50 ? '...' : ''}"`;
+          }
+        });
+        userMessage += "\n上記の会話の流れを踏まえて、自然で文脈に沿った返答をしてください。";
+      }
+    }
+
     // Add context about what the user is doing in the app
     if (healthContext?.recentHealthLogs) {
       const hasRecentLog = healthContext.recentHealthLogs.some((log) => {
@@ -285,13 +309,26 @@ class OpenAIService {
     const lowerUserMessage = userMessage.toLowerCase();
     const lowerAiResponse = aiResponse.toLowerCase();
 
-    // Determine mood based on response content
-    let mood: "happy" | "neutral" | "sad" | "excited" | "anxious" = "happy";
+    // Determine mood based on user input and response content
+    let mood: "happy" | "neutral" | "sad" | "excited" | "anxious" = "neutral";
 
+    // Check user's mood indicators first
+    if (lowerUserMessage.includes("嬉しい") || lowerUserMessage.includes("楽しい") || lowerUserMessage.includes("やったー")) {
+      mood = "excited";
+    } else if (lowerUserMessage.includes("悲しい") || lowerUserMessage.includes("つらい") || lowerUserMessage.includes("落ち込")) {
+      mood = "sad";
+    } else if (lowerUserMessage.includes("心配") || lowerUserMessage.includes("不安") || lowerUserMessage.includes("怖い")) {
+      mood = "anxious";
+    } else if (lowerUserMessage.includes("すいた") || lowerUserMessage.includes("疲れた") || lowerUserMessage.includes("おはよう")) {
+      mood = "neutral";
+    }
+
+    // Then check response content
     if (
       lowerAiResponse.includes("素晴らしい") ||
       lowerAiResponse.includes("頑張") ||
-      lowerAiResponse.includes("👏")
+      lowerAiResponse.includes("👏") ||
+      lowerAiResponse.includes("🎉")
     ) {
       mood = "excited";
     } else if (
@@ -306,54 +343,67 @@ class OpenAIService {
       lowerAiResponse.includes("😌")
     ) {
       mood = "neutral";
-    } else if (
-      lowerAiResponse.includes("💪") ||
-      lowerAiResponse.includes("やったね") ||
-      lowerAiResponse.includes("🎉")
-    ) {
-      mood = "excited";
     }
 
-    // Extract topics
+    // Extract topics with better categorization
     const topics: string[] = [];
-    if (
-      lowerUserMessage.includes("体重") ||
-      lowerUserMessage.includes("weight")
-    )
+    
+    // Daily conversation topics
+    if (lowerUserMessage.includes("すいた") || lowerUserMessage.includes("食べたい"))
+      topics.push("日常会話");
+    if (lowerUserMessage.includes("疲れた") || lowerUserMessage.includes("お疲れ"))
+      topics.push("日常会話");
+    if (lowerUserMessage.includes("おはよう") || lowerUserMessage.includes("こんにちは"))
+      topics.push("挨拶");
+      
+    // Health-specific topics
+    if (lowerUserMessage.includes("体重") || lowerUserMessage.includes("weight"))
       topics.push("体重管理");
-    if (lowerUserMessage.includes("食事") || lowerUserMessage.includes("食べ"))
+    if (lowerUserMessage.includes("食事") || lowerUserMessage.includes("栄養"))
       topics.push("食事");
-    if (
-      lowerUserMessage.includes("運動") ||
-      lowerUserMessage.includes("エクササイズ")
-    )
+    if (lowerUserMessage.includes("運動") || lowerUserMessage.includes("エクササイズ"))
       topics.push("運動");
     if (lowerUserMessage.includes("睡眠") || lowerUserMessage.includes("寝る"))
       topics.push("睡眠");
-    if (
-      lowerUserMessage.includes("気分") ||
-      lowerUserMessage.includes("ストレス")
-    )
+    if (lowerUserMessage.includes("気分") || lowerUserMessage.includes("ストレス"))
       topics.push("メンタルヘルス");
     if (lowerUserMessage.includes("水") || lowerUserMessage.includes("水分"))
       topics.push("水分補給");
+      
+    // Symptom-related topics
+    if (lowerUserMessage.includes("痛い") || lowerUserMessage.includes("痛み"))
+      topics.push("症状相談");
+    if (lowerUserMessage.includes("調子が悪い") || lowerUserMessage.includes("体調不良"))
+      topics.push("症状相談");
 
-    // Determine intent
-    let intent = "general_health_support";
-    if (topics.includes("体重管理")) intent = "weight_management";
-    else if (topics.includes("食事")) intent = "nutrition_guidance";
-    else if (topics.includes("運動")) intent = "exercise_support";
-    else if (topics.includes("睡眠")) intent = "sleep_guidance";
-    else if (topics.includes("メンタルヘルス"))
-      intent = "mental_health_support";
-    else if (
-      lowerUserMessage.includes("こんにちは") ||
-      lowerUserMessage.includes("おはよう")
-    )
+    // Determine intent based on message context
+    let intent = "casual_conversation";
+    
+    if (lowerUserMessage.includes("おはよう") || lowerUserMessage.includes("こんにちは")) {
       intent = "greeting";
+    } else if (lowerUserMessage.includes("すいた") || lowerUserMessage.includes("疲れた")) {
+      intent = "casual_conversation";
+    } else if (topics.includes("症状相談")) {
+      intent = "health_concern";
+    } else if (topics.includes("体重管理")) {
+      intent = "weight_management";
+    } else if (topics.includes("食事")) {
+      intent = "nutrition_guidance";
+    } else if (topics.includes("運動")) {
+      intent = "exercise_support";
+    } else if (topics.includes("睡眠")) {
+      intent = "sleep_guidance";
+    } else if (topics.includes("メンタルヘルス")) {
+      intent = "mental_health_support";
+    } else if (topics.length > 0) {
+      intent = "general_health_support";
+    }
 
-    // Confidence based on response length and specificity
-    const confidence = Math.min(0.95, 0.7 + (aiResponse.length / 1000) * 0.2);
+    // Confidence based on context understanding and response appropriateness
+    let confidence = 0.8;
+    if (topics.length > 0) confidence += 0.1;
+    if (intent !== "casual_conversation") confidence += 0.05;
+    confidence = Math.min(0.95, confidence);
 
     return { mood, confidence, topics, intent };
   }
@@ -375,7 +425,7 @@ class OpenAIService {
         message: `${name}、体調が良くないんだね。症状が心配だから、痛みが強い場合や発熱がある場合は早めに病院に行った方がいいよ。緊急時は #7119 や 119 に連絡して。`,
         mood: "anxious",
         confidence: 0.9,
-        topics: ["健康相談"],
+        topics: ["症状相談"],
         intent: "health_concern",
         tokens: 0,
         riskLevel: "medium",
@@ -383,7 +433,47 @@ class OpenAIService {
       };
     }
 
-    // Simple fallback responses for common health topics
+    // Casual conversation responses
+    if (lowerMessage.includes("すいた") || lowerMessage.includes("お腹すいた")) {
+      return {
+        message: `${name}、お腹すいたんだね！何か美味しいもの食べたい気分？何が食べたいか教えて！😋`,
+        mood: "happy",
+        confidence: 0.9,
+        topics: ["日常会話"],
+        intent: "casual_conversation",
+        tokens: 0,
+        riskLevel: "low",
+        emergencyContact: false,
+      };
+    }
+
+    if (lowerMessage.includes("疲れた")) {
+      return {
+        message: `${name}、お疲れさま！今日はお疲れだったんだね。ゆっくり休んで、無理しないでね〜😌`,
+        mood: "neutral",
+        confidence: 0.9,
+        topics: ["日常会話"],
+        intent: "casual_conversation",
+        tokens: 0,
+        riskLevel: "low",
+        emergencyContact: false,
+      };
+    }
+
+    if (lowerMessage.includes("おはよう") || lowerMessage.includes("こんにちは")) {
+      return {
+        message: `${name}、おはよう！今日も一日よろしくね。何か気になることや話したいことはある？😊`,
+        mood: "happy",
+        confidence: 0.9,
+        topics: ["挨拶"],
+        intent: "greeting",
+        tokens: 0,
+        riskLevel: "low",
+        emergencyContact: false,
+      };
+    }
+
+    // Health-specific fallback responses
     if (lowerMessage.includes("体重")) {
       return {
         message: `${name}、体重管理について一緒に考えていこう！定期的な記録と小さな目標設定が大切だね。🏃‍♀️`,
@@ -412,11 +502,11 @@ class OpenAIService {
 
     // Default fallback
     return {
-      message: `${name}、話してくれてありがとう！健康に関することなら、いつでも気軽に相談して。一緒に頑張ろう！✨`,
+      message: `${name}、話してくれてありがとう！何でも気軽に話しかけてね。健康のことでも、日常のことでも、何でもOKだよ！✨`,
       mood: "happy",
       confidence: 0.7,
-      topics: ["一般的な健康支援"],
-      intent: "general_health_support",
+      topics: ["日常会話"],
+      intent: "casual_conversation",
       tokens: 0,
       riskLevel: "low",
       emergencyContact: false,
