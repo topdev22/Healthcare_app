@@ -16,13 +16,14 @@ export function useChat(userProfile: any) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "こんにちは！私はあなたの健康管理パートナーです！🌟 今日の体調はいかがですか？あなたの健康な生活をサポートするためにここにいます！",
+      content: "こんにちは！私はあなたの健康管理パートナーです！🌟 今日の体調はいかがですか？あなたの健康的な生活習慣をサポートするためにここにいます！",
       sender: 'character',
       timestamp: new Date()
     }
   ]);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [currentAnimation, setCurrentAnimation] = useState<string>('greeting');
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const triggerHaptics = async (style: ImpactStyle = ImpactStyle.Medium) => {
     try {
@@ -48,7 +49,13 @@ export function useChat(userProfile: any) {
     setIsLoadingResponse(true);
 
     try {
-      const response = await chatAPI.sendMessage(message, userProfile);
+      const response = await chatAPI.sendMessage(message, userProfile, conversationId);
+      
+      // サーバーから返されたconversationIdを保存
+      if (response.conversationId && !conversationId) {
+        setConversationId(response.conversationId);
+        console.log('💬 Conversation ID saved:', response.conversationId);
+      }
       
       const characterResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -102,6 +109,7 @@ export function useChat(userProfile: any) {
     messages,
     isLoadingResponse,
     currentAnimation,
+    conversationId,
     handleSendMessage,
     addMessage,
     triggerHaptics

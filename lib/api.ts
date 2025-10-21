@@ -383,10 +383,11 @@ export const healthAPI = {
 // Chat API with real-time support
 export const chatAPI = {
   // Send message via HTTP
-  async sendMessage(message: string, userContext?: any) {
+  async sendMessage(message: string, userContext?: any, conversationId?: string | null) {
     const response = await apiClient.post('/chat/message', { 
       message, 
-      userContext 
+      userContext,
+      conversationId 
     });
     return response.data;
   },
