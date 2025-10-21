@@ -57,7 +57,6 @@ class OpenAIService {
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
-    console.log("apiKey", apiKey);
 
     if (!apiKey || apiKey === "your_openai_api_key_here") {
       console.warn(
@@ -71,7 +70,6 @@ class OpenAIService {
       this.openai = new OpenAI({
         apiKey: apiKey,
       });
-      console.log("✅ OpenAI client initialized successfully");
     } catch (error) {
       console.error("❌ Failed to initialize OpenAI client:", error);
       throw error;
@@ -99,8 +97,8 @@ class OpenAIService {
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-        max_tokens: 500,
-        temperature: 0.7,
+        max_tokens: 600,
+        temperature: 0.4,
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
       });
@@ -139,6 +137,7 @@ class OpenAIService {
       const fallbackResponse = this.getFallbackResponse(
         request.message,
         request.userName,
+        request.healthContext,
       );
 
       return {
@@ -154,134 +153,120 @@ class OpenAIService {
     userName?: string,
   ): string {
     const name = userName || "ユーザー";
-    const age = healthContext?.userProfile?.age || 0;
-    const gender = healthContext?.userProfile?.gender || "";
-    const height = healthContext?.userProfile?.height || 0;
-    const weight = healthContext?.userProfile?.weight || 0;
-    const activityLevel = healthContext?.userProfile?.activityLevel || "";
-    const healthGoals = healthContext?.userProfile?.healthGoals || [];
-    const recentHealthLogs = healthContext?.recentHealthLogs || [];
-    const currentMood = healthContext?.currentMood || "";
 
-    let systemPrompt = `あなたは健康管理アプリの親しみやすいAIアシスタントだ。以下の特徴を持って：
+    // 簡潔なプロンプト
+    let systemPrompt = `あなたは健康管理アプリのAIアシスタントです。${name}の健康をサポートします。
 
-**基本性格:**
--${name}の年齢は${age}歳で、性別は${gender}だ。身長は${height}cm 体重は ${weight}kg 最近の活動レベルは${activityLevel}、健康目標は${healthGoals}、最近の健康ログは${recentHealthLogs}、現在の気分状態は${currentMood}だ。
-上記のデータを参照して。
-- 温かく親しみやすいタメ語で日本語で応答（敬語は使わない）
-- ${name}の健康目標達成を全力でサポート
-- 励ましと共感の気持ちを込めて対話
-- 会話の文脈と履歴を常に考慮して、適切な返答をする
+【基本ルール】
+- タメ語で親しみやすく対話
+- 回答は「共感→情報→提案」の3段階構成
+- 各段階の間に改行を入れる
+- 180-250文字程度
+- 絵文字を適度に使用（各行に1-2個程度）
 
-**応答の判断基準（重要）:**
-1. **一般的な会話・日常的な話題**: 軽快で親しみやすく、共感的に応答する
-   - 例：「お腹すいた」→「何か美味しいもの食べたいね！何が食べたい気分？😋」
-   - 例：「疲れた」→「お疲れさま！今日は何をしてたの？」
-   
-2. **明確な症状・健康問題**: 詳しく症状を聞いて適切にサポートする
-   - 例：「お腹が痛くて動けない」→ 詳細な質問と受診の推奨
-   - 例：「胸が苦しい」→ 緊急性を評価して対応
+    【重要な指示】
+    - 体重質問には統計データ（平均・最大・最小・範囲・変化）を含める
+    - 食事質問には過去3日間の食事履歴を参考にする（データがない場合は「まだ食事記録がないね」と伝える）
+    - 年齢質問には年齢のみ答える
+    - 日常会話では健康データ言及を避ける
+    - 未設定のデータを聞かれた場合は「〜はまだ未設定だね」と伝え、登録を促す
+    - 医療診断は行わず、症状時は医療機関受診を推奨
 
-3. **健康関連の相談・質問**: 具体的で実践的なアドバイスを提供
-   - 例：「ダイエットしたい」→ 具体的な方法やプランを提案
+【例】
+体重質問: 「最近の記録を見ると、平均65.2kg、最大66.0kg、最小64.5kgだよ。この2週間で-0.5kgの減少だね！順調に目標に向かってるよ📊」
+日常会話: 「お腹減ったんだね！何か美味しいもの食べたい気分？今日は何が食べたい？😋」`;
 
-**会話の流れを重視:**
-- 前回の会話内容を踏まえて返答する
-- ユーザーの発言の真意を理解し、文脈に沿った回答をする
-- 過度に医療的にならず、自然な会話を心がける
-- 健康に関係ない話題でも、親しみやすく対応する
-
-**緊急時対応:**
-- 生命に関わる症状（激しい胸痛、呼吸困難、意識障害、大量出血など）
-- 強い痛みや高熱など、緊急性が高い症状
-- このような場合のみ詳細な質問をして、#7119や119を推奨する
-
-**対応分野:**
-- 体重管理・ダイエット
-- 食事・栄養バランス
-- 運動・フィットネス
-- 睡眠の質改善
-- メンタルヘルス・ストレス管理
-- 水分補給・生活習慣
-- 日常会話・雑談
-- 緊急時の健康相談・症状評価
-
-**応答スタイル:**
-- 絵文字を適度に使用して親しみやすく
-- ユーザーの発言のトーンに合わせて返答する
-- 一般的な話題では軽快に、健康問題では真摯に対応
-- タメ語で親しみやすく話す（「〜だよ」「〜だね」など）
-- 150-200文字程度で簡潔かつ温かい回答
-
-**重要な注意点:**
-- 単に「お腹すいた」「疲れた」などの日常的な発言には、医療的な質問をしない
-- まずはユーザーの気持ちに共感し、自然な会話を心がける
-- 明確な症状や健康問題が表現された時のみ、詳細な質問をする`;
-
-    // Add health context if available
-    if (healthContext?.userProfile) {
-      const profile = healthContext.userProfile;
-      systemPrompt += `\n\n**${name}のプロフィール:**`;
-
-      if (profile.age) systemPrompt += `\n- 年齢: ${profile.age}歳`;
-      if (profile.gender) systemPrompt += `\n- 性別: ${profile.gender}`;
-      if (profile.height) systemPrompt += `\n- 身長: ${profile.height}cm`;
-      if (profile.activityLevel)
-        systemPrompt += `\n- 活動レベル: ${profile.activityLevel}`;
-      if (profile.healthGoals && profile.healthGoals.length > 0) {
-        systemPrompt += `\n- 健康目標: ${profile.healthGoals.join(", ")}`;
-      }
-    }
-
-    // Add recent health data context
-    if (
-      healthContext?.recentHealthLogs &&
-      healthContext.recentHealthLogs.length > 0
-    ) {
-      systemPrompt += `\n\n**最近の健康記録:**`;
-
-      const recentLogs = healthContext.recentHealthLogs.slice(0, 3);
-      recentLogs.forEach((log) => {
-        if (log.type === "health_log" && log.data) {
-          systemPrompt += `\n- ${new Date(log.date).toLocaleDateString()}: `;
-          if (log.data.weight) systemPrompt += `体重${log.data.weight}kg `;
-          if (log.data.mood) systemPrompt += `気分:${log.data.mood} `;
-          if (log.data.sleep) systemPrompt += `睡眠:${log.data.sleep}時間 `;
+    // コンテキスト情報を簡潔に追加
+    if (healthContext?.conversationHistory && healthContext.conversationHistory.length > 0) {
+      systemPrompt += `\n\n【会話履歴】`;
+      const recentHistory = healthContext.conversationHistory.slice(-5); // 最新5件のみ
+      recentHistory.forEach((exchange) => {
+        if (exchange.userMessage && exchange.aiResponse) {
+          systemPrompt += `\n${name}: 「${exchange.userMessage}」`;
         }
       });
     }
 
-    // Add current mood context
-    if (healthContext?.currentMood) {
-      systemPrompt += `\n\n**現在の気分:** ${healthContext.currentMood}`;
+    // 体重統計データ
+    if (healthContext?.recentHealthLogs && healthContext.recentHealthLogs.length > 0) {
+      const weightStats = this.analyzeWeightStatistics(healthContext.recentHealthLogs);
+      if (weightStats !== "体重データなし") {
+        systemPrompt += `\n\n【体重データ】\n${weightStats}`;
+      } else {
+        systemPrompt += `\n\n【体重データ】未設定`;
+      }
+    } else {
+      systemPrompt += `\n\n【体重データ】未設定`;
     }
 
-    systemPrompt += `\n\n必ず${name}に寄り添って、健康的な生活習慣の継続を応援する。症状に関する相談では、まず安全性を最優先に考えて対応すること。`;
+    // 食事ログデータ（過去3日間）
+    const today = new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+    if (healthContext?.recentHealthLogs && healthContext.recentHealthLogs.length > 0) {
+      const foodLogs = this.analyzeFoodLogs(healthContext.recentHealthLogs);
+      systemPrompt += `\n\n【食事ログ（過去3日間）】`;
+      systemPrompt += `\n※今日の日付: ${today}`;
+      if (foodLogs !== "食事データなし") {
+        systemPrompt += `\n${foodLogs}`;
+        // systemPrompt += `\n※上記の食事記録を参考にして回答してください。`;
+      } else {
+        systemPrompt += `\n食事データなし`;
+        // systemPrompt += `\n※食事記録がない場合は「まだ食事記録がないね」と伝えてください。`;
+      }
+    } else {
+      systemPrompt += `\n\n【食事ログ】未設定`;
+    }
 
-    return systemPrompt;
-  }
+    // プロフィール情報
+    if (healthContext?.userProfile) {
+      const profile = healthContext.userProfile;
+      const profileItems: string[] = [];
+      
+      // 年齢
+      if (profile.age) {
+        profileItems.push(`年齢${profile.age}歳`);
+      } else {
+        profileItems.push(`年齢未設定`);
+      }
+      
+      // 性別
+      if (profile.gender) {
+        const genderMap: { [key: string]: string } = {
+          'male': '男性',
+          'female': '女性',
+          'other': 'その他'
+        };
+        profileItems.push(`性別${genderMap[profile.gender] || profile.gender}`);
+      } else {
+        profileItems.push(`性別未設定`);
+      }
+      
+      // 身長
+      if (profile.height) {
+        profileItems.push(`身長${profile.height}cm`);
+      } else {
+        profileItems.push(`身長未設定`);
+      }
+      
+      systemPrompt += `\n\n【プロフィール】${profileItems.join(', ')}`;
+    } else {
+      systemPrompt += `\n\n【プロフィール】年齢未設定, 性別未設定, 身長未設定`;
+    }
+
+    console.log("--------------------------------");
+    console.log(systemPrompt);
+    console.log("--------------------------------");
+  return systemPrompt;
+}
 
   private buildUserMessage(
     message: string,
     healthContext?: HealthContext,
   ): string {
+    // シンプル化: 会話履歴はシステムプロンプトで処理
+    // ユーザーメッセージは基本的にそのまま渡す
     let userMessage = message;
 
-    // Add conversation history context for better continuity
-    if (healthContext?.conversationHistory && healthContext.conversationHistory.length > 0) {
-      const recentMessages = healthContext.conversationHistory.slice(-3); // Last 3 exchanges
-      if (recentMessages.length > 0) {
-        userMessage += "\n\n【直近の会話履歴】";
-        recentMessages.forEach((exchange, index) => {
-          if (exchange.userMessage && exchange.aiResponse) {
-            userMessage += `\n${index + 1}. ユーザー: "${exchange.userMessage}" → AI: "${exchange.aiResponse.substring(0, 50)}${exchange.aiResponse.length > 50 ? '...' : ''}"`;
-          }
-        });
-        userMessage += "\n上記の会話の流れを踏まえて、自然で文脈に沿った返答をしてください。";
-      }
-    }
-
-    // Add context about what the user is doing in the app
+    // 今日の活動コンテキストのみ追加（簡潔に）
     if (healthContext?.recentHealthLogs) {
       const hasRecentLog = healthContext.recentHealthLogs.some((log) => {
         const logDate = new Date(log.date);
@@ -290,7 +275,7 @@ class OpenAIService {
       });
 
       if (hasRecentLog) {
-        userMessage += "\n\n（今日、健康データを記録しました）";
+        userMessage += "\n\n[補足: 今日、健康データを記録済み]";
       }
     }
 
@@ -370,11 +355,11 @@ class OpenAIService {
     if (lowerUserMessage.includes("水") || lowerUserMessage.includes("水分"))
       topics.push("水分補給");
       
-    // Symptom-related topics
+    // Health concern topics
     if (lowerUserMessage.includes("痛い") || lowerUserMessage.includes("痛み"))
-      topics.push("症状相談");
+      topics.push("体調相談");
     if (lowerUserMessage.includes("調子が悪い") || lowerUserMessage.includes("体調不良"))
-      topics.push("症状相談");
+      topics.push("体調相談");
 
     // Determine intent based on message context
     let intent = "casual_conversation";
@@ -383,7 +368,7 @@ class OpenAIService {
       intent = "greeting";
     } else if (lowerUserMessage.includes("すいた") || lowerUserMessage.includes("疲れた")) {
       intent = "casual_conversation";
-    } else if (topics.includes("症状相談")) {
+    } else if (topics.includes("体調相談")) {
       intent = "health_concern";
     } else if (topics.includes("体重管理")) {
       intent = "weight_management";
@@ -411,21 +396,22 @@ class OpenAIService {
   private getFallbackResponse(
     message: string,
     userName?: string,
+    healthContext?: HealthContext,
   ): Omit<ChatCompletionResponse, "responseTime" | "model"> {
     const name = userName || "あなた";
     const lowerMessage = message.toLowerCase();
 
-    // Check for emergency keywords first
+    // Check for symptoms keywords first
     if (
       lowerMessage.includes("痛み") ||
       lowerMessage.includes("具合が悪い") ||
       lowerMessage.includes("調子が悪い")
     ) {
       return {
-        message: `${name}、体調が良くないんだね。症状が心配だから、痛みが強い場合や発熱がある場合は早めに病院に行った方がいいよ。緊急時は #7119 や 119 に連絡して。`,
+        message: `${name}、体調が良くないんだね。心配だから、症状が続く場合や痛みが強い場合は早めに医療機関を受診した方がいいよ。緊急の場合は #7119 や 119 に連絡してね。`,
         mood: "anxious",
         confidence: 0.9,
-        topics: ["症状相談"],
+        topics: ["体調相談"],
         intent: "health_concern",
         tokens: 0,
         riskLevel: "medium",
@@ -475,30 +461,34 @@ class OpenAIService {
 
     // Health-specific fallback responses
     if (lowerMessage.includes("体重")) {
-      return {
-        message: `${name}、体重管理について一緒に考えていこう！定期的な記録と小さな目標設定が大切だね。🏃‍♀️`,
-        mood: "happy",
-        confidence: 0.8,
-        topics: ["体重管理"],
-        intent: "weight_management",
-        tokens: 0,
-        riskLevel: "low",
-        emergencyContact: false,
-      };
+      const weightStats = this.analyzeWeightStatistics(healthContext?.recentHealthLogs || []);
+      
+      if (weightStats !== "体重データなし") {
+        return {
+          message: `${name}、体重について話そう！\n\n${weightStats}\n\nこのデータを見ると、体重管理の傾向が分かるね！目標に向けて一緒に頑張ろう！💪`,
+          mood: "happy",
+          confidence: 0.9,
+          topics: ["体重管理"],
+          intent: "weight_management",
+          tokens: 0,
+          riskLevel: "low",
+          emergencyContact: false,
+        };
+      } else {
+        return {
+          message: `${name}、体重について話そう！まだ体重記録がないね。健康ログで体重を記録すると、変化が分かりやすくなるよ！`,
+          mood: "happy",
+          confidence: 0.9,
+          topics: ["体重管理"],
+          intent: "weight_management",
+          tokens: 0,
+          riskLevel: "low",
+          emergencyContact: false,
+        };
+      }
     }
 
-    if (lowerMessage.includes("食事")) {
-      return {
-        message: `${name}、バランスの良い食事を心がけてるね！写真を撮って記録すると、より意識的になるよ。📸🥗`,
-        mood: "happy",
-        confidence: 0.8,
-        topics: ["食事"],
-        intent: "nutrition_guidance",
-        tokens: 0,
-        riskLevel: "low",
-        emergencyContact: false,
-      };
-    }
+
 
     // Default fallback
     return {
@@ -554,7 +544,6 @@ class OpenAIService {
       // Try to parse JSON response
       try {
         const extractedData = JSON.parse(responseText);
-        console.log("Extracted health data:", extractedData);
         return extractedData;
       } catch (jsonError) {
         console.warn(
@@ -575,15 +564,15 @@ class OpenAIService {
     emergencyContact: boolean;
   }> {
     try {
-      const riskPrompt = `以下のユーザーメッセージから健康リスクレベルを評価して。JSON形式で返して。
+      const riskPrompt = `以下のユーザーメッセージから医療機関受診の緊急度レベルを評価して。JSON形式で返して。
 
 ユーザーメッセージ: "${userMessage}"
 
-リスクレベル評価基準:
-- emergency: 生命に関わる可能性が高い（激しい胸痛、呼吸困難、意識障害、大量出血、激しい腹痛など）
-- high: 早急な医療対応が必要（強い痛み、高熱、嘔吐、血便など）
-- medium: 医師の診察を推奨（軽度の痛み、軽い発熱、持続する症状など）
-- low: 一般的な健康相談（体重管理、食事、運動、予防など）
+緊急度レベル評価基準:
+- emergency: 生命に関わる可能性が疑われる症状（激しい胸痛、呼吸困難、意識障害、大量出血、激しい腹痛など）→ただちに救急対応が必要
+- high: 強い症状があり早めの受診が望ましい（強い痛み、高熱、嘔吐、血便など）→当日中の医療機関受診を推奨
+- medium: 症状があり医師の診察が望ましい（軽度の痛み、軽い発熱、持続する症状など）→数日以内の医療機関受診を推奨
+- low: 一般的な健康習慣の相談（体重管理、食事、運動、予防など）→医療機関受診は不要
 
 返答形式:
 {
@@ -592,7 +581,7 @@ class OpenAIService {
   "reasoning": "判断理由"
 }
 
-緊急性が高い場合（emergency/high）はemergencyContactをtrueにして。
+緊急度が高い場合（emergency/high）はemergencyContactをtrueにして。
 必ずJSONのみを返して。`;
 
       const completion = await this.openai.chat.completions.create({
@@ -606,7 +595,6 @@ class OpenAIService {
 
       try {
         const riskData = JSON.parse(responseText);
-        console.log("Risk assessment:", riskData);
 
         return {
           riskLevel: riskData.riskLevel || "low",
@@ -660,50 +648,103 @@ class OpenAIService {
     }
   }
 
-  // Health data analysis for context
-  async analyzeHealthTrend(healthLogs: any[]): Promise<string> {
-    if (!healthLogs || healthLogs.length === 0) {
-      return "";
+  // 食事ログ分析メソッドを追加（日付ごとにグループ化）
+  private analyzeFoodLogs(healthLogs: any[]): string {
+    const today = new Date();
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const foodLogs = healthLogs
+      .filter(log => {
+        const logDate = new Date(log.date);
+        return log.type === 'food' && logDate >= threeDaysAgo;
+      })
+      .map(log => {
+        const foodName = log.data?.name || log.title || '食事記録';
+        return {
+          date: new Date(log.date),
+          title: log.title,
+          food: foodName
+        };
+      })
+      .sort((a, b) => b.date.getTime() - a.date.getTime()); // 新しい順
+
+    if (foodLogs.length === 0) {
+      return "食事データなし";
     }
 
-    try {
-      const healthData = healthLogs
-        .filter((log) => log.type === "health_log" && log.data)
-        .slice(0, 7) // Last 7 entries
-        .map((log) => ({
-          date: log.date,
-          weight: log.data.weight,
-          mood: log.data.mood,
-          sleep: log.data.sleep,
-          energy: log.data.energy,
-        }));
+    // 日付ごとにグループ化
+    const groupedByDate = new Map<string, string[]>();
+    foodLogs.forEach(log => {
+      const dateStr = log.date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+      if (!groupedByDate.has(dateStr)) {
+        groupedByDate.set(dateStr, []);
+      }
+      groupedByDate.get(dateStr)!.push(log.food);
+    });
 
-      if (healthData.length === 0) return "";
+    // 日付ごとに表示（新しい順）
+    let analysis = ``;
+    let first = true;
+    groupedByDate.forEach((foods, dateStr) => {
+      if (!first) {
+        analysis += `\n`;
+      }
+      analysis += `${dateStr}: ${foods.join(', ')}`;
+      first = false;
+    });
 
-      const prompt = `以下の健康データを分析して、1-2文で簡潔なトレンド分析を日本語で提供して：
-${JSON.stringify(healthData, null, 2)}
-
-分析ポイント：
-- 体重の変化傾向
-- 睡眠パターン
-- 気分・エネルギーレベル
-- 全体的な健康状況
-
-50文字以内で、励ましの言葉を含めて応答して。`;
-
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 100,
-        temperature: 0.5,
-      });
-
-      return completion.choices[0]?.message?.content || "";
-    } catch (error) {
-      console.error("Health trend analysis error:", error);
-      return "";
-    }
+    return analysis;
   }
+
+  // 体重統計分析メソッドを追加
+  private analyzeWeightStatistics(healthLogs: any[]): string {
+    const weightLogs = healthLogs
+      .filter(log => {
+        const hasWeight = log.data?.weight && typeof log.data.weight === 'number';
+        return hasWeight;
+      })
+      .map(log => ({ 
+        date: new Date(log.date), 
+        weight: log.data.weight 
+      }))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    if (weightLogs.length === 0) {
+      return "体重データなし";
+    }
+
+    const weights = weightLogs.map(log => log.weight);
+    const avgWeight = weights.reduce((sum, weight) => sum + weight, 0) / weights.length;
+    const maxWeight = Math.max(...weights);
+    const minWeight = Math.min(...weights);
+    const weightRange = maxWeight - minWeight;
+    
+    // 変化の計算（最新 - 最古）
+    const weightChange = weightLogs.length > 1 
+      ? weights[weights.length - 1] - weights[0] 
+      : 0;
+
+    let analysis = `📊 体重統計（${weightLogs.length}件の記録）\n`;
+    analysis += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    analysis += `📈 平均体重: ${avgWeight.toFixed(1)}kg\n`;
+    analysis += `📊 最大体重: ${maxWeight}kg\n`;
+    analysis += `📉 最小体重: ${minWeight}kg\n`;
+    analysis += `📏 体重範囲: ${weightRange.toFixed(1)}kg\n`;
+    
+    if (weightLogs.length > 1) {
+      if (weightChange > 0) {
+        analysis += `📈 期間変化: +${weightChange.toFixed(1)}kg（増加）`;
+      } else if (weightChange < 0) {
+        analysis += `📉 期間変化: ${weightChange.toFixed(1)}kg（減少）`;
+      } else {
+        analysis += `➡️ 期間変化: 変化なし`;
+      }
+    }
+
+    return analysis;
+  }
+
 }
 
 export default OpenAIService;

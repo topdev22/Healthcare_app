@@ -239,6 +239,25 @@ router.post('/message', authenticateToken, async (req: any, res) => {
       .select('sender content createdAt')
       .lean();
 
+    // Format conversation history for OpenAI Service
+    // Pair up user messages with assistant responses
+    const formattedHistory: { userMessage: string; aiResponse: string; timestamp: string }[] = [];
+    const reversedMessages = [...recentMessages].reverse(); // Oldest to newest
+    
+    for (let i = 0; i < reversedMessages.length - 1; i++) {
+      const current = reversedMessages[i];
+      const next = reversedMessages[i + 1];
+      
+      if (current.sender === 'user' && next.sender === 'assistant') {
+        formattedHistory.push({
+          userMessage: current.content,
+          aiResponse: next.content,
+          timestamp: current.createdAt.toISOString()
+        });
+        i++; // Skip the next message as we've already processed it
+      }
+    }
+
     // Prepare health context for GPT
     const healthContext = {
       recentHealthLogs,
@@ -250,7 +269,7 @@ router.post('/message', authenticateToken, async (req: any, res) => {
         healthGoals: user.healthGoals
       } : undefined,
       currentMood: userContext?.mood,
-      conversationHistory: recentMessages.reverse() // Oldest to newest for better context
+      conversationHistory: formattedHistory
     };
 
     // Generate AI response using GPT or fallback
@@ -736,7 +755,7 @@ function generateHealthResponse(message: string, userContext: any) {
 
   if (lowerMessage.includes('食事') || lowerMessage.includes('食べ') || lowerMessage.includes('料理')) {
     return {
-      message: `${userName}さん、食事について話しましょう！バランスの良い食事は健康の基盤です。今日は何を食べましたか？写真を撮って記録してみませんか？📸🥗`,
+      message: `${userName}さん、食事について話しましょう！バランスの良い食事は健康的な生活の基盤だね。今日は何を食べましたか？写真を撮って記録してみませんか？📸🥗`,
       mood: 'excited' as const,
       confidence: 0.9,
       topics: ['食事', '栄養'],
@@ -750,7 +769,7 @@ function generateHealthResponse(message: string, userContext: any) {
 
   if (lowerMessage.includes('運動') || lowerMessage.includes('エクササイズ') || lowerMessage.includes('ワークアウト')) {
     return {
-      message: `${userName}さん、運動について素晴らしいですね！💪 定期的な運動は心身の健康に欠かせません。どんな運動がお好みですか？`,
+      message: `${userName}さん、運動について素晴らしいですね！💪 定期的な運動は心身の調子を整えるのに役立つよ。どんな運動がお好みですか？`,
       mood: 'excited' as const,
       confidence: 0.9,
       topics: ['運動', 'フィットネス'],
@@ -764,7 +783,7 @@ function generateHealthResponse(message: string, userContext: any) {
 
   if (lowerMessage.includes('気分') || lowerMessage.includes('ストレス') || lowerMessage.includes('疲れ')) {
     return {
-      message: `${userName}さん、お疲れ様です。心の健康も体の健康と同じくらい大切ですね。😌 深呼吸をして、リラックスする時間を作ってみてください。`,
+      message: `${userName}さん、お疲れ様です。心の調子も体の調子と同じくらい大切だね。😌 深呼吸をして、リラックスする時間を作ってみてください。`,
       mood: 'neutral' as const,
       confidence: 0.8,
       topics: ['メンタルヘルス', 'ストレス管理'],
@@ -778,7 +797,7 @@ function generateHealthResponse(message: string, userContext: any) {
 
   if (lowerMessage.includes('睡眠') || lowerMessage.includes('寝る') || lowerMessage.includes('眠い')) {
     return {
-      message: `${userName}さん、良質な睡眠は健康の要です！😴 7-8時間の睡眠を心がけて、規則正しい生活リズムを保ちましょう。`,
+      message: `${userName}さん、良質な睡眠は大切だね！😴 一般的には7-8時間の睡眠が推奨されているよ。規則正しい生活リズムを心がけてみてね。`,
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['睡眠', '生活リズム'],
@@ -792,7 +811,7 @@ function generateHealthResponse(message: string, userContext: any) {
 
   if (lowerMessage.includes('水') || lowerMessage.includes('水分')) {
     return {
-      message: `${userName}さん、水分補給について！💧 1日に1.5-2リットルの水を飲むことが推奨されています。こまめな水分補給で健康維持しましょう！`,
+      message: `${userName}さん、水分補給について！💧 一般的には1日に1.5-2リットルの水を飲むことが推奨されているよ。こまめな水分補給を心がけてみてね！`,
       mood: 'happy' as const,
       confidence: 0.9,
       topics: ['水分補給', 'ヘルスケア'],
@@ -835,10 +854,10 @@ function generateHealthResponse(message: string, userContext: any) {
 
   // Default response
   return {
-    message: `${userName}さん、お話しいただきありがとうございます！🌟 健康に関することでしたら何でもお聞かせください。体重記録、食事管理、運動について一緒に考えていきましょう！`,
+    message: `${userName}さん、お話しいただきありがとうございます！🌟 健康的な生活習慣に関することでしたら何でもお聞かせください。体重記録、食事管理、運動について一緒に考えていきましょう！`,
     mood: 'happy' as const,
     confidence: 0.7,
-    topics: topics.length > 0 ? topics : ['一般的な健康支援'],
+    topics: topics.length > 0 ? topics : ['一般的な健康サポート'],
     intent: 'general_health_support',
     responseTime,
     tokens: 0,
