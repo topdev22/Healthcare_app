@@ -44,6 +44,14 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
   const webcamRef = useRef<Webcam>(null);
   const [isMediaDevicesSupported, setIsMediaDevicesSupported] = useState<boolean | null>(null);
 
+  // エラーメッセージの定数
+  const ERROR_MESSAGES = {
+    SERVICE_UNAVAILABLE: '食事画像の解析サービスが一時的に利用できません。しばらく時間をおいてから再度お試しください。',
+    SERVER_ERROR: 'サーバーエラーが発生しました。しばらく時間をおいてから再度お試しください。',
+    ANALYSIS_FAILED: '画像の解析に失敗しました。しばらく時間をおいてから再度お試しください。',
+    IMAGE_PROCESSING_FAILED: '画像の処理に失敗しました。'
+  };
+
   // Cleanup function for media streams
   const cleanupStream = useCallback(() => {
     if (currentStream) {
@@ -310,7 +318,23 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
       }
     } catch (err) {
       console.error('食事画像解析エラー:', err);
-      setError('画像の解析に失敗しました。別の画像を試してください。');
+      
+      // エラーレスポンスから適切なメッセージを取得
+      if (err && typeof err === 'object' && 'response' in err) {
+        const errorResponse = (err as any).response;
+        if (errorResponse?.data?.message) {
+          setError(errorResponse.data.message);
+        } else if (errorResponse?.status === 503) {
+          setError(ERROR_MESSAGES.SERVICE_UNAVAILABLE);
+        } else if (errorResponse?.status === 500) {
+          setError(ERROR_MESSAGES.SERVER_ERROR);
+        } else {
+          setError(ERROR_MESSAGES.ANALYSIS_FAILED);
+        }
+      } else {
+        // タイムアウトやネットワークエラーなども含めて統一メッセージ
+        setError(ERROR_MESSAGES.ANALYSIS_FAILED);
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -406,7 +430,7 @@ export default function FoodAnalysisModal({ isOpen, onClose, onSaveFoodData }: F
       setIsCameraOpen(false);
     } catch (err) {
       console.error('Error converting image:', err);
-      setError('画像の処理に失敗しました。');
+      setError(ERROR_MESSAGES.IMAGE_PROCESSING_FAILED);
     }
   };
 

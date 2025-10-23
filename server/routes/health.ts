@@ -3,7 +3,7 @@ import multer from 'multer';
 import { authenticateToken } from '../middleware/auth';
 import HealthLog from '../models/HealthLog';
 import { checkAndUpdateAchievements } from './achievements';
-import GeminiService from '../services/geminiService';
+import ChatGPTFoodService from '../services/chatgptFoodService';
 import {
   validateHealthLog,
   validateFoodData,
@@ -239,11 +239,11 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
     const imageBase64 = req.file.buffer.toString('base64');
     const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
 
-    // Use GeminiService for food analysis
+    // Use ChatGPTFoodService for food analysis
     try {
-      if (GeminiService.isConfigured()) {
-        const geminiService = new GeminiService();
-        const analysisResult = await geminiService.analyzeFoodImage(imageData);
+      if (ChatGPTFoodService.isConfigured()) {
+        const chatgptService = new ChatGPTFoodService();
+        const analysisResult = await chatgptService.analyzeFoodImage(imageData);
         
         // Ensure the response is properly formatted JSON
         const jsonResponse = {
@@ -253,7 +253,7 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
             foodItems: analysisResult.foodItems || [],
             totalCalories: analysisResult.totalCalories || 0,
             analysisTimestamp: new Date().toISOString(),
-            source: 'gemini-api'
+            source: 'chatgpt-api'
           }
         };
         
@@ -261,12 +261,12 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
         res.json(jsonResponse);
         
       } else {
-        // Use fallback data if Gemini is not configured
-        const fallbackResult = GeminiService.getFallbackAnalysis(imageData);
+        // Use fallback data if ChatGPT is not configured
+        const fallbackResult = ChatGPTFoodService.getFallbackAnalysis(imageData);
         
         const jsonResponse = {
           success: true,
-          message: 'Using fallback analysis (Gemini API not configured)',
+          message: 'Using fallback analysis (ChatGPT API not configured)',
           data: {
             ...fallbackResult,
             analysisTimestamp: new Date().toISOString(),
@@ -280,22 +280,13 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
     } catch (apiError) {
       console.error('Food analysis error:', apiError);
       
-      // Fallback to mock data if API fails
-      const fallbackResult = GeminiService.getFallbackAnalysis(imageData);
-      
-      const jsonResponse = {
-        success: true,
-        message: 'Using fallback analysis due to API error',
-        data: {
-          ...fallbackResult,
-          analysisTimestamp: new Date().toISOString(),
-          source: 'error-fallback',
-          error: apiError instanceof Error ? apiError.message : 'Unknown error'
-        }
-      };
-      
-      console.log('📊 Error fallback JSON response:', JSON.stringify(jsonResponse, null, 2));
-      res.json(jsonResponse);
+      // Return error message instead of fallback data
+      res.status(503).json({
+        success: false,
+        message: '食事画像の解析サービスが一時的に利用できません。しばらく時間をおいてから再度お試しください。',
+        error: apiError instanceof Error ? apiError.message : 'Unknown error',
+        retryAfter: 300 // 5 minutes
+      });
     }
   } catch (error) {
     console.error('Analyze food error:', error);
@@ -306,25 +297,25 @@ router.post('/analyze-food', authenticateToken, upload.single('image'), async (r
   }
 });
 
-// Get Gemini service status
-router.get('/gemini-status', authenticateToken, async (req: any, res) => {
+// Get ChatGPT service status
+router.get('/chatgpt-status', authenticateToken, async (req: any, res) => {
   try {
-    const status = GeminiService.getStatus();
+    const status = ChatGPTFoodService.getStatus();
     
     res.json({
       success: true,
       data: {
         ...status,
         message: status.configured 
-          ? 'Gemini API is properly configured' 
-          : 'Gemini API is not configured. Using fallback data.'
+          ? 'ChatGPT API is properly configured' 
+          : 'ChatGPT API is not configured. Using fallback data.'
       }
     });
   } catch (error) {
-    console.error('Gemini status check error:', error);
+    console.error('ChatGPT status check error:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Failed to check Gemini service status' 
+      message: 'Failed to check ChatGPT service status' 
     });
   }
 });
@@ -339,22 +330,22 @@ router.post('/analyze-food-debug', authenticateToken, upload.single('image'), as
       });
     }
 
-    if (!GeminiService.isConfigured()) {
+    if (!ChatGPTFoodService.isConfigured()) {
       return res.status(400).json({
         success: false,
-        message: 'Gemini API is not configured'
+        message: 'ChatGPT API is not configured'
       });
     }
 
     const imageBase64 = req.file.buffer.toString('base64');
     const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
 
-    const geminiService = new GeminiService();
-    const rawResponse = await geminiService.getRawJsonResponse(imageData);
+    const chatgptService = new ChatGPTFoodService();
+    const rawResponse = await chatgptService.getRawJsonResponse(imageData);
     
     res.json({
       success: true,
-      message: 'Raw JSON response from Gemini API',
+      message: 'Raw JSON response from ChatGPT API',
       data: {
         rawResponse,
         timestamp: new Date().toISOString()
